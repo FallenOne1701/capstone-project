@@ -14,6 +14,7 @@ from app.corpus.refresh import last_checked_for
 from app.desk.orchestrator import run_desk
 from app.guard.pii import redact
 from app.intent.classifier import IntentResult, classify_intent
+from app.link.question_keys import question_key
 from app.models import Action, Draft, Ticket
 
 log = logging.getLogger(__name__)
@@ -60,7 +61,7 @@ async def create_ticket(db: Session, text: str, *, channel: str = "text") -> tup
     t = Ticket(code="GRW-" + "".join(secrets.choice(_ALPH) for _ in range(6)), channel=channel,
                language=intent.language, question_redacted=red.text, pii_types=red.pii_types,
                intent=intent.intent, scheme_id=intent.scheme_ids[0] if len(intent.scheme_ids) == 1 else None,
-               fact_key=intent.fact_key, status="received")
+               fact_key=intent.fact_key, question_key=question_key(intent, red.text), status="received")
     db.add(t)
     db.flush()
     audit(db, "public", "create", "ticket", t.id, f"intent={intent.intent}")
