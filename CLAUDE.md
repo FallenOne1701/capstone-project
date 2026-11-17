@@ -9,8 +9,9 @@ Final project: one deployed system for Groww (HDFC mutual funds) with a **respon
 - GitHub: private `FallenOne1701/capstone-project`. Each plan = its own branch + PR.
 
 ## Status (2026-11-17)
-- Plan 2: all 13 tasks done, 272 tests green, live weekly run on real Play Store data works (run 3: 3002 reviews, window 2026-10-26→11-17, Link 1 demo showing 5 repeated exit-load questions). Verification report `api/data/verify/weekly-run-3.md` → 0 flags.
-- **Pending at the checkpoint:** user to approve action 16 (Google Doc append) and 17 (Gmail draft) — only on their explicit say-so; suggested rejecting stale actions 6–9 (runs 1–2). Then: exercise Link 2 live (ask "What is brokerage?"-type question → reused canonical explainer), fresh-context final review, fix pass, copy ledger to docs, PR.
+- Plan 2: done — 290 tests green, live runs 3–4 delivered to Google Doc + Gmail draft after user approval, Link 2 verified live (brokerage question → reused canonical explainer #4). Fresh-context final review fixed (ledger: `docs/superpowers/plans/2026-11-17-plan-2-ledger.md`, incl. deferred items for Plan 3/4). PR open for user review — do not merge without their say-so.
+- Known limit for Plan 3/4: the MCP Doc append is plain text, so `#` headings show literally in the Doc.
+- Failed Google actions (e.g. expired token) can be retried: `POST /api/console/actions/{id}/retry`.
 - Google OAuth app could not be published (restricted Gmail scope) → stays in Testing; refresh token expires every 7 days: re-run `npm run auth` in `C:/Users/dhruv/MCP Server 1` and update `GOOGLE_REFRESH_TOKEN` before demo/deploy.
 
 ## Run it
