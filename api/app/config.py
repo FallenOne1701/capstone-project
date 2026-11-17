@@ -62,6 +62,15 @@ class Settings(BaseSettings):
     repeat_days: int = 7
     pulse_doc_id: str = ""
 
+    # Google delivery via MCP Server 1 (stdio)
+    mcp_server_dir: Path = API_ROOT / "mcp_server"
+    node_command: str = "node"
+    google_client_id: str = ""
+    google_client_secret: str = ""
+    google_refresh_token: str = ""
+    pulse_draft_recipient: str = ""
+    mcp_timeout_s: float = 60.0
+
     @property
     def allowed_source_domains(self) -> frozenset[str]:
         return ALLOWED_SOURCE_DOMAINS

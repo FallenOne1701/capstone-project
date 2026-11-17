@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from app.desk.contracts import FactsResult, OrchestratorOutput, RoutingNote
 from app.desk.reviewer import review_draft
 from app.guard.pii import redact
-from app.models import Action, AuditLog, Draft, Ticket
+from app.models import Action, AuditLog, Draft, Explainer
 
 MIN_REPLY_CHARS = 10
 
@@ -40,21 +40,46 @@ def _claim(db: Session, action_id: int, new_status: str) -> None:
         raise ValueError(f"action {action_id} is no longer pending")
 
 
+def mark_canonical(db: Session, explainer_id: int) -> Explainer:
+    ex = db.get(Explainer, explainer_id)
+    for other in db.query(Explainer).filter(Explainer.topic == ex.topic, Explainer.status == "canonical",
+                                            Explainer.id != ex.id):
+        other.status = "superseded"
+    ex.status, ex.canonical_at = "canonical", _now()
+    return ex
+
+
+def _run_explainer(db: Session, a: Action) -> Explainer | None:
+    if not a.source_ref.startswith("weekly_run:"):
+        return None
+    run_id = int(a.source_ref.split(":", 1)[1])
+    return db.query(Explainer).filter_by(run_id=run_id).order_by(Explainer.id.desc()).first()
+
+
 def approve(db: Session, action_id: int, actor: str) -> Action:
+    from app.approvals.executors import EXECUTORS
     a = _get(db, action_id)
-    if a.type != "reply_publish":
-        raise ValueError(f"executor for {a.type} not available")  # Plan 3 adds doc_append/email_draft
-    d = db.get(Draft, a.draft_id)
-    if d.review_status == "blocked":
+    if a.type not in EXECUTORS:
+        raise ValueError(f"no executor for {a.type}")
+    if a.type == "reply_publish" and db.get(Draft, a.draft_id).review_status == "blocked":
         raise ValueError("blocked draft cannot be approved; edit it first")
     _claim(db, action_id, "approved")
     db.refresh(a)
-    t = db.get(Ticket, d.ticket_id)
-    now = _now()
-    a.status, a.executed_at = "executed", now
-    t.status, t.answer_text, t.answered_at = "answered", d.reply, now
     audit(db, actor, "approve", "action", a.id)
-    audit(db, actor, "execute", "action", a.id, f"published to ticket {t.code}")
+    try:
+        ref = EXECUTORS[a.type](db, a)
+    except Exception as exc:  # noqa: BLE001  — no silent retry; the failure is recorded on the action
+        a.status, a.error = "failed", redact(f"{type(exc).__name__}: {exc}").text[:500]
+        audit(db, actor, "fail", "action", a.id, a.error)
+        db.commit()
+        return a
+    a.status, a.executed_at = "executed", _now()
+    audit(db, actor, "execute", "action", a.id, ref)
+    if a.type == "doc_append":
+        ex = _run_explainer(db, a)
+        if ex is not None:
+            mark_canonical(db, ex.id)
+            audit(db, actor, "canonical", "explainer", ex.id, ex.topic)
     db.commit()
     return a
 
@@ -64,6 +89,10 @@ def reject(db: Session, action_id: int, actor: str) -> Action:
     _claim(db, action_id, "rejected")
     db.refresh(a)
     audit(db, actor, "reject", "action", a.id)
+    if a.type == "doc_append":
+        ex = _run_explainer(db, a)
+        if ex is not None and ex.status == "draft":
+            ex.status = "rejected"
     db.commit()
     return a
 
