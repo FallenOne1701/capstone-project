@@ -6,7 +6,7 @@
 
 **Architecture:** A new `app/weekly/` package (reviews → themes → fee topic → explainer + pulse → run orchestration) and `app/link/` package (question keys, canonical reuse). These plug into Plan 1's tickets, approvals and desk through three seams:
 - `process_ticket` checks canonical explainers first.
-- `approve` dispatches to a per-type executor registry. `doc_append`/`email_draft` write to a local outbox in this plan; Plan 3 swaps in MCP.
+- `approve` dispatches to a per-type executor registry, and `doc_append`/`email_draft` call MCP Server 1 over stdio to write to the user's Google Doc and Gmail drafts.
 - `deps.get_themes_provider` feeds the latest themes to the Pattern agent.
 
 Official fee-concept pages join the corpus as `kind: reference`.
@@ -39,7 +39,8 @@ Official fee-concept pages join the corpus as `kind: reference`.
 - Reviews: public Play Store listing `com.nextbillion.groww`, `lang="en"`, `country="in"`, last **8 weeks**, capped at **3000** reviews.
 - LLM budget per weekly run: ≤ **4** fast-model calls (ambiguous labels, 12 reviews per call) + **1** main-model call (action ideas). The rules-only path must be complete when `USE_LLM=0`.
 - Allowed citation hosts become `groww.in`, `amfiindia.com`, `sebi.gov.in`.
-- `doc_append`/`email_draft` executors in this plan write to `api/data/outbox/` (**interim**; Plan 3 replaces them with MCP). The recipient email is never stored in the DB; `target_ref` holds the setting name `PULSE_DRAFT_RECIPIENT`.
+- Approved `doc_append` **appends the pulse + explainer to the user's Google Doc** (`PULSE_DOC_ID`), and approved `email_draft` **creates a Gmail draft in the user's account** (never sends; `gmail_send_email` is denylisted). Both go through MCP Server 1 (vendored at `api/mcp_server/`, stdio). The recipient email is never stored in the DB; `target_ref` holds the setting name `PULSE_DRAFT_RECIPIENT`.
+- Deployment target (Plan 4): **backend on Railway**, **frontend on Vercel**.
 - Every commit message ends with `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`.
 
 ## Review Focus
@@ -76,7 +77,9 @@ api/app/
     question_keys.py        question_key(), repeated_questions()
     canonical.py            find_canonical(), reuse_reply()
   approvals/
-    executors.py            NEW registry; outbox executors; reply_publish executor
+    executors.py            NEW registry; reply_publish; doc_append + email_draft via MCP
+  delivery/mcp_client.py    NEW stdio MCP client (denylists gmail_send_email)
+api/mcp_server/             vendored MCP Server 1 (TypeScript; built with npm)
     service.py              approve() dispatches executors; on doc_append executed → mark canonical
   tickets/service.py        create_ticket sets question_key; process_ticket tries canonical first
   deps.py                   get_themes_provider() → latest run's ThemeStats
@@ -1683,24 +1686,51 @@ On failure the `db.rollback()` discards that run's Theme rows; the run row itsel
 
 ---
 
-### Task 9: Action executors and Link 2 canonicalization
+### Task 9: Real Google delivery via MCP (Doc append + Gmail draft) and Link 2 canonicalization
+
+The user wants the weekly pulse in their own Google Docs and a draft in their own Gmail, so approved `doc_append` / `email_draft` actions call **MCP Server 1** (vendored into this repo) over stdio. That's the same server and transport proven working on 2026-11-17 (M2 delivery test: Doc append + Gmail draft id `r-8536280290181872368`).
 
 **Files:**
-- Create: `api/app/approvals/executors.py`
-- Modify: `api/app/approvals/service.py` (`approve` dispatches; doc_append success → canonical)
+- Create: `api/mcp_server/` (vendored copy of `C:/Users/dhruv/MCP Server 1`: `src/`, `package.json`, `package-lock.json`, `tsconfig.json` only; **never** `token.json`, `Credential.json`, `.env`, `node_modules`, `dist`)
+- Create: `api/app/delivery/__init__.py`, `api/app/delivery/mcp_client.py`, `api/app/approvals/executors.py`
+- Modify: `api/app/approvals/service.py`, `api/app/config.py`, `api/pyproject.toml` (`mcp>=1.2`), `api/.env.example`, `.gitignore` (`api/mcp_server/node_modules/`, `api/mcp_server/dist/`)
 - Test: `api/tests/test_executors_link2.py`
 
 **Interfaces:**
-- Consumes: `_claim`, `audit`, `Explainer`, `WeeklyRun`, `Action`, settings `data_outbox_dir`
-- Produces:
-  - `executors.EXECUTORS: dict[str, Callable[[Session, Action], str]]`: returns a result reference string; raises on failure
-  - `executors.register(type, fn)`
-  - Default executors: `reply_publish` (moved from approve), `doc_append` and `email_draft`, which write `outbox/<action_id>-<type>.md` and return the path (interim until Plan 3)
-  - `service.mark_canonical(db, explainer_id) -> Explainer`: sets `canonical`/`canonical_at`; any other `canonical` explainer with the same topic → `superseded`
-  - `approve()` behaviour: claim (`approved`) → executor. On success: `executed` + `executed_at`, audit approve+execute, and if `doc_append` → `mark_canonical` for the run's explainer. On exception: `failed` + `error` (redacted), audit approve+fail, no canonicalization; it returns the action without raising.
-  - `reject()` on a `doc_append`: the action `rejected`, and the run's draft explainer → `rejected`.
+- Settings added: `mcp_server_dir: Path = API_ROOT / "mcp_server"`, `node_command: str = "node"`, `google_client_id: str = ""`, `google_client_secret: str = ""`, `google_refresh_token: str = ""`, `pulse_draft_recipient: str = ""`, `mcp_timeout_s: float = 60.0` (`pulse_doc_id` exists from Task 1).
+- `delivery.mcp_client.DENYLIST = {"gmail_send_email"}`.
+- `delivery.mcp_client.call_tool(name: str, args: dict) -> dict`: sync. Raises `McpDeliveryError` if `name` is denylisted, the server isn't built, a Google credential is missing, the call times out, or the tool returns `isError`. It returns the tool's JSON result. It spawns `node <mcp_server_dir>/dist/server.js` with env `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REFRESH_TOKEN`, `DOTENV_CONFIG_QUIET=true`, `PATH`, `SYSTEMROOT` (Windows) and nothing else from the parent env.
+- `executors.EXECUTORS: dict[str, Callable[[Session, Action], str]]`, `executors.register(type, fn)`:
+  - `reply_publish` (moved from approve).
+  - `doc_append`: `call_tool("google_docs_append_content", {"document_id": settings.pulse_doc_id, "content": action.content, "add_newline_before": True, "add_newline_after": True})` → `"gdoc:<document_id>"`. `McpDeliveryError("PULSE_DOC_ID not set")` if empty.
+  - `email_draft`: splits `action.content` into the `Subject:` line + body → `call_tool("gmail_create_draft", {"to": [settings.pulse_draft_recipient], "subject": subject, "body": body, "is_html": False})` → `"gmail_draft:<id>"`. `McpDeliveryError("PULSE_DRAFT_RECIPIENT not set")` if empty.
+- `service.mark_canonical(db, explainer_id) -> Explainer`: sets `canonical` and `canonical_at`; any other canonical explainer with the same topic becomes `superseded`.
+- `approve()`: claim (`approved`) → executor.
+  - On success: `executed` + `executed_at`; audit approve + execute(ref); if `doc_append` → `mark_canonical` for the run's explainer + audit `canonical`.
+  - On exception: `failed` + redacted `error`; audit approve + fail; no canonicalization; returns the action without raising. There's no silent retry.
+- `reject()` on `doc_append`: the run's draft explainer becomes `rejected`.
 
-- [ ] **Step 1: Write the failing test**
+- [ ] **Step 1: Vendor the MCP server and build it**
+
+```bash
+cd C:/Users/dhruv/support-desk/api && mkdir -p mcp_server
+cp -r "C:/Users/dhruv/MCP Server 1/src" "C:/Users/dhruv/MCP Server 1/package.json" "C:/Users/dhruv/MCP Server 1/package-lock.json" "C:/Users/dhruv/MCP Server 1/tsconfig.json" mcp_server/
+printf 'api/mcp_server/node_modules/\napi/mcp_server/dist/\n' >> ../.gitignore
+cd mcp_server && npm ci --silent && npm run build --silent && ls dist/server.js
+git -C .. status --short api/mcp_server | grep -iE "token|credential|\.env" || echo "no secrets staged"
+```
+Expected: `dist/server.js` exists; `no secrets staged`.
+
+Add to `api/.env.example`:
+```
+PULSE_DOC_ID=
+PULSE_DRAFT_RECIPIENT=
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+GOOGLE_REFRESH_TOKEN=
+```
+
+- [ ] **Step 2: Write the failing test**
 
 `api/tests/test_executors_link2.py`:
 ```python
@@ -1710,92 +1740,220 @@ import pytest
 
 from app.approvals import executors
 from app.approvals.service import approve, reject
+from app.delivery.mcp_client import McpDeliveryError, call_tool
 from app.models import Action, Explainer, WeeklyRun
+
+CALLS = []
 
 
 @pytest.fixture()
-def run(db_session, tmp_path, monkeypatch):
+def fake_mcp(monkeypatch):
+    CALLS.clear()
+
+    def fake(name, args):
+        CALLS.append((name, args))
+        return {"document_id": args.get("document_id"), "draft_id": "r-1"}
+    monkeypatch.setattr(executors, "call_tool", fake)
     from app.config import get_settings
-    monkeypatch.setattr(get_settings(), "data_outbox_dir", tmp_path / "outbox")
+    s = get_settings()
+    monkeypatch.setattr(s, "pulse_doc_id", "DOC123")
+    monkeypatch.setattr(s, "pulse_draft_recipient", "team@example.com")
+    return CALLS
+
+
+@pytest.fixture()
+def run(db_session):
     r = WeeklyRun(status="awaiting_approval", window_start=date(2026, 9, 22), window_end=date(2026, 11, 17))
     db_session.add(r); db_session.flush()
     ex = Explainer(run_id=r.id, topic="exit_load", title="t", bullets=[{"text": "a", "url": "https://groww.in/a"}],
                    last_checked="2026-11-17", status="draft", evidence={})
-    doc = Action(type="doc_append", target_label="doc", target_ref="D", content="PULSE", source_ref=f"weekly_run:{r.id}")
-    mail = Action(type="email_draft", target_label="mail", target_ref="M", content="PULSE", source_ref=f"weekly_run:{r.id}")
+    doc = Action(type="doc_append", target_label="doc", target_ref="D", content="PULSE BODY",
+                 source_ref=f"weekly_run:{r.id}")
+    mail = Action(type="email_draft", target_label="mail", target_ref="M",
+                  content="Subject: Groww weekly pulse\n\nPULSE BODY", source_ref=f"weekly_run:{r.id}")
     db_session.add_all([ex, doc, mail]); db_session.commit()
     return r, ex, doc, mail
 
 
-def test_doc_approve_executes_only_doc_and_canonicalizes(db_session, run, tmp_path):
+def test_doc_approve_calls_docs_tool_only_and_canonicalizes(db_session, run, fake_mcp):
     r, ex, doc, mail = run
     approve(db_session, doc.id, "agent")
     db_session.expire_all()
+    assert fake_mcp == [("google_docs_append_content", {"document_id": "DOC123", "content": "PULSE BODY",
+                                                         "add_newline_before": True, "add_newline_after": True})]
     assert db_session.get(Action, doc.id).status == "executed"
     assert db_session.get(Action, mail.id).status == "pending"
     assert db_session.get(Explainer, ex.id).status == "canonical"
-    assert len(list((tmp_path / "outbox").iterdir())) == 1
 
 
-def test_email_first_does_not_canonicalize(db_session, run):
+def test_email_approve_creates_gmail_draft_never_sends(db_session, run, fake_mcp):
     r, ex, doc, mail = run
     approve(db_session, mail.id, "agent")
+    db_session.expire_all()
+    assert fake_mcp == [("gmail_create_draft", {"to": ["team@example.com"], "subject": "Groww weekly pulse",
+                                                 "body": "PULSE BODY", "is_html": False})]
+    assert db_session.get(Explainer, ex.id).status == "draft"
+
+
+def test_send_tool_is_denylisted():
+    with pytest.raises(McpDeliveryError):
+        call_tool("gmail_send_email", {"to": ["x@example.com"]})
+
+
+def test_missing_doc_id_fails_action_cleanly(db_session, run, fake_mcp, monkeypatch):
+    from app.config import get_settings
+    monkeypatch.setattr(get_settings(), "pulse_doc_id", "")
+    r, ex, doc, mail = run
+    a = approve(db_session, doc.id, "agent")
+    assert a.status == "failed" and "PULSE_DOC_ID" in a.error and fake_mcp == []
     db_session.expire_all()
     assert db_session.get(Explainer, ex.id).status == "draft"
 
 
-def test_reject_doc_rejects_explainer(db_session, run):
+def test_mcp_failure_redacted_and_not_canonical(db_session, run, monkeypatch):
+    r, ex, doc, mail = run
+
+    def boom(name, args):
+        raise McpDeliveryError("google 401 for ABCDE1234F")
+    monkeypatch.setattr(executors, "call_tool", boom)
+    from app.config import get_settings
+    monkeypatch.setattr(get_settings(), "pulse_doc_id", "DOC123")
+    a = approve(db_session, doc.id, "agent")
+    assert a.status == "failed" and "ABCDE1234F" not in a.error
+    db_session.expire_all()
+    assert db_session.get(Explainer, ex.id).status == "draft"
+
+
+def test_reject_doc_rejects_explainer(db_session, run, fake_mcp):
     r, ex, doc, mail = run
     reject(db_session, doc.id, "agent")
     db_session.expire_all()
     assert db_session.get(Explainer, ex.id).status == "rejected" and db_session.get(Action, mail.id).status == "pending"
+    assert fake_mcp == []
 
 
-def test_second_approve_raises(db_session, run):
+def test_second_approve_raises(db_session, run, fake_mcp):
     r, ex, doc, mail = run
     approve(db_session, doc.id, "agent")
     with pytest.raises(ValueError):
         approve(db_session, doc.id, "agent")
+    assert len(fake_mcp) == 1
 
 
-def test_executor_failure_marks_failed_no_canonical(db_session, run, monkeypatch):
-    r, ex, doc, mail = run
-    def boom(db, a):
-        raise RuntimeError("mcp down for ABCDE1234F")
-    monkeypatch.setitem(executors.EXECUTORS, "doc_append", boom)
-    a = approve(db_session, doc.id, "agent")
-    db_session.expire_all()
-    a = db_session.get(Action, doc.id)
-    assert a.status == "failed" and "ABCDE1234F" not in a.error
-    assert db_session.get(Explainer, ex.id).status == "draft"
-
-
-def test_new_canonical_supersedes_old(db_session, run):
+def test_new_canonical_supersedes_old(db_session, run, fake_mcp):
     r, ex, doc, mail = run
     old = Explainer(topic="exit_load", title="old", bullets=[], last_checked="2026-11-01", status="canonical", evidence={})
     db_session.add(old); db_session.commit()
     approve(db_session, doc.id, "agent")
     db_session.expire_all()
     assert db_session.get(Explainer, old.id).status == "superseded"
+
+
+def test_call_tool_requires_built_server(monkeypatch, tmp_path):
+    from app.config import get_settings
+    monkeypatch.setattr(get_settings(), "mcp_server_dir", tmp_path)   # no dist/server.js
+    with pytest.raises(McpDeliveryError, match="not built"):
+        call_tool("google_docs_append_content", {})
 ```
 
-- [ ] **Step 2: Run to verify failure** → FAIL (`ModuleNotFoundError: app.approvals.executors`).
+- [ ] **Step 3: Run to verify failure** → FAIL (`ModuleNotFoundError: app.delivery`).
 
-- [ ] **Step 3: Implement**
+- [ ] **Step 4: Implement**
+
+Append to `Settings` in `api/app/config.py`:
+```python
+    # Google delivery via MCP Server 1 (stdio)
+    mcp_server_dir: Path = API_ROOT / "mcp_server"
+    node_command: str = "node"
+    google_client_id: str = ""
+    google_client_secret: str = ""
+    google_refresh_token: str = ""
+    pulse_draft_recipient: str = ""
+    mcp_timeout_s: float = 60.0
+```
+
+`api/app/delivery/mcp_client.py`:
+```python
+"""Calls MCP Server 1 (Google Docs / Gmail) over stdio. Only drafts and appends; sending is denylisted."""
+
+from __future__ import annotations
+
+import asyncio
+import json
+import os
+from pathlib import Path
+
+from app.config import get_settings
+
+DENYLIST = {"gmail_send_email"}
+
+
+class McpDeliveryError(RuntimeError):
+    pass
+
+
+def _server_env() -> dict[str, str]:
+    s = get_settings()
+    missing = [k for k, v in (("GOOGLE_CLIENT_ID", s.google_client_id), ("GOOGLE_CLIENT_SECRET", s.google_client_secret),
+                              ("GOOGLE_REFRESH_TOKEN", s.google_refresh_token)) if not v]
+    if missing:
+        raise McpDeliveryError(f"Google credentials not configured: {', '.join(missing)}")
+    env = {"GOOGLE_CLIENT_ID": s.google_client_id, "GOOGLE_CLIENT_SECRET": s.google_client_secret,
+           "GOOGLE_REFRESH_TOKEN": s.google_refresh_token, "DOTENV_CONFIG_QUIET": "true",
+           "PATH": os.environ.get("PATH", "")}
+    if os.name == "nt":
+        env["SYSTEMROOT"] = os.environ.get("SYSTEMROOT", r"C:\Windows")
+    return env
+
+
+async def _call(name: str, args: dict) -> dict:
+    from mcp import ClientSession, StdioServerParameters
+    from mcp.client.stdio import stdio_client
+    s = get_settings()
+    server = Path(s.mcp_server_dir) / "dist" / "server.js"
+    params = StdioServerParameters(command=s.node_command, args=[str(server)], env=_server_env(),
+                                   cwd=str(s.mcp_server_dir))
+    async with stdio_client(params) as (read, write):
+        async with ClientSession(read, write) as session:
+            await session.initialize()
+            result = await session.call_tool(name, args)
+    text = "".join(getattr(c, "text", "") for c in (result.content or []))
+    if getattr(result, "isError", False):
+        raise McpDeliveryError(f"{name} failed: {text[:300]}")
+    try:
+        return json.loads(text) if text else {}
+    except ValueError:
+        return {"raw": text[:500]}
+
+
+def call_tool(name: str, args: dict) -> dict:
+    if name in DENYLIST:
+        raise McpDeliveryError(f"{name} is not allowed (drafts only)")
+    s = get_settings()
+    if not (Path(s.mcp_server_dir) / "dist" / "server.js").exists():
+        raise McpDeliveryError("MCP server not built: run npm ci && npm run build in api/mcp_server")
+    try:
+        return asyncio.run(asyncio.wait_for(_call(name, args), timeout=s.mcp_timeout_s))
+    except McpDeliveryError:
+        raise
+    except Exception as exc:  # noqa: BLE001
+        raise McpDeliveryError(f"{name} failed: {type(exc).__name__}: {exc}") from exc
+```
+`call_tool` uses `asyncio.run`, so call it only from sync code. The console approve endpoints are plain `def` (FastAPI worker thread), so they qualify.
 
 `api/app/approvals/executors.py`:
 ```python
-"""Per-action-type executors. Plan 3 registers MCP-backed doc_append / email_draft over these outbox ones."""
+"""Per-action-type executors. Only these functions write outside the database."""
 
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from pathlib import Path
 from typing import Callable
 
 from sqlalchemy.orm import Session
 
 from app.config import get_settings
+from app.delivery.mcp_client import McpDeliveryError, call_tool
 from app.models import Action, Draft, Ticket
 
 Executor = Callable[[Session, Action], str]
@@ -1813,20 +1971,34 @@ def _reply_publish(db: Session, a: Action) -> str:
     return f"ticket:{t.code}"
 
 
-def _outbox(db: Session, a: Action) -> str:
-    out = Path(get_settings().data_outbox_dir)
-    out.mkdir(parents=True, exist_ok=True)
-    p = out / f"{a.id}-{a.type}.md"
-    p.write_text(f"<!-- target: {a.target_label} -->\n{a.content}", encoding="utf-8")
-    return str(p)
+def _doc_append(db: Session, a: Action) -> str:
+    doc_id = get_settings().pulse_doc_id
+    if not doc_id:
+        raise McpDeliveryError("PULSE_DOC_ID not set")
+    call_tool("google_docs_append_content", {"document_id": doc_id, "content": a.content,
+                                             "add_newline_before": True, "add_newline_after": True})
+    return f"gdoc:{doc_id}"
+
+
+def _email_draft(db: Session, a: Action) -> str:
+    to = get_settings().pulse_draft_recipient
+    if not to:
+        raise McpDeliveryError("PULSE_DRAFT_RECIPIENT not set")
+    first, _, rest = (a.content or "").partition("\n\n")
+    if first.startswith("Subject:"):
+        subject, body = first.removeprefix("Subject:").strip(), rest
+    else:
+        subject, body = "Groww weekly pulse", a.content or ""
+    res = call_tool("gmail_create_draft", {"to": [to], "subject": subject, "body": body, "is_html": False})
+    return f"gmail_draft:{res.get('draft_id') or res.get('id') or 'created'}"
 
 
 register("reply_publish", _reply_publish)
-register("doc_append", _outbox)
-register("email_draft", _outbox)
+register("doc_append", _doc_append)
+register("email_draft", _email_draft)
 ```
 
-Rewrite `approve` and `reject` in `api/app/approvals/service.py` (keep `_claim`, `_get`, `audit`, `edit_draft` as they are):
+In `api/app/approvals/service.py` add `Explainer` to the models import and replace `approve`/`reject` with:
 ```python
 def mark_canonical(db: Session, explainer_id: int) -> Explainer:
     ex = db.get(Explainer, explainer_id)
@@ -1884,11 +2056,31 @@ def reject(db: Session, action_id: int, actor: str) -> Action:
     db.commit()
     return a
 ```
-Add `Explainer` to the models import in service.py. The `reply_publish` path previously audited `approve` then `execute` with detail `published to ticket {code}`; the new detail `ticket:{code}` keeps the same 2 audit rows. Plan 1's `test_approve_one_does_not_touch_other` still expects actions/tickets/2 audits, which this preserves.
+The `reply_publish` path keeps exactly 2 audit rows (approve + execute), so Plan 1's isolation test still holds.
 
-- [ ] **Step 4: Run** → `pytest tests/test_executors_link2.py tests/test_approvals.py tests/test_review_fixes.py tests/test_tickets_api.py -q` → PASS.
+- [ ] **Step 5: Run** → `pytest tests/test_executors_link2.py tests/test_approvals.py tests/test_review_fixes.py tests/test_tickets_api.py -q` → PASS.
 
-- [ ] **Step 5: Commit** — `feat(approvals): executor registry, outbox delivery, explainer canonical on doc approve (link 2)` (+ Co-Authored-By).
+- [ ] **Step 6: Local stdio handshake (no Google write)**
+
+Put the credentials in `api/.env` without printing them: `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` from `C:/Users/dhruv/MCP Server 1/.env`, `GOOGLE_REFRESH_TOKEN` from its `token.json`, and `PULSE_DOC_ID` and `PULSE_DRAFT_RECIPIENT` from `C:/Users/dhruv/Groww-and-MCP/.env`. Then list the tools over stdio:
+```bash
+cd api && .venv/Scripts/python -c "
+import asyncio
+from mcp import ClientSession, StdioServerParameters
+from mcp.client.stdio import stdio_client
+from app.delivery.mcp_client import _server_env
+from app.config import get_settings
+s=get_settings()
+async def go():
+    p=StdioServerParameters(command='node', args=[str(s.mcp_server_dir/'dist'/'server.js')], env=_server_env(), cwd=str(s.mcp_server_dir))
+    async with stdio_client(p) as (r,w):
+        async with ClientSession(r,w) as c:
+            await c.initialize(); print(sorted(t.name for t in (await c.list_tools()).tools))
+asyncio.run(go())"
+```
+Expected: `['gmail_create_draft', 'gmail_send_email', 'google_docs_append_content']`.
+
+- [ ] **Step 7: Commit** — `feat(delivery): approved pulse appends to Google Doc and creates Gmail draft via MCP; explainer canonical on doc approve (link 2)` (+ Co-Authored-By).
 
 ---
 
@@ -2096,7 +2288,7 @@ RAW = json.loads((Path(__file__).parent / "fixtures" / "reviews.json").read_text
 def ran(client, db_session, tmp_path, monkeypatch):
     from app.config import get_settings
     s = get_settings()
-    for k in ("data_raw_dir", "data_processed_dir", "data_index_dir", "data_outbox_dir"):
+    for k in ("data_raw_dir", "data_processed_dir", "data_index_dir"):
         monkeypatch.setattr(s, k, tmp_path / k)
     from app.corpus.refresh import refresh_corpus
     refresh_corpus(db_session, fetch=False, raw_dir=Path(__file__).parent / "fixtures" / "raw")
@@ -2115,7 +2307,11 @@ def test_latest_shows_traced_themes_and_pending_actions(client, ran):
     assert all(a["content"] and a["target_label"] for a in body["actions"])
 
 
-def test_approve_doc_makes_explainer_canonical_and_listed(client, ran):
+def test_approve_doc_makes_explainer_canonical_and_listed(client, ran, monkeypatch):
+    from app.approvals import executors
+    from app.config import get_settings
+    monkeypatch.setattr(executors, "call_tool", lambda name, args: {"ok": True})   # never touch real Google in tests
+    monkeypatch.setattr(get_settings(), "pulse_doc_id", "DOC123")
     acts = client.get("/api/console/actions?status=pending", headers=H).json()
     doc = next(a for a in acts if a["type"] == "doc_append")
     assert client.post(f"/api/console/actions/{doc['id']}/approve", headers=H).status_code == 200
@@ -2341,7 +2537,7 @@ RAW = json.loads((FIX / "reviews.json").read_text())
 def run(db_session, tmp_path, monkeypatch):
     from app.config import get_settings
     s = get_settings()
-    for k in ("data_raw_dir", "data_processed_dir", "data_index_dir", "data_outbox_dir"):
+    for k in ("data_raw_dir", "data_processed_dir", "data_index_dir"):
         monkeypatch.setattr(s, k, tmp_path / k)
     from app.corpus.refresh import refresh_corpus
     refresh_corpus(db_session, fetch=False, raw_dir=FIX / "raw")
@@ -2591,7 +2787,7 @@ Expected: status `awaiting_approval`, ≤5 themes with ids, a pulse ≤250 words
 
 - [ ] **Step 3: Exercise link 2 live**
 
-Start the server (`uvicorn --factory app.main:create_app --port 8000`), approve the run's `doc_append` via `POST /api/console/actions/{id}/approve`, then `POST /api/ask {"text":"What is <topic>?"}` for the explainer's topic. Expected: the queue item's draft has `reused_explainer_id` set and cites the explainer's first bullet URL. Confirm the outbox file exists, the `email_draft` action is still `pending`, and `grep -cE "ABCDE1234F|9876543210"` on the server log is 0.
+Start the server (`uvicorn --factory app.main:create_app --port 8000`). **At the checkpoint (Step 5) the user approves** the run's `doc_append` and `email_draft` (`POST /api/console/actions/{id}/approve`), then checks their Google Doc and Gmail Drafts. After that, then `POST /api/ask {"text":"What is <topic>?"}` for the explainer's topic. Expected: the queue item's draft has `reused_explainer_id` set and cites the explainer's first bullet URL. Confirm the Doc shows the new section and Gmail has the draft (not sent), and `grep -cE "ABCDE1234F|9876543210"` on the server log is 0.
 
 - [ ] **Step 4: Generate the verification page**
 
@@ -2613,7 +2809,7 @@ Expected: `0 flag(s)`. Any flag gets a failing test plus a fix before continuing
   - Link 1 → Task 5 (keys), Task 7 (pulse section), Task 8 (wired)
   - Link 2 → Task 9 (canonicalize on executed doc_append), Task 10 (reuse)
   - §4 fee pages → Task 2
-  - §7 approvals for doc/email (gate, independence, failure without silent retry) → Tasks 8, 9. MCP execution is Plan 3; the outbox is the interim executor.
+  - §7 approvals for doc/email (gate, independence, failure without silent retry) and real MCP delivery to Google Docs/Gmail → Tasks 8, 9.
   - §9 feasibility hooks (traced themes, windows, caps, run without manual steps) → Tasks 4, 7, 8, 11
   - Scheduler → Task 11
   - The Pattern agent's themes → Task 11 provider

@@ -3,7 +3,7 @@
 - **Date:** 2026-11-17
 - **Due:** within one week (submission ~2026-11-24)
 - **Product:** Groww — HDFC mutual fund schemes (same as Milestones 1–3)
-- **Deploy target:** Railway (new account)
+- **Deploy target:** backend (api + Postgres) on Railway (new account); frontend (web) on Vercel
 
 ## 1. Goal and success criteria
 
@@ -47,7 +47,7 @@ Code is **ported** (copied and adapted) into the new repo, not imported from old
 
 ## 3. Architecture
 
-Two Railway services plus Postgres.
+Backend service + Postgres on Railway; Next.js frontend on Vercel.
 
 ```
 web (Next.js)
@@ -186,7 +186,7 @@ Runnable via CLI (`python -m app.evals run [suite]`) and a console button. Each 
 ## 10. Deployment
 
 - **api:** Dockerfile — Python 3.12 + Node 22 (for MCP subprocess); builds vendored MCP server; fastembed model downloaded at build time.
-- **web:** Next.js on Railway.
+- **web:** Next.js on **Vercel** (env `NEXT_PUBLIC_API_URL` = Railway api URL; api CORS allows the Vercel domain).
 - **Postgres:** Railway plugin.
 - **Secrets** only as Railway variables: `GROQ_API_KEY`, `GOOGLE_API_KEY`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REFRESH_TOKEN`, `PULSE_DOC_ID`, `PULSE_DRAFT_RECIPIENT`, `CONSOLE_PASSWORD`, `DATABASE_URL`.
 - **Health:** `/health` checks DB, Chroma index loaded, MCP handshake.
