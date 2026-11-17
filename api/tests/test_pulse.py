@@ -75,3 +75,11 @@ def test_long_inputs_are_trimmed_to_cap():
     text = compose_pulse(week_end=W1, window_start=W0, window_end=W1, review_count=3, themes=themes, quotes=quotes,
                          repeated=rq, fee=FeeConfusion("exit_load"), actions=actions)
     assert validate_pulse(text) == []
+
+
+def test_fee_counts_are_pluralised_correctly():
+    # Live run 4 printed "67 reviews and 1 questions".
+    one = FeeConfusion("brokerage", [rid(3)], 1)
+    text = _pulse(_themes(), fee=one)
+    assert "1 reviews" not in text and "1 questions" not in text
+    assert "Brokerage & charges: 1 review and 1 question → explainer below." in text

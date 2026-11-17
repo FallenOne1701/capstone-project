@@ -64,6 +64,10 @@ async def action_ideas(themes, quotes) -> tuple[list[str], int]:
     return (acts if ok else defaults), 1
 
 
+def _n(count: int, noun: str) -> str:
+    return f"{count} {noun}{'' if count == 1 else 's'}"
+
+
 def _render(*, week_end, window_start, window_end, review_count, themes, quotes, repeated, fee, actions,
             threshold) -> str:
     themed = sum(t.count for t in themes)
@@ -71,7 +75,7 @@ def _render(*, week_end, window_start, window_end, review_count, themes, quotes,
          f"{review_count} Play Store reviews, {window_start.isoformat()} to {window_end.isoformat()}; "
          f"{themed} matched a theme.", "",
          "## Top themes"]
-    L += [f"{t.rank}. {t.label} — {t.count} reviews ({t.recent_count} in last 7 days)" for t in themes[:3]]
+    L += [f"{t.rank}. {t.label} — {_n(t.count, 'review')} ({t.recent_count} in last 7 days)" for t in themes[:3]]
     if len(themes) < 3:
         L.append(f"(Only {len(themes)} theme(s) had reviews in this window.)")
     L += ["", "## What users said"] + [f'- "{q.text}" ({q.review_id})' for q in quotes]
@@ -83,7 +87,8 @@ def _render(*, week_end, window_start, window_end, review_count, themes, quotes,
          [f"- No question reached {threshold} asks in the last 7 days."]
     ev = fee.evidence
     L += ["", "## Fee confusion",
-          f"- {TOPIC_LABELS[fee.topic]}: {ev['reviews']} reviews and {ev['tickets']} questions → explainer below.",
+          f"- {TOPIC_LABELS[fee.topic]}: {_n(ev['reviews'], 'review')} and {_n(ev['tickets'], 'question')}"
+          " → explainer below.",
           "", "## Action ideas"] + [f"{i}. {a}" for i, a in enumerate(actions[:3], 1)]
     return "\n".join(L)
 

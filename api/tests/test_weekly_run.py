@@ -64,3 +64,11 @@ def test_no_pii_in_run_outputs(corpus):
     blob = r.pulse_text + " ".join(a.content for a in corpus.query(Action))
     for raw in ("Real Person", "9876543210", "ABCDE1234F", "ravi.k@example.com"):
         assert raw not in blob
+
+
+def test_doc_action_label_does_not_claim_a_doc_title(corpus):
+    # The real Doc is titled differently from the hard-coded name the label used to show;
+    # an approver must not be told a title we never read.
+    r = run(corpus)
+    doc = corpus.query(Action).filter_by(source_ref=f"weekly_run:{r.id}", type="doc_append").one()
+    assert "'" not in doc.target_label and doc.target_label.startswith("Append to the weekly pulse Google Doc (")

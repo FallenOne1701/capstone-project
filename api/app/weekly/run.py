@@ -19,7 +19,6 @@ from app.weekly.reviews import ingest_reviews, play_store_fetcher
 from app.weekly.themes import assign_themes, build_themes
 
 log = logging.getLogger(__name__)
-DOC_TITLE = "Groww Weekly Pulse"
 
 
 def _aware(dt: datetime) -> datetime:
@@ -62,7 +61,7 @@ async def run_weekly(db: Session, *, now: datetime, fetcher=play_store_fetcher) 
                          last_checked=draft.last_checked, status="draft", evidence=fee.evidence))
         body = pulse + "\n\n" + render_explainer(draft)
         doc = Action(type="doc_append", target_ref=s.pulse_doc_id or "PULSE_DOC_ID",
-                     target_label=f"Append to Google Doc '{DOC_TITLE}' ({s.pulse_doc_id or 'PULSE_DOC_ID not set'})",
+                     target_label=f"Append to the weekly pulse Google Doc ({s.pulse_doc_id or 'PULSE_DOC_ID not set'})",
                      content=body, source_ref=f"weekly_run:{run.id}")
         mail = Action(type="email_draft", target_ref="PULSE_DRAFT_RECIPIENT",
                       target_label="Gmail draft to the product team (PULSE_DRAFT_RECIPIENT)",
