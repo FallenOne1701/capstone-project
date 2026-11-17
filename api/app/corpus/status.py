@@ -1,2 +1,7 @@
 def corpus_status() -> dict:
-    return {"vectors": 0, "ready": False}
+    try:
+        from app.corpus.indexer import collection_count
+        n = collection_count()
+    except Exception:  # noqa: BLE001
+        n = 0
+    return {"vectors": n, "ready": n > 0}
