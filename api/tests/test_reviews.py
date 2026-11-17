@@ -29,8 +29,9 @@ def test_review_ids_never_look_like_pii():
 
 def test_ingest_window_and_no_pii(db_session):
     res = ingest_reviews(db_session, today=date(2026, 11, 17), fetcher=fake_fetcher)
-    assert res.window_start == date(2026, 9, 22) and res.window_end == date(2026, 11, 17)
     rows = db_session.query(Review).all()
+    assert res.window_start == min(r.date for r in rows) >= date(2026, 9, 22)   # actual coverage
+    assert res.window_end == date(2026, 11, 17)
     assert 0 < len(rows) == res.stored <= 40
     assert all(res.window_start <= r.date <= res.window_end for r in rows)
     blob = " ".join(f"{r.id} {r.text_redacted} {r.app_version}" for r in rows)

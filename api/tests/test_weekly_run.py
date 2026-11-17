@@ -34,6 +34,7 @@ def test_full_run_without_manual_steps(corpus):
     assert r.status == "awaiting_approval", r.error
     themes = corpus.query(Theme).filter_by(run_id=r.id).order_by(Theme.rank).all()
     assert 1 <= len(themes) <= 5 and all(t.review_ids and t.window_start and t.window_end for t in themes)
+    assert all(t.window_start == r.window_start for t in themes)   # run states the window it covers
     assert word_count(r.pulse_text) <= 250
     ex = corpus.query(Explainer).filter_by(run_id=r.id).one()
     assert ex.status == "draft" and 1 <= len(ex.bullets) <= 6

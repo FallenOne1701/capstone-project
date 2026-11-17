@@ -7,7 +7,7 @@ from datetime import date, timedelta
 
 from app.llm.client import complete_json, llm_enabled
 from app.models import Review
-from app.weekly.vocab import THEME_VOCAB, confident_theme_id, heuristic_theme_id
+from app.weekly.vocab import THEME_VOCAB, confident_theme_id, heuristic_theme_id, keyword_scores
 
 _ORDER = list(THEME_VOCAB)
 _SYSTEM = (
@@ -52,7 +52,10 @@ async def assign_themes(reviews: list[Review], *, max_llm: int = 48) -> tuple[di
                 if item.get("id") in ids and item.get("theme_id") in THEME_VOCAB:
                     out[item["id"]] = item["theme_id"]
     for r in ambiguous:
-        out.setdefault(r.id, heuristic_theme_id(r.text_redacted))
+        # Ties between themes fall back to the heuristic; reviews with no theme signal at all stay unthemed
+        # (e.g. "good app") instead of inflating a complaint theme.
+        if r.id not in out and max(keyword_scores(r.text_redacted).values()) > 0:
+            out[r.id] = heuristic_theme_id(r.text_redacted)
     return out, calls
 
 

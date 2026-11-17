@@ -35,6 +35,7 @@ async def run_weekly(db: Session, *, now: datetime, fetcher=play_store_fetcher) 
     run_id = run.id
     try:
         ing = ingest_reviews(db, today=today, fetcher=fetcher)
+        run.window_start = ing.window_start   # the window actually covered, not the nominal 8 weeks
         reviews = db.query(Review).filter(Review.date >= ing.window_start, Review.date <= ing.window_end).all()
         run.review_count = len(reviews)
         assign, calls = await assign_themes(reviews)

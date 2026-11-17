@@ -69,12 +69,14 @@ def ingest_reviews(db: Session, *, today: date, fetcher: RawFetcher = play_store
     raws = fetcher(s.play_package, s.reviews_weeks, s.reviews_max)
     if not raws:
         raise RuntimeError("Play Store returned 0 reviews")
-    stored = 0
+    dates: list[date] = []
     for raw in raws:
         row = scrub(raw)
         if row is None or not (start <= row["date"] <= today):
             continue
         db.merge(Review(**row))
-        stored += 1
+        dates.append(row["date"])
     db.commit()
-    return IngestResult(fetched=len(raws), stored=stored, window_start=start, window_end=today)
+    # State the window actually covered: when the review cap is hit, that's much shorter than reviews_weeks.
+    covered = max(start, min(dates)) if dates else start
+    return IngestResult(fetched=len(raws), stored=len(dates), window_start=covered, window_end=today)

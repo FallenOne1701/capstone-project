@@ -11,7 +11,7 @@ from app.guard.pii import find_pii
 from app.guard.scope import check_output, detect_advice, detect_performance, word_count
 from app.llm.client import complete_json, llm_enabled
 from app.weekly.fee_topics import TOPIC_LABELS, FeeConfusion
-from app.weekly.vocab import DEFAULT_ACTIONS
+from app.weekly.vocab import DEFAULT_ACTIONS, keyword_scores
 
 
 @dataclass
@@ -35,8 +35,10 @@ def select_quotes(themes, reviews_by_id, *, max_words: int = 24) -> list[Quote]:
     for t in themes[:3]:
         cands = [reviews_by_id[i] for i in t.review_ids if i in reviews_by_id and _safe(reviews_by_id[i].text_redacted)]
         low = [r for r in cands if r.rating <= 2] or cands
+        # Best evidence for the theme: most theme keywords, readable length, then most recent.
+        low = [r for r in low if 6 <= len(r.text_redacted.split()) <= 80] or low
         if low:
-            r = max(low, key=lambda r: (r.date, r.id))
+            r = max(low, key=lambda r: (keyword_scores(r.text_redacted)[t.theme_id], r.date, r.id))
             out.append(Quote(r.id, t.theme_id, _cut(r.text_redacted, max_words)))
     return out
 
@@ -64,8 +66,10 @@ async def action_ideas(themes, quotes) -> tuple[list[str], int]:
 
 def _render(*, week_end, window_start, window_end, review_count, themes, quotes, repeated, fee, actions,
             threshold) -> str:
+    themed = sum(t.count for t in themes)
     L = [f"# Groww Weekly Review Pulse — week ending {week_end.isoformat()}",
-         f"{review_count} Play Store reviews, {window_start.isoformat()} to {window_end.isoformat()}.", "",
+         f"{review_count} Play Store reviews, {window_start.isoformat()} to {window_end.isoformat()}; "
+         f"{themed} matched a theme.", "",
          "## Top themes"]
     L += [f"{t.rank}. {t.label} — {t.count} reviews ({t.recent_count} in last 7 days)" for t in themes[:3]]
     if len(themes) < 3:
