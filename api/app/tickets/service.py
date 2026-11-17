@@ -11,7 +11,10 @@ from sqlalchemy.orm import Session
 from app.approvals.service import audit
 from app.config import get_settings, load_schemes
 from app.corpus.refresh import last_checked_for
+from app.desk.contracts import FactsResult, OrchestratorOutput, RoutingNote
 from app.desk.orchestrator import run_desk
+from app.desk.reviewer import review_draft
+from app.link.canonical import find_canonical, reuse_reply
 from app.guard.pii import redact
 from app.intent.classifier import IntentResult, classify_intent
 from app.link.question_keys import question_key
@@ -73,14 +76,31 @@ async def process_ticket(db: Session, ticket_id: int, *, retriever, themes_provi
     t = db.get(Ticket, ticket_id)
     try:
         intent = await classify_intent(t.question_redacted)
-        res = await run_desk(t.question_redacted, list(t.pii_types), intent, retriever=retriever,
-                             themes=themes_provider(db), last_checked=lambda u: last_checked_for(db, u),
-                             today=date.today())
-        d = Draft(ticket_id=t.id, reply=res.draft.reply, citation=res.draft.citation,
-                  last_checked=res.draft.last_checked, disposition=res.draft.disposition,
-                  routing_team=res.draft.routing_note.team, routing_priority=res.draft.routing_note.priority,
-                  routing_why=res.draft.routing_note.why, review_status=res.review.status,
-                  review_failures=[f.model_dump() for f in res.review.failures], searched=res.facts.searched)
+        ex = find_canonical(db, intent, t.question_redacted)
+        reuse = reuse_reply(ex, intent) if ex is not None else None
+        if reuse is not None:
+            reply, bullet = reuse
+            draft_out = OrchestratorOutput(
+                reply=reply, citation=bullet["url"], last_checked=ex.last_checked, disposition="reply",
+                disagreement=False, routing_note=RoutingNote(team="Fees and mutual fund ops", priority="P3",
+                                                             why=f"Reused canonical explainer #{ex.id} ({ex.topic})."))
+            facts = FactsResult(status="covered",
+                                scheme_id=intent.scheme_ids[0] if len(intent.scheme_ids) == 1 else "reference",
+                                fact=bullet["text"], citation=bullet["url"], last_checked=ex.last_checked,
+                                searched=[f"explainer:{ex.id}"])
+            review = review_draft(draft_out, facts=facts, round=1)
+            searched, reused_id = facts.searched, ex.id
+        else:
+            res = await run_desk(t.question_redacted, list(t.pii_types), intent, retriever=retriever,
+                                 themes=themes_provider(db), last_checked=lambda u: last_checked_for(db, u),
+                                 today=date.today())
+            draft_out, review, searched, reused_id = res.draft, res.review, res.facts.searched, None
+        d = Draft(ticket_id=t.id, reply=draft_out.reply, citation=draft_out.citation,
+                  last_checked=draft_out.last_checked, disposition=draft_out.disposition,
+                  routing_team=draft_out.routing_note.team, routing_priority=draft_out.routing_note.priority,
+                  routing_why=draft_out.routing_note.why, review_status=review.status,
+                  review_failures=[f.model_dump() for f in review.failures], searched=searched,
+                  reused_explainer_id=reused_id)
         db.add(d)
         db.flush()
         a = Action(type="reply_publish", target_label=f"Reply to ticket {t.code}", target_ref=t.code, draft_id=d.id,
