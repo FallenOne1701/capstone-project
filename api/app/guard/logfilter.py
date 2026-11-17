@@ -4,6 +4,15 @@ import logging
 
 from app.guard.pii import redact
 
+_FMT = logging.Formatter()
+
+
+def _redact_arg(a):
+    # Numbers stay numbers so "%d" formats still work; everything else (incl. exceptions) is stringified + redacted.
+    if isinstance(a, (int, float)) and not isinstance(a, bool):
+        return a
+    return redact(a if isinstance(a, str) else str(a)).text
+
 
 class RedactingFilter(logging.Filter):
     def filter(self, record: logging.LogRecord) -> bool:
@@ -11,9 +20,14 @@ class RedactingFilter(logging.Filter):
         if isinstance(record.msg, str):
             record.msg = redact(record.msg).text
         if isinstance(record.args, tuple):
-            record.args = tuple(redact(a).text if isinstance(a, str) else a for a in record.args)
+            record.args = tuple(_redact_arg(a) for a in record.args)
         elif isinstance(record.args, dict):
-            record.args = {k: redact(v).text if isinstance(v, str) else v for k, v in record.args.items()}
+            record.args = {k: _redact_arg(v) for k, v in record.args.items()}
+        # Tracebacks: Formatter.format() reuses record.exc_text when set, so pre-render it redacted.
+        if record.exc_info and not record.exc_text:
+            record.exc_text = redact(_FMT.formatException(record.exc_info)).text
+        if record.stack_info:
+            record.stack_info = redact(record.stack_info).text
         return True
 
 

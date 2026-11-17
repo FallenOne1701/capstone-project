@@ -25,6 +25,8 @@ def _citation_failures(d: OrchestratorOutput, facts: FactsResult | None) -> list
     if d.disposition in COVERED:
         if not d.citation:
             out.append(ReviewerFailure(check="citation", detail="covered draft missing citation"))
+        elif d.citation not in urls:
+            out.append(ReviewerFailure(check="citation", detail="covered reply text must contain its citation link"))
         if facts is not None and facts.status == "covered" and d.citation and d.citation != facts.citation:
             out.append(ReviewerFailure(check="citation", detail="citation does not match Facts source"))
         if urls and d.citation and any(u != d.citation for u in urls):

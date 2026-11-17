@@ -135,7 +135,6 @@ _FACT_PHRASES: tuple[tuple[str, tuple[str, ...]], ...] = (
             "minimum investment",
             "min investment",
             "sip amount",
-            "sip",
         ),
     ),
     (
@@ -269,7 +268,8 @@ def detect_fact_key(query: str) -> str | None:
     normalized = _normalize(query)
     for fact_key, phrases in _FACT_PHRASES:
         for phrase in phrases:
-            if _normalize(phrase) in normalized:
+            # Whole words only: "ter" must not match "riskometer", "after" or "short term".
+            if re.search(r"(?<![a-z0-9])" + re.escape(_normalize(phrase)) + r"(?![a-z0-9])", normalized):
                 return fact_key
     return None
 

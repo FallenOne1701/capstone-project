@@ -42,7 +42,9 @@ _FEE = _rx(r"exit[\s-]?load", r"expense ratio", r"ter", r"charges?", r"fees?", r
 _HOWTO = _rx(r"how (?:do|to|can|long|does)", r"kaise", r"steps?", r"process", r"procedure", r"redeem", r"withdraw\w*",
              r"start (?:a |an )?sip", r"stop (?:my |a )?sip", r"cancel (?:my |a )?sip", r"kyc", r"nominee", r"statement")
 _HOWTO_TXN = _rx(r"how (?:do|to|can|should) (?:i |we |one )?(?:buy|sell|redeem|invest|purchase|switch)",
-                 r"(?:buy|sell|redeem|invest) kaise")
+                 r"(?:buy|sell|redeem|invest) kaise",
+                 r"(?:process|procedure|steps?|way) (?:to|for) (?:buy|sell|redeem|invest|purchase|switch)\w*",
+                 r"can i (?:buy|sell|redeem|switch|withdraw|purchase)")
 _FACT_KEYS_FEE = {"exit_load", "expense_ratio"}
 _HINGLISH = _rx(r"kya", r"hai", r"kaise", r"kitna", r"mera", r"mujhe", r"nahi", r"nhi", r"karu", r"kare", r"paisa", r"ka", r"ki", r"ke", r"chahiye")
 _DEVANAGARI = re.compile(r"[ऀ-ॿ]")

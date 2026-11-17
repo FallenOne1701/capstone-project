@@ -25,7 +25,14 @@ _ADVICE_PHRASES = re.compile(
 )
 _ADVICE_VERBS = re.compile(r"(?i)\b(buy|sell|hold|switch)\b")
 _PERF_WORDS = re.compile(r"(?i)\b(cagr|xirr|annuali[sz]ed|performance|outperform\w*|underperform\w*)\b")
-_RETURN_WORD = re.compile(r"(?i)\breturns?\b")
+# "returns" is a claim only with a figure or a claim word nearby; official objectives say
+# "seeks to generate reasonable returns", which is allowed.
+_RETURN_WORD = re.compile(
+    r"(?i)(?:\b(?:expected|guaranteed|assured|high|higher|highest|best|good|great|strong|past|last|annual|"
+    r"annuali[sz]ed|yearly|monthly|average|gave|delivered|earned|kitna)\b(?:\W+\w+){0,3}?\W+returns?\b)|"
+    r"(?:\breturns?\b(?:\W+\w+){0,3}?\W+(?:of\s+)?\d)|"
+    r"(?:\breturns?\b(?:\W+\w+){0,2}?\W+(?:are|were|is|was)\s+(?:high|higher|good|great|strong|guaranteed|assured))"
+)
 _TRI = re.compile(r"(?i)\btotal return index\b|\bTRI\b")
 # "Growth" in plan names ("Direct Growth", "Plan Growth", "Growth option") is not a performance claim.
 _PLAN_GROWTH = re.compile(r"(?i)\b(?:direct|regular|plan)\s+growth\b|\bgrowth\s+(?:option|plan)\b")

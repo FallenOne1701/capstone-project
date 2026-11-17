@@ -17,9 +17,12 @@ class Redaction:
 _RULES: list[tuple[str, re.Pattern[str], str]] = [
     ("EMAIL", re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b"), "[EMAIL]"),
     ("UPI", re.compile(r"\b[A-Za-z0-9._-]{2,}@[A-Za-z]{2,}\b"), "[UPI]"),
-    # compact, grouped ("abcde 1234 f") or fully spaced ("A B C D E 1 2 3 4 F") — never partial spacing,
-    # which would match ordinary text such as "SIP is 1000 a month".
-    ("PAN", re.compile(r"(?i)\b(?:[a-z]{5}\d{4}[a-z]|[a-z]{5}[\s-]\d{4}[\s-][a-z]|(?:[a-z][\s-]){5}(?:\d[\s-]){4}[a-z])\b"), "[PAN]"),
+    # Letters: compact ("ABCDE"), fully spaced ("A B C D E") or 4+1 ("abcd e"); digits compact or fully
+    # spaced; optional separator between groups. Arbitrary per-letter spacing is NOT allowed — it would
+    # match ordinary text such as "SIP is 1000 a month" ("sip is" = 5 letters).
+    ("PAN", re.compile(
+        r"(?i)\b(?:[a-z]{5}|(?:[a-z][\s-]){4}[a-z]|[a-z]{4}[\s-][a-z])[\s-]?(?:\d{4}|(?:\d[\s-]){3}\d)[\s-]?[a-z]\b"
+    ), "[PAN]"),
     ("IFSC", re.compile(r"(?i)\b[a-z]{4}0[a-z0-9]{6}\b"), "[IFSC]"),
     ("OTP", re.compile(r"(?i)\b(?:otp|one[\s-]?time[\s-]?password)\s*(?:is|:|-)?\s*(?:\d" + _S + r"){3,7}\d\b"), "[OTP]"),
     ("CARD", re.compile(r"\b(?:\d" + _S + r"){15}\d\b"), "[CARD]"),
