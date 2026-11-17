@@ -47,4 +47,6 @@ def create_app(*, init_corpus: bool = True) -> FastAPI:
 
     if init_corpus:
         threading.Thread(target=_bootstrap_corpus, daemon=True).start()
+        from app.scheduler import start_scheduler
+        app.state.scheduler = start_scheduler()
     return app
