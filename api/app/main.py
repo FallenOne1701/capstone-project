@@ -8,6 +8,8 @@ from app.db import get_db, init_db
 
 
 def create_app(*, init_corpus: bool = True) -> FastAPI:
+    from app.guard.logfilter import install_log_redaction
+    install_log_redaction()
     app = FastAPI(title="Groww Support Desk API")
     init_db()
 
