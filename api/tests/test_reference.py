@@ -46,3 +46,18 @@ def test_fetch_failure_marks_stale_keeps_text(db_session, refs, monkeypatch):
     res = ref.refresh_references(db_session, fetch=True)
     assert res.stale == 4
     assert ref.reference_sentences("exit_load")
+
+
+def test_questions_and_page_chrome_are_not_fact_sentences(db_session, tmp_path, monkeypatch):
+    # Live brokerage page: trafilatura glues the help header onto the page's title question.
+    from app.config import get_settings
+    monkeypatch.setattr(get_settings(), "data_processed_dir", tmp_path / "processed")
+    doc = ref.ReferenceDoc(topic="brokerage", url="https://groww.in/help/x", title="t", fetched_at="2026-11-17",
+                           text="Customer Support Help and Support En हि What fees does Groww charge? "
+                                "Groww charges a brokerage fee for executing your trades. Is it free for you? "
+                                "The minimum charge is ₹5 per order.")
+    import json
+    from dataclasses import asdict
+    (ref._dir() / "brokerage.json").write_text(json.dumps(asdict(doc), ensure_ascii=False), encoding="utf-8")
+    assert ref.reference_sentences("brokerage") == [
+        "Groww charges a brokerage fee for executing your trades.", "The minimum charge is ₹5 per order."]

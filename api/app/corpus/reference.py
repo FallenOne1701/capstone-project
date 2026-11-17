@@ -100,7 +100,8 @@ def reference_sentences(topic: str, *, max_words: int = 45) -> list[str]:
     out: list[str] = []
     for s in _SENT.split(doc.text):
         s = s.strip()
-        if len(s.split()) < 5 or detect_advice(s) or detect_performance(s) or find_pii(s):
+        # Questions are headings (and carry page chrome glued on by extraction), never facts.
+        if len(s.split()) < 5 or s.endswith("?") or detect_advice(s) or detect_performance(s) or find_pii(s):
             continue
         words = s.split()
         out.append(s if len(words) <= max_words else " ".join(words[:max_words]) + "…")
