@@ -33,6 +33,16 @@ def test_retrieves_mid_cap_exit_load(built_index):
     assert r.winner.source_url == "https://groww.in/mutual-funds/hdfc-mid-cap-fund-direct-growth"
 
 
+@pytest.mark.parametrize("query,fact_key", [
+    ("What is the expense ratio of HDFC Small Cap Fund? my pan [PAN]", "expense_ratio"),
+    ("Please tell me, as soon as possible, the expense ratio for HDFC Small Cap Fund, thanks [PHONE]", "expense_ratio"),
+    ("small cap minimum sip amount kitna hai bhai", "min_sip"),
+])
+def test_detected_fact_key_wins_over_noisy_similarity(built_index, query, fact_key):
+    r = Retriever(index_dir=built_index).retrieve(query)
+    assert r.status == "ok" and r.winner.fact_key == fact_key
+
+
 def test_hinglish_query_still_resolves(built_index):
     r = Retriever(index_dir=built_index).retrieve("mid cap ka exit load kitna hai")
     assert r.status == "ok" and r.winner.fact_key == "exit_load"

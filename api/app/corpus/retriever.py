@@ -329,6 +329,17 @@ class Retriever:
         ranked = _rank_candidates(hits, preferred_fact_key=hints.fact_key)
         winner = _select_winner(ranked, min_similarity=min_sim)
 
+        # Metadata-first: scheme and fact were both detected deterministically, so the exact
+        # (scheme, fact) chunk is the answer even when noisy wording pushes it out of the top-k.
+        if hints.fact_key and (winner is None or winner.fact_key != hints.fact_key):
+            exact = self._query_chroma(
+                query_vec, n_results=1,
+                where={"$and": [{"scheme_id": scheme_id}, {"fact_key": hints.fact_key}]},
+            )
+            if exact:
+                winner = exact[0]
+                ranked = [winner] + [h for h in ranked if h.chunk_id != winner.chunk_id]
+
         if winner is None:
             return RetrievalResult(
                 status="low_confidence",

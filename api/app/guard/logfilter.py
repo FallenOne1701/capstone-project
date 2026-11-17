@@ -7,12 +7,13 @@ from app.guard.pii import redact
 
 class RedactingFilter(logging.Filter):
     def filter(self, record: logging.LogRecord) -> bool:
-        try:
-            msg = record.getMessage()
-        except Exception:
-            msg = str(record.msg)
-        record.msg = redact(msg).text
-        record.args = ()
+        # Redact in place and keep args' shape: some formatters (uvicorn access logs) unpack record.args.
+        if isinstance(record.msg, str):
+            record.msg = redact(record.msg).text
+        if isinstance(record.args, tuple):
+            record.args = tuple(redact(a).text if isinstance(a, str) else a for a in record.args)
+        elif isinstance(record.args, dict):
+            record.args = {k: redact(v).text if isinstance(v, str) else v for k, v in record.args.items()}
         return True
 
 
