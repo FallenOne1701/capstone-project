@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 
-_S = r"[\s\-]?"  # optional single space/hyphen between characters (voice transcripts)
+_S = r"[ 	\-]?"  # optional single space/tab/hyphen between characters (voice transcripts); never a newline
 
 
 @dataclass(frozen=True)
@@ -21,17 +21,17 @@ _RULES: list[tuple[str, re.Pattern[str], str]] = [
     # spaced; optional separator between groups. Arbitrary per-letter spacing is NOT allowed — it would
     # match ordinary text such as "SIP is 1000 a month" ("sip is" = 5 letters).
     ("PAN", re.compile(
-        r"(?i)\b(?:[a-z]{5}|(?:[a-z][\s-]){4}[a-z]|[a-z]{4}[\s-][a-z])[\s-]?(?:\d{4}|(?:\d[\s-]){3}\d)[\s-]?[a-z]\b"
+        r"(?i)\b(?:[a-z]{5}|(?:[a-z][ 	-]){4}[a-z]|[a-z]{4}[ 	-][a-z])[ 	-]?(?:\d{4}|(?:\d[ 	-]){3}\d)[ 	-]?[a-z]\b"
     ), "[PAN]"),
     ("IFSC", re.compile(r"(?i)\b[a-z]{4}0[a-z0-9]{6}\b"), "[IFSC]"),
-    ("OTP", re.compile(r"(?i)\b(?:otp|one[\s-]?time[\s-]?password)\s*(?:is|:|-)?\s*(?:\d" + _S + r"){3,7}\d\b"), "[OTP]"),
+    ("OTP", re.compile(r"(?i)\b(?:otp|one[ 	-]?time[ 	-]?password)\s*(?:is|:|-)?\s*(?:\d" + _S + r"){3,7}\d\b"), "[OTP]"),
     ("CARD", re.compile(r"\b(?:\d" + _S + r"){15}\d\b"), "[CARD]"),
     ("ACCOUNT", re.compile(
         r"(?i)\b(?:account|acct|acc|a/c)\s*(?:no\.?|number|num|#)?\s*(?:is|:|-)?\s*(?:\d" + _S + r"){8,17}\d\b"
     ), "[ACCOUNT]"),
     ("PHONE", re.compile(r"(?<!\d)(?:\+?91" + _S + r")?[6-9](?:" + _S + r"\d){9}(?!\d)"), "[PHONE]"),
-    ("AADHAAR", re.compile(r"(?<!\d)\d{4}[\s-]?\d{4}[\s-]?\d{4}(?!\d)"), "[AADHAAR]"),
-    ("ACCOUNT", re.compile(r"(?<![\d,.])(?:\d[\s-]?){8,17}\d(?![\d,.])"), "[ACCOUNT]"),
+    ("AADHAAR", re.compile(r"(?<!\d)\d{4}[ 	-]?\d{4}[ 	-]?\d{4}(?!\d)"), "[AADHAAR]"),
+    ("ACCOUNT", re.compile(r"(?<![\d,.])(?:\d[ 	-]?){8,17}\d(?![\d,.])"), "[ACCOUNT]"),
 ]
 
 
