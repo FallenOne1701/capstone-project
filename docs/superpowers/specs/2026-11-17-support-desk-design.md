@@ -109,7 +109,7 @@ support-desk/
 
 1. **Speak or type.** Mic button records up to 60 s in the browser (MediaRecorder). Audio is POSTed to `api`, transcribed by Whisper, and discarded — held in memory only, never written to disk, logs or DB.
 2. **Confirm.** The redacted transcript and detected intent are shown, e.g. *"What is the exit load on HDFC mid cap?" → Fee question · HDFC Mid Cap*. The user can edit, re-record or submit. Ambiguous scheme → one clarifying question ("HDFC Mid Cap or HDFC Small Cap?").
-3. **Ticket.** On submit the user gets a ticket code and a status page. Status: *received → in review → answered* (or *refused* immediately for advice/performance intents, which need no human approval since they are fixed templates).
+3. **Ticket.** On submit the user gets a ticket code and a status page. Status: *received → in review → answered*. For advice/performance intents the page immediately shows a static scope notice (fixed UI copy, not a reply: "We share facts only and can't advise on buying, selling or returns"); the ticket's refusal reply still goes through approval like any other.
 4. **Listen.** Once approved, the status page shows the reply with a 🔊 button using browser `speechSynthesis`, voice `en-IN` or `hi-IN` matching the question language. Hindi/Hinglish questions get Hindi replies; facts and citations unchanged.
 5. **Fallbacks.** Typing always available; mic-permission-denied guidance; STT failure → "Couldn't hear that — try again or type"; clips under ~1 s or silent are rejected.
 
@@ -125,7 +125,7 @@ support-desk/
 | `account_issue` | Routing note to support; user told to use official support channels |
 | `out_of_scope` | Not covered — searched: … |
 
-Refusal templates are fixed strings, so they are returned to the user immediately; all LLM-drafted replies require approval.
+Refusal replies are fixed templates (no LLM), but like every reply they are published to the ticket only after a human approves them.
 
 ## 6. The two loops and the link
 
