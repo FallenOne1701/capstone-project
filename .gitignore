@@ -11,3 +11,4 @@ token.json
 *.egg-info/
 api/mcp_server/node_modules/
 api/mcp_server/dist/
+api/data/verify/
