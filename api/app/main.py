@@ -27,12 +27,25 @@ def _bootstrap_corpus() -> None:
         db.close()
 
 
+def _recover_runs() -> None:
+    from app import db as dbmod
+    from app.weekly.run import recover_interrupted_runs
+    s = dbmod.SessionLocal()
+    try:
+        n = recover_interrupted_runs(s)
+        if n:
+            log.warning("marked %d interrupted weekly run(s) as failed", n)
+    finally:
+        s.close()
+
+
 def create_app(*, init_corpus: bool = True) -> FastAPI:
     from app.guard.logfilter import install_log_redaction
     install_log_redaction()
     app = FastAPI(title="Groww Support Desk API")
     app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
     init_db()
+    _recover_runs()
 
     from app.api.console import router as console_router
     from app.api.public import router as public_router

@@ -5,7 +5,8 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 
-_S = r"[ \t\-]?"  # optional single space/tab/hyphen between characters (voice transcripts); never a newline
+_SEP = r"[^\S\r\n]"   # any horizontal whitespace (incl. NBSP), never a newline
+_S = r"(?:" + _SEP + r"|-)?"  # optional single separator between characters (voice transcripts)
 
 
 @dataclass(frozen=True)
@@ -30,8 +31,8 @@ _RULES: list[tuple[str, re.Pattern[str], str]] = [
         r"(?i)\b(?:account|acct|acc|a/c)\s*(?:no\.?|number|num|#)?\s*(?:is|:|-)?\s*(?:\d" + _S + r"){8,17}\d\b"
     ), "[ACCOUNT]"),
     ("PHONE", re.compile(r"(?<!\d)(?:\+?91" + _S + r")?[6-9](?:" + _S + r"\d){9}(?!\d)"), "[PHONE]"),
-    ("AADHAAR", re.compile(r"(?<!\d)\d{4}[ \t-]?\d{4}[ \t-]?\d{4}(?!\d)"), "[AADHAAR]"),
-    ("ACCOUNT", re.compile(r"(?<![\d,.])(?:\d[ \t-]?){8,17}\d(?![\d,.])"), "[ACCOUNT]"),
+    ("AADHAAR", re.compile(r"(?<!\d)\d{4}" + _S + r"\d{4}" + _S + r"\d{4}(?!\d)"), "[AADHAAR]"),
+    ("ACCOUNT", re.compile(r"(?<![\d,.])(?:\d" + _S + r"){8,17}\d(?![\d,.])"), "[ACCOUNT]"),
 ]
 
 

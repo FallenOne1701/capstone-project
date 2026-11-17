@@ -64,6 +64,9 @@ def test_latest_404_when_no_runs(client):
     assert client.get("/api/console/weekly/latest", headers=H).status_code == 404
 
 
-def test_scheduler_disabled_by_default():
+def test_scheduler_disabled_by_default(monkeypatch):
+    from app.config import Settings, get_settings
+    assert Settings.model_fields["scheduler_enabled"].default is False
+    monkeypatch.setattr(get_settings(), "scheduler_enabled", False)   # never depend on the developer's real .env
     from app.scheduler import start_scheduler
     assert start_scheduler() is None

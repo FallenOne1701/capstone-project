@@ -7,6 +7,7 @@ from datetime import datetime, timedelta, timezone
 
 from sqlalchemy.orm import Session
 
+from app.approvals.executors import DOC_PLACEHOLDER, recipient_label, recipient_ref
 from app.approvals.service import audit
 from app.config import get_settings
 from app.guard.pii import redact
@@ -14,7 +15,7 @@ from app.link.question_keys import repeated_questions
 from app.models import Action, Explainer, Review, Theme, Ticket, WeeklyRun
 from app.weekly.explainer import build_explainer, render_explainer, validate_explainer
 from app.weekly.fee_topics import detect_fee_confusion
-from app.weekly.pulse import action_ideas, compose_pulse, select_quotes, validate_pulse
+from app.weekly.pulse import action_ideas, compose_pulse, default_actions, select_quotes, validate_pulse
 from app.weekly.reviews import ingest_reviews, play_store_fetcher
 from app.weekly.themes import assign_themes, build_themes
 
@@ -25,18 +26,40 @@ def _aware(dt: datetime) -> datetime:
     return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
 
 
-async def run_weekly(db: Session, *, now: datetime, fetcher=play_store_fetcher) -> WeeklyRun:
-    s = get_settings()
+def recover_interrupted_runs(db: Session) -> int:
+    """At startup nothing can still be running: a 'running' row is left over from a crash or restart."""
+    rows = db.query(WeeklyRun).filter_by(status="running").all()
+    for r in rows:
+        r.status, r.finished_at = "failed", datetime.now(timezone.utc)
+        r.error = "interrupted: the server stopped before this run finished"
+        audit(db, "scheduler", "fail", "weekly_run", r.id, r.error)
+    db.commit()
+    return len(rows)
+
+
+def start_run(db: Session, *, now: datetime) -> WeeklyRun:
+    """Insert the 'running' row up front (one at a time) so callers can return its id and refuse a second run."""
+    if db.query(WeeklyRun).filter_by(status="running").first():
+        raise ValueError("a weekly run is already running")
     today = now.date()
-    run = WeeklyRun(status="running", window_start=today - timedelta(weeks=s.reviews_weeks), window_end=today)
+    run = WeeklyRun(status="running", window_start=today - timedelta(weeks=get_settings().reviews_weeks),
+                    window_end=today)
     db.add(run)
     db.commit()
+    return run
+
+
+async def run_weekly(db: Session, *, now: datetime, fetcher=play_store_fetcher, run_id: int | None = None) -> WeeklyRun:
+    s = get_settings()
+    today = now.date()
+    run = db.get(WeeklyRun, run_id) if run_id else start_run(db, now=now)
     run_id = run.id
     try:
         ing = ingest_reviews(db, today=today, fetcher=fetcher)
         run.window_start = ing.window_start   # the window actually covered, not the nominal 8 weeks
         reviews = db.query(Review).filter(Review.date >= ing.window_start, Review.date <= ing.window_end).all()
         run.review_count = len(reviews)
+        db.commit()   # don't hold a write transaction open across the LLM calls below
         assign, calls = await assign_themes(reviews)
         themes = build_themes(assign, reviews, window_start=ing.window_start, window_end=ing.window_end, today=today)
         for t in themes:
@@ -54,17 +77,24 @@ async def run_weekly(db: Session, *, now: datetime, fetcher=play_store_fetcher) 
                               review_count=len(reviews), themes=themes, quotes=quotes, repeated=repeated, fee=fee,
                               actions=actions)
         run.llm_calls = calls + act_calls
+        if validate_pulse(pulse) and actions != default_actions(themes):
+            # §6 step 5: regenerate once — the fixed action ideas are known-safe and short
+            actions = default_actions(themes)
+            pulse = compose_pulse(week_end=today, window_start=ing.window_start, window_end=ing.window_end,
+                                  review_count=len(reviews), themes=themes, quotes=quotes, repeated=repeated,
+                                  fee=fee, actions=actions)
         problems = validate_pulse(pulse) + validate_explainer(draft)
         if problems:
             raise ValueError("; ".join(problems))
         db.add(Explainer(run_id=run.id, topic=draft.topic, title=draft.title, bullets=draft.bullets,
                          last_checked=draft.last_checked, status="draft", evidence=fee.evidence))
         body = pulse + "\n\n" + render_explainer(draft)
-        doc = Action(type="doc_append", target_ref=s.pulse_doc_id or "PULSE_DOC_ID",
+        doc = Action(type="doc_append", target_ref=s.pulse_doc_id or DOC_PLACEHOLDER,
                      target_label=f"Append to the weekly pulse Google Doc ({s.pulse_doc_id or 'PULSE_DOC_ID not set'})",
                      content=body, source_ref=f"weekly_run:{run.id}")
-        mail = Action(type="email_draft", target_ref="PULSE_DRAFT_RECIPIENT",
-                      target_label="Gmail draft to the product team (PULSE_DRAFT_RECIPIENT)",
+        mail = Action(type="email_draft",
+                      target_ref=recipient_ref(s.pulse_draft_recipient) if s.pulse_draft_recipient else "",
+                      target_label=recipient_label(),
                       content=f"Subject: Groww weekly pulse — week ending {today.isoformat()}\n\n{body}",
                       source_ref=f"weekly_run:{run.id}")
         db.add_all([doc, mail])

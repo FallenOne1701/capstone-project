@@ -55,6 +55,8 @@ def _text_of(value) -> str:
 def build_report(db: Session, run_id: int | None = None, *, log_paths=()) -> Report:
     s = get_settings()
     run = db.get(WeeklyRun, run_id) if run_id else db.query(WeeklyRun).order_by(WeeklyRun.id.desc()).first()
+    if run is None:
+        return Report(run_id=None, markdown="# Verification report\n\nNo weekly runs found.", flags=[])
     flags: list[str] = []
     L = [f"# Verification report — weekly run {run.id}", f"Generated {datetime.now(timezone.utc).isoformat()}", "",
          "## Run summary",

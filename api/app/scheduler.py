@@ -13,10 +13,16 @@ log = logging.getLogger(__name__)
 
 
 def _weekly_job() -> None:
-    from app.weekly.run import run_weekly
+    from app.weekly.run import run_weekly, start_run
     db = SessionLocal()
     try:
-        run = asyncio.run(run_weekly(db, now=datetime.now(timezone.utc)))
+        now = datetime.now(timezone.utc)
+        try:
+            pre = start_run(db, now=now)
+        except ValueError:
+            log.warning("scheduled weekly run skipped: a run is already running")
+            return
+        run = asyncio.run(run_weekly(db, now=now, run_id=pre.id))
         log.info("scheduled weekly run %s -> %s", run.id, run.status)
     finally:
         db.close()

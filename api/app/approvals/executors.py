@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 from datetime import datetime, timezone
 from typing import Callable
 
@@ -26,10 +27,28 @@ def _reply_publish(db: Session, a: Action) -> str:
     return f"ticket:{t.code}"
 
 
+DOC_PLACEHOLDER = "PULSE_DOC_ID"
+
+
+def recipient_ref(email: str) -> str:
+    """Stored instead of the address: lets execution prove the recipient is still the one that was shown."""
+    return "recipient:" + hashlib.sha256(email.strip().lower().encode()).hexdigest()[:16]
+
+
+def _mask(email: str) -> str:
+    local, _, domain = email.strip().partition("@")
+    return f"{local[:1]}***@{domain}" if domain else "***"
+
+
+def recipient_label() -> str:
+    to = get_settings().pulse_draft_recipient
+    return f"Gmail draft to the product team ({_mask(to) if to else 'PULSE_DRAFT_RECIPIENT not set'})"
+
+
 def _doc_append(db: Session, a: Action) -> str:
-    doc_id = get_settings().pulse_doc_id
-    if not doc_id:
-        raise McpDeliveryError("PULSE_DOC_ID not set")
+    doc_id = a.target_ref   # exactly the Doc the approver was shown, not whatever is configured now
+    if not doc_id or doc_id == DOC_PLACEHOLDER:
+        raise McpDeliveryError("PULSE_DOC_ID was not set when this run was created; start a new weekly run")
     call_tool("google_docs_append_content", {"document_id": doc_id, "content": a.content,
                                              "add_newline_before": True, "add_newline_after": True})
     return f"gdoc:{doc_id}"
@@ -39,6 +58,8 @@ def _email_draft(db: Session, a: Action) -> str:
     to = get_settings().pulse_draft_recipient
     if not to:
         raise McpDeliveryError("PULSE_DRAFT_RECIPIENT not set")
+    if a.target_ref != recipient_ref(to):
+        raise McpDeliveryError("draft recipient changed since this action was shown; start a new weekly run")
     first, _, rest = (a.content or "").partition("\n\n")
     if first.startswith("Subject:"):
         subject, body = first.removeprefix("Subject:").strip(), rest

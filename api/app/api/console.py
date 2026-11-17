@@ -60,6 +60,12 @@ def approve(action_id: int, db: Session = Depends(get_db)):
     return {"id": a.id, "status": a.status}
 
 
+@router.post("/actions/{action_id}/retry")
+def retry(action_id: int, db: Session = Depends(get_db)):
+    a = _guard(ap.retry, db, action_id, "console")
+    return {"id": a.id, "status": a.status, "error": a.error}
+
+
 @router.post("/actions/{action_id}/reject")
 def reject(action_id: int, db: Session = Depends(get_db)):
     a = _guard(ap.reject, db, action_id, "console")
@@ -87,7 +93,6 @@ from datetime import datetime, timezone  # noqa: E402
 from sqlalchemy import func  # noqa: E402
 
 from app.config import get_settings  # noqa: E402
-from app.db import SessionLocal  # noqa: E402
 from app.link.question_keys import repeated_questions  # noqa: E402
 from app.models import Explainer, Theme, WeeklyRun  # noqa: E402
 
@@ -105,20 +110,27 @@ def _explainer_out(db: Session, e: Explainer) -> dict:
             "reuse_count": reuse}
 
 
-@router.post("/weekly/run", status_code=202)
-def weekly_run(db: Session = Depends(get_db)):
-    if db.query(WeeklyRun).filter_by(status="running").first():
-        raise HTTPException(409, "a weekly run is already running")
-
+def _run_in_background(run_id: int) -> None:
     def go():
+        from app import db as dbmod
         from app.weekly.run import run_weekly
-        s = SessionLocal()
+        s = dbmod.SessionLocal()
         try:
-            asyncio.run(run_weekly(s, now=datetime.now(timezone.utc)))
+            asyncio.run(run_weekly(s, now=datetime.now(timezone.utc), run_id=run_id))
         finally:
             s.close()
     threading.Thread(target=go, daemon=True).start()
-    return {"status": "started"}
+
+
+@router.post("/weekly/run", status_code=202)
+def weekly_run(db: Session = Depends(get_db)):
+    from app.weekly.run import start_run
+    try:
+        run = start_run(db, now=datetime.now(timezone.utc))
+    except ValueError as e:
+        raise HTTPException(409, str(e))
+    _run_in_background(run.id)
+    return {"status": "started", "run_id": run.id}
 
 
 @router.get("/weekly/latest")

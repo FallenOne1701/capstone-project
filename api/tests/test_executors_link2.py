@@ -31,9 +31,9 @@ def run(db_session):
     db_session.add(r); db_session.flush()
     ex = Explainer(run_id=r.id, topic="exit_load", title="t", bullets=[{"text": "a", "url": "https://groww.in/a"}],
                    last_checked="2026-11-17", status="draft", evidence={})
-    doc = Action(type="doc_append", target_label="doc", target_ref="D", content="PULSE BODY",
+    doc = Action(type="doc_append", target_label="doc", target_ref="DOC123", content="PULSE BODY",
                  source_ref=f"weekly_run:{r.id}")
-    mail = Action(type="email_draft", target_label="mail", target_ref="M",
+    mail = Action(type="email_draft", target_label="mail", target_ref=executors.recipient_ref("team@example.com"),
                   content="Subject: Groww weekly pulse\n\nPULSE BODY", source_ref=f"weekly_run:{r.id}")
     db_session.add_all([ex, doc, mail]); db_session.commit()
     return r, ex, doc, mail
@@ -64,10 +64,10 @@ def test_send_tool_is_denylisted():
         call_tool("gmail_send_email", {"to": ["x@example.com"]})
 
 
-def test_missing_doc_id_fails_action_cleanly(db_session, run, fake_mcp, monkeypatch):
-    from app.config import get_settings
-    monkeypatch.setattr(get_settings(), "pulse_doc_id", "")
+def test_missing_doc_id_fails_action_cleanly(db_session, run, fake_mcp):
     r, ex, doc, mail = run
+    doc.target_ref = executors.DOC_PLACEHOLDER   # PULSE_DOC_ID was unset when the run created the action
+    db_session.commit()
     a = approve(db_session, doc.id, "agent")
     assert a.status == "failed" and "PULSE_DOC_ID" in a.error and fake_mcp == []
     db_session.expire_all()

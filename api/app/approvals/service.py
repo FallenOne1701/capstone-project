@@ -28,20 +28,27 @@ def _get(db: Session, action_id: int) -> Action:
     return a
 
 
-def _claim(db: Session, action_id: int, new_status: str) -> None:
-    """Atomically move pending → new_status in the database; the in-memory object may be stale."""
+def _claim(db: Session, action_id: int, new_status: str, *, from_status: str = "pending") -> None:
+    """Atomically move from_status → new_status in the database; the in-memory object may be stale."""
     res = db.execute(
-        update(Action).where(Action.id == action_id, Action.status == "pending")
-        .values(status=new_status, decided_at=_now()),
+        update(Action).where(Action.id == action_id, Action.status == from_status)
+        .values(status=new_status, decided_at=_now(), error=None),
         execution_options={"synchronize_session": False},
     )
     if res.rowcount != 1:
         db.rollback()
-        raise ValueError(f"action {action_id} is no longer pending")
+        raise ValueError(f"action {action_id} is no longer {from_status}")
 
 
 def mark_canonical(db: Session, explainer_id: int) -> Explainer:
+    """Make this explainer the one Link 2 reuses — unless a newer weekly run's explainer already is."""
     ex = db.get(Explainer, explainer_id)
+    newer = (db.query(Explainer).filter(Explainer.topic == ex.topic, Explainer.status == "canonical",
+                                        Explainer.id != ex.id, Explainer.run_id.isnot(None),
+                                        Explainer.run_id > (ex.run_id or 0)).first())
+    if newer is not None:
+        ex.status = "superseded"
+        return ex
     for other in db.query(Explainer).filter(Explainer.topic == ex.topic, Explainer.status == "canonical",
                                             Explainer.id != ex.id):
         other.status = "superseded"
@@ -66,6 +73,21 @@ def approve(db: Session, action_id: int, actor: str) -> Action:
     _claim(db, action_id, "approved")
     db.refresh(a)
     audit(db, actor, "approve", "action", a.id)
+    return _execute(db, a, actor)
+
+
+def retry(db: Session, action_id: int, actor: str) -> Action:
+    """A failed action (e.g. expired Google token) is re-run on an explicit human click — never automatically."""
+    a = _get(db, action_id)
+    _claim(db, action_id, "approved", from_status="failed")
+    db.refresh(a)
+    audit(db, actor, "retry", "action", a.id)
+    return _execute(db, a, actor)
+
+
+def _execute(db: Session, a: Action, actor: str) -> Action:
+    from app.approvals.executors import EXECUTORS
+    db.commit()   # the claim is durable before any external call: no duplicate write on crash, no long DB lock
     try:
         ref = EXECUTORS[a.type](db, a)
     except Exception as exc:  # noqa: BLE001  — no silent retry; the failure is recorded on the action
@@ -79,7 +101,7 @@ def approve(db: Session, action_id: int, actor: str) -> Action:
         ex = _run_explainer(db, a)
         if ex is not None:
             mark_canonical(db, ex.id)
-            audit(db, actor, "canonical", "explainer", ex.id, ex.topic)
+            audit(db, actor, ex.status, "explainer", ex.id, ex.topic)
     db.commit()
     return a
 

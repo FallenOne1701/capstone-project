@@ -14,12 +14,14 @@ FEE_TOPICS: dict[str, tuple[str, ...]] = {
 }
 TOPIC_LABELS = {"exit_load": "Exit load", "expense_ratio": "Expense ratio",
                 "redemption_charges": "Redemption charges", "brokerage": "Brokerage & charges"}
-_COMPILED = {t: [re.compile("(?i)" + p) for p in ps] for t, ps in FEE_TOPICS.items()}
+_GENERIC = {r"\bcharges?\b", r"\bfees?\b"}   # fine for mining reviews, too loose to pick an answer
+_COMPILED = {t: [(re.compile("(?i)" + p), p in _GENERIC) for p in ps] for t, ps in FEE_TOPICS.items()}
 
 
-def topic_of(text: str) -> str | None:
+def topic_of(text: str, *, strict: bool = False) -> str | None:
+    """strict=True (Link 2 answering) ignores the bare 'charge'/'fee' catch-alls."""
     for topic, pats in _COMPILED.items():
-        if any(p.search(text) for p in pats):
+        if any(p.search(text) for p, generic in pats if not (strict and generic)):
             return topic
     return None
 

@@ -51,9 +51,7 @@ _ACT_SYSTEM = (
 
 
 async def action_ideas(themes, quotes) -> tuple[list[str], int]:
-    defaults = [DEFAULT_ACTIONS[t.theme_id] for t in themes[:3]]
-    defaults += [a for a in DEFAULT_ACTIONS.values() if a not in defaults]
-    defaults = defaults[:3]
+    defaults = default_actions(themes)
     if not llm_enabled():
         return defaults, 0
     user = "\n".join([f"Theme {t.rank}: {t.label} ({t.count} reviews)" for t in themes[:3]] +
@@ -62,6 +60,12 @@ async def action_ideas(themes, quotes) -> tuple[list[str], int]:
     acts = [a.strip() for a in (data or {}).get("actions", []) if isinstance(a, str) and a.strip()]
     ok = len(acts) == 3 and all(not [v for v in check_output(a, kind="pulse") if v.check != "shape"] for a in acts)
     return (acts if ok else defaults), 1
+
+
+def default_actions(themes) -> list[str]:
+    out = [DEFAULT_ACTIONS[t.theme_id] for t in themes[:3]]
+    out += [a for a in DEFAULT_ACTIONS.values() if a not in out]
+    return out[:3]
 
 
 def _n(count: int, noun: str) -> str:

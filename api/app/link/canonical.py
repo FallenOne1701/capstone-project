@@ -14,7 +14,7 @@ from app.weekly.fee_topics import FEE_TOPICS, topic_of
 def find_canonical(db: Session, intent: IntentResult, text: str) -> Explainer | None:
     if intent.intent != "fee_question":
         return None
-    topic = intent.fact_key if intent.fact_key in FEE_TOPICS else topic_of(text)
+    topic = intent.fact_key if intent.fact_key in FEE_TOPICS else topic_of(text, strict=True)
     if topic is None:
         return None
     return (db.query(Explainer).filter_by(topic=topic, status="canonical")
