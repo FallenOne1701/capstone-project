@@ -52,6 +52,16 @@ class Settings(BaseSettings):
 
     max_message_chars: int = 500
 
+    # Weekly loop (Plan 2)
+    data_outbox_dir: Path = API_ROOT / "data" / "outbox"
+    scheduler_enabled: bool = False
+    reviews_weeks: int = 8
+    reviews_max: int = 3000
+    play_package: str = "com.nextbillion.groww"
+    repeat_threshold: int = 5
+    repeat_days: int = 7
+    pulse_doc_id: str = ""
+
     @property
     def allowed_source_domains(self) -> frozenset[str]:
         return ALLOWED_SOURCE_DOMAINS

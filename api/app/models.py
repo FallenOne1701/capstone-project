@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 
-from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import JSON, Boolean, Date, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db import Base
@@ -87,3 +87,55 @@ class AuditLog(Base):
     entity: Mapped[str] = mapped_column(String(20))
     entity_id: Mapped[int] = mapped_column(Integer)
     detail: Mapped[str] = mapped_column(Text, default="")
+
+
+class Review(Base):
+    __tablename__ = "reviews"
+    id: Mapped[str] = mapped_column(String(20), primary_key=True)
+    rating: Mapped[int] = mapped_column(Integer)
+    date: Mapped["date"] = mapped_column(Date, index=True)
+    text_redacted: Mapped[str] = mapped_column(Text)
+    app_version: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    fetched_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class WeeklyRun(Base):
+    __tablename__ = "weekly_runs"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    status: Mapped[str] = mapped_column(String(20), default="running")  # running|awaiting_approval|failed|done
+    window_start: Mapped["date"] = mapped_column(Date)
+    window_end: Mapped["date"] = mapped_column(Date)
+    review_count: Mapped[int] = mapped_column(Integer, default=0)
+    pulse_text: Mapped[str | None] = mapped_column(Text, nullable=True)
+    error: Mapped[str | None] = mapped_column(Text, nullable=True)
+    llm_calls: Mapped[int] = mapped_column(Integer, default=0)
+
+
+class Theme(Base):
+    __tablename__ = "themes"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    run_id: Mapped[int] = mapped_column(ForeignKey("weekly_runs.id"), index=True)
+    theme_id: Mapped[str] = mapped_column(String(40))
+    label: Mapped[str] = mapped_column(String(120))
+    count: Mapped[int] = mapped_column(Integer)
+    recent_count: Mapped[int] = mapped_column(Integer)
+    review_ids: Mapped[list] = mapped_column(JSON, default=list)
+    window_start: Mapped["date"] = mapped_column(Date)
+    window_end: Mapped["date"] = mapped_column(Date)
+    rank: Mapped[int] = mapped_column(Integer)
+
+
+class Explainer(Base):
+    __tablename__ = "explainers"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    run_id: Mapped[int | None] = mapped_column(ForeignKey("weekly_runs.id"), nullable=True)
+    topic: Mapped[str] = mapped_column(String(40), index=True)
+    title: Mapped[str] = mapped_column(String(200))
+    bullets: Mapped[list] = mapped_column(JSON, default=list)
+    last_checked: Mapped[str] = mapped_column(String(20))
+    status: Mapped[str] = mapped_column(String(12), default="draft")  # draft|canonical|superseded|rejected
+    evidence: Mapped[dict] = mapped_column(JSON, default=dict)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    canonical_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
