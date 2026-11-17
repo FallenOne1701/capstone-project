@@ -19,7 +19,8 @@ def test_refresh_from_fixtures_creates_sources(db_session, tmp_path, monkeypatch
     _settings(tmp_path, monkeypatch)
     res = rf.refresh_corpus(db_session, fetch=False, raw_dir=FIXTURES)
     assert res.ok == 15 and res.reindexed
-    rows = db_session.query(Source).all()
+    rows = db_session.query(Source).filter_by(kind="scheme").all()
+    assert db_session.query(Source).filter_by(kind="reference").count() == 4
     assert len(rows) == 15 and all(r.status == "ok" and r.fetched_at for r in rows)
 
 
@@ -35,9 +36,14 @@ def test_fetch_failure_marks_stale_and_keeps_date(db_session, tmp_path, monkeypa
                                                 source_url=s["url"], status="error", error="timeout")
                                     for s in kwargs["schemes"]])
     monkeypatch.setattr(rf, "fetch_scheme_pages", failing_fetch)
+    from app.corpus import reference
+
+    def no_network(url):
+        raise RuntimeError("offline")
+    monkeypatch.setattr(reference, "_download", no_network)
     res = rf.refresh_corpus(db_session, fetch=True, raw_dir=FIXTURES)
     assert res.stale == 15
-    for r in db_session.query(Source):
+    for r in db_session.query(Source):  # schemes and references both keep their old date
         assert r.status == "stale" and r.fetched_at == before[r.url]
 
 

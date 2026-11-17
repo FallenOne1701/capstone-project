@@ -100,4 +100,16 @@ refusal:
   title: Mutual Funds on Groww
 
 # Reference pages (fee concepts) — added in Plan 2 after inspection
-references: []
+references:
+  - topic: exit_load
+    title: What is exit load? — Groww Help
+    url: https://groww.in/help/mutual-funds/order/what-is-exit-load--71
+  - topic: redemption_charges
+    title: What are the charges applicable for redeeming? — Groww Help
+    url: https://groww.in/help/mutual-funds/order/what-are-the-charges-applicable-for-redeeming--53
+  - topic: expense_ratio
+    title: Expense Ratio — AMFI Investor Corner
+    url: https://www.amfiindia.com/investor/knowledge-center-info?zoneName=expenseRatio
+  - topic: brokerage
+    title: What fees does Groww charge? — Groww Help
+    url: https://groww.in/help/payments-&-withdrawals/payments-charges/what-fees-does-groww-charge--58

@@ -52,6 +52,25 @@ class Settings(BaseSettings):
 
     max_message_chars: int = 500
 
+    # Weekly loop (Plan 2)
+    data_outbox_dir: Path = API_ROOT / "data" / "outbox"
+    scheduler_enabled: bool = False
+    reviews_weeks: int = 8
+    reviews_max: int = 3000
+    play_package: str = "com.nextbillion.groww"
+    repeat_threshold: int = 5
+    repeat_days: int = 7
+    pulse_doc_id: str = ""
+
+    # Google delivery via MCP Server 1 (stdio)
+    mcp_server_dir: Path = API_ROOT / "mcp_server"
+    node_command: str = "node"
+    google_client_id: str = ""
+    google_client_secret: str = ""
+    google_refresh_token: str = ""
+    pulse_draft_recipient: str = ""
+    mcp_timeout_s: float = 60.0
+
     @property
     def allowed_source_domains(self) -> frozenset[str]:
         return ALLOWED_SOURCE_DOMAINS

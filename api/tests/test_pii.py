@@ -42,6 +42,8 @@ def test_redacts_each_type(raw, ptype, token):
     "Minimum SIP is 1000 a month.",
     "Last checked: 2026-11-17.",
     "Ticket GRW-AB12CD is in review.",
+    "# Pulse — week ending 2026-11-17\n4 Play Store reviews",
+    "1. Fees — 12 reviews\n2. Support — 9 reviews\n3. App — 7 reviews",
 ])
 def test_leaves_clean_text_untouched(clean):
     r = redact(clean)

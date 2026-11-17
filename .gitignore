@@ -9,3 +9,9 @@ node_modules/
 token.json
 .superpowers/
 *.egg-info/
+api/mcp_server/node_modules/
+api/mcp_server/dist/
+api/data/verify/
+
+# Google OAuth tokens written by the vendored MCP server — never commit
+api/mcp_server/.tokens/
