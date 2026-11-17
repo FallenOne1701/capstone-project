@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+.venv/
+.env
+api/data/
+*.db
+node_modules/
+.next/
+token.json
+.superpowers/
+*.egg-info/
