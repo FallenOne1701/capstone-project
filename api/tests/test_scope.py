@@ -44,6 +44,9 @@ def test_performance_detected(text):
     "The expense ratio is 0.74%.",
     "Exit load of 1% if redeemed within 1 year.",
     "Stamp duty of 0.005% applies on purchases.",
+    "Exit load for HDFC Mid Cap Fund Direct Growth: Exit load of 1% if redeemed within 1 year.",
+    "The expense ratio of HDFC ELSS Tax Saver Fund Direct Plan Growth is 0.62%.",
+    "Growth option: expense ratio 0.5%.",
 ])
 def test_performance_not_flagged_for_fee_facts(text):
     assert not detect_performance(text)

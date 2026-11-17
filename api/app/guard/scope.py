@@ -27,6 +27,8 @@ _ADVICE_VERBS = re.compile(r"(?i)\b(buy|sell|hold|switch)\b")
 _PERF_WORDS = re.compile(r"(?i)\b(cagr|xirr|annuali[sz]ed|performance|outperform\w*|underperform\w*)\b")
 _RETURN_WORD = re.compile(r"(?i)\breturns?\b")
 _TRI = re.compile(r"(?i)\btotal return index\b|\bTRI\b")
+# "Growth" in plan names ("Direct Growth", "Plan Growth", "Growth option") is not a performance claim.
+_PLAN_GROWTH = re.compile(r"(?i)\b(?:direct|regular|plan)\s+growth\b|\bgrowth\s+(?:option|plan)\b")
 _PCT_NEAR_GAIN = re.compile(
     r"(?i)(\d+(?:\.\d+)?\s?%(?:\W+\w+){0,6}?\W+(?:return\w*|gain\w*|grew|growth|gave|delivered|yield\w*))|"
     r"((?:return\w*|gain\w*|grew|growth|gave|delivered|yield\w*)(?:\W+\w+){0,6}?\W+\d+(?:\.\d+)?\s?%)"
@@ -42,7 +44,7 @@ def detect_advice(text: str) -> bool:
 def detect_performance(text: str) -> bool:
     if _PERF_WORDS.search(text):
         return True
-    without_tri = _TRI.sub(" ", text)
+    without_tri = _PLAN_GROWTH.sub(" ", _TRI.sub(" ", text))
     if _RETURN_WORD.search(without_tri):
         return True
     return bool(_PCT_NEAR_GAIN.search(without_tri))
