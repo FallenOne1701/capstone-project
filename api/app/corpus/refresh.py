@@ -73,7 +73,11 @@ def refresh_corpus(db: Session, *, fetch: bool = True, raw_dir: Path | None = No
         chunk_scheme_pages(schemes=schemes, write_report=False)
         build_index(schemes=schemes, write_report=False)
         res.reindexed = True
-    log.info("corpus refresh ok=%s stale=%s error=%s reindexed=%s", res.ok, res.stale, res.error, res.reindexed)
+    from app.corpus.reference import refresh_references
+    ref_fixtures = Path(raw_dir).parent / "reference" if (raw_dir is not None and not fetch) else None
+    rr = refresh_references(db, fetch=fetch, fixture_dir=ref_fixtures)
+    log.info("corpus refresh ok=%s stale=%s error=%s reindexed=%s references_ok=%s references_stale=%s",
+             res.ok, res.stale, res.error, res.reindexed, rr.ok, rr.stale)
     return res
 
 
