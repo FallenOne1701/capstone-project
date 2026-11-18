@@ -117,6 +117,49 @@ def test_refusal_is_published_automatically(wired, db_session, ...)   # "Should 
 
 ---
 
+### Task 1b: Never answer advice or off-topic (banking etc.) questions
+
+The user asked for this on 2026-11-18: "asking for suggestions on advice on banking and stuff… we don't want any questions like that to be answered."
+
+**Files:**
+- Modify:
+  - `api/app/intent/classifier.py` (advice phrasings);
+  - `api/app/desk/templates.py` (`OUT_OF_SCOPE_REPLY`);
+  - `api/app/desk/orchestrator.py` (an `out_of_scope` intent → disposition `"refuse"` with `OUT_OF_SCOPE_REPLY`);
+  - `api/app/api/public.py` (`notice` for `out_of_scope` too);
+  - `web/lib/labels.ts` + `web/components/ask/ScopeNotice.tsx` (the notice text per intent).
+- Test: `api/tests/test_off_topic.py`, `web/lib/labels.test.ts`
+
+**Interfaces:**
+- `templates.OUT_OF_SCOPE_REPLY` = "We only answer factual questions about HDFC mutual funds on Groww. We can't help with banking, loans, cards, insurance or other products, and we never give advice."
+- `classify_intent` maps these phrasings to `advice_request`, before any scheme or fee rule:
+  - "is it a good idea";
+  - "is it worth";
+  - "which … should I";
+  - "best … (fund|bank|card|fd|loan|plan|scheme|investment)";
+  - "recommend";
+  - "where should I invest";
+  - "what should I (buy|invest|do)".
+- Questions about banks, loans, credit cards, insurance, tax filing, stocks or crypto, with no HDFC mutual fund scheme named, are `out_of_scope`.
+- `labels.scopeNotice(intent)` returns the advice/performance notice (Plan 3 copy) or `OUT_OF_SCOPE_NOTICE` (the same text as `OUT_OF_SCOPE_REPLY`) for `out_of_scope`. It is shown immediately on the confirm card.
+
+- [ ] **Step 1: Failing tests**
+
+```python
+@pytest.mark.parametrize("q", ["Which bank gives the best FD rate?", "Should I take a personal loan from HDFC Bank?",
+    "Is it a good idea to open a savings account in HDFC Bank or SBI?", "Which credit card should I get?",
+    "Where should I invest 1 lakh?", "Is HDFC Mid Cap worth it?", "Recommend a good tax saving plan"])
+def test_advice_or_off_topic_never_answered(wired, db_session, q)   # draft.disposition == "refuse"; reply is ADVICE_REFUSAL/PERFORMANCE_REFUSAL/OUT_OF_SCOPE_REPLY exactly; no citation to a scheme fact
+def test_off_topic_gets_immediate_notice(wired)                       # /api/ask "Which bank gives the best FD rate?" → notice == OUT_OF_SCOPE_REPLY
+def test_fund_fact_questions_still_answered(wired, db_session)        # "What is the exit load of HDFC Mid Cap?" → disposition "reply"
+```
+
+  Plus vitest: `scopeNotice("out_of_scope")` and `scopeNotice("advice_request")`.
+- [ ] **Steps 2–4:** fail → implement → pass. Run the full API suite: existing intent tests must stay green, and any that change are a ruling in the ledger.
+- [ ] **Step 5: Commit** `feat(desk): refuse advice and off-topic (banking, loans, cards…) questions with fixed replies`.
+
+---
+
 ### Task 2: Automatic weekly delivery with capped hourly retry
 
 **Files:**
