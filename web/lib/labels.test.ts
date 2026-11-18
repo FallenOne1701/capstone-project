@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { clarifyQuestion, intentLabel, scopeNotice, statusLabel, weekHeading } from "./labels";
+import { ASK_AGAIN, CLOSED_TEXT, clarifyQuestion, intentLabel, scopeNotice, statusLabel, waitingText, weekHeading } from "./labels";
 import type { Preview } from "./types";
 
 const base: Preview = {
@@ -58,5 +58,19 @@ describe("weekHeading", () => {
   });
   it("never calls an old pulse this week", () => {
     expect(weekHeading("2026-11-03", true)).toBe("Latest pulse · week ending 3 Nov 2026");
+  });
+});
+
+describe("Plan 3c: who approves, closed tickets", () => {
+  it("labels a closed ticket as closed", () => {
+    expect(statusLabel("closed")).toBe("closed");
+  });
+  it("tells the asker a person approves when auto mode is off", () => {
+    expect(waitingText("in_review", "person")).toBe("Waiting for a person to approve this answer.");
+    expect(waitingText("in_review", "auto")).toBe("Our agents are checking the answer against official sources and the rules…");
+  });
+  it("gives the exact rejected copy", () => {
+    expect(CLOSED_TEXT).toBe("We couldn't answer this one.");
+    expect(ASK_AGAIN).toBe("Ask again");
   });
 });

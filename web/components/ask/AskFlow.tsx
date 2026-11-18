@@ -82,7 +82,17 @@ export function AskFlow({ initialCode = null }: { initialCode?: string | null })
         <p className="text-xs text-text-tertiary">
           Ticket <span className="font-mono-token">{code}</span>
         </p>
-        <TicketStatus code={code} />
+        <TicketStatus
+          code={code}
+          onAskAgain={() => {
+            // keep the box as it was submitted (empty when the visitor arrived by ticket link) so they can reword it
+            setCode(null);
+            setPreview(null);
+            setChosen(null);
+            setPhase("compose");
+            router.replace("/", { scroll: false });
+          }}
+        />
         <button
           type="button"
           onClick={() => {

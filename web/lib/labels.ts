@@ -22,12 +22,23 @@ export function clarifyQuestion(names: string[]): string {
   return `${names.slice(0, -1).join(", ")} or ${names[names.length - 1]}?`;
 }
 
-export type StatusWord = "received" | "in review" | "answered" | "failed";
+export type StatusWord = "received" | "in review" | "answered" | "failed" | "closed";
 
 export function statusLabel(s: string): StatusWord {
   if (s === "in_review") return "in review";
-  if (s === "answered" || s === "failed") return s;
+  if (s === "answered" || s === "failed" || s === "closed") return s;
   return "received";
+}
+
+export const CLOSED_TEXT = "We couldn't answer this one.";
+export const ASK_AGAIN = "Ask again";
+
+/** What the asker reads while the draft waits: a person approves unless the optional auto mode is on. */
+export function waitingText(status: string, approval: "auto" | "person"): string | null {
+  if (status !== "in_review") return null;
+  return approval === "person"
+    ? "Waiting for a person to approve this answer."
+    : "Our agents are checking the answer against official sources and the rules…";
 }
 
 export const SCOPE_INTENTS: Intent[] = ["advice_request", "performance_request"];

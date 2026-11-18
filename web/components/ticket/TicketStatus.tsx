@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { ScopeNotice } from "@/components/ask/ScopeNotice";
 import { ChecksPanel } from "./ChecksPanel";
 import { ApiError, ticket as fetchTicket } from "@/lib/api";
-import { scopeNotice, statusLabel } from "@/lib/labels";
+import { ASK_AGAIN, CLOSED_TEXT, scopeNotice, statusLabel, waitingText } from "@/lib/labels";
 import { loadVoices, planSpeech, speechLang } from "@/lib/speech";
 import { useClientValue } from "@/lib/useClient";
 import type { TicketView } from "@/lib/types";
@@ -91,7 +91,7 @@ function Listen({ text, englishText, lang, onFallback }: ListenProps) {
   );
 }
 
-export function TicketStatus({ code }: { code: string }) {
+export function TicketStatus({ code, onAskAgain }: { code: string; onAskAgain?: () => void }) {
   const [t, setT] = useState<TicketView | null>(null);
   const [missing, setMissing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -107,7 +107,7 @@ export function TicketStatus({ code }: { code: string }) {
         if (!alive) return;
         setT(next);
         setError(null);
-        if (next.status === "answered" || next.status === "failed") return;
+        if (next.status === "answered" || next.status === "failed" || next.status === "closed") return;
       } catch (e) {
         if (!alive) return;
         if (e instanceof ApiError && e.status === 404) {
@@ -134,7 +134,7 @@ export function TicketStatus({ code }: { code: string }) {
 
   return (
     <div className="space-y-5">
-      <Progress status={t.status} />
+      {t.status !== "closed" && <Progress status={t.status} />}
       <div>
         <p className="text-xs font-medium uppercase tracking-wide text-text-tertiary">Your question</p>
         <p className="mt-1 text-text-primary">{t.question}</p>
@@ -142,7 +142,19 @@ export function TicketStatus({ code }: { code: string }) {
       {scopeNotice(t.intent) && <ScopeNotice text={scopeNotice(t.intent)!} />}
 
       {t.status === "received" && <p className="text-sm text-text-secondary">We&apos;ve got your question and are preparing an answer.</p>}
-      {t.status === "in_review" && <p className="text-sm text-text-secondary">Our agents are checking the answer against official sources and the rules…</p>}
+      {t.status === "in_review" && (
+        <p className="text-sm text-text-secondary" aria-live="polite">{waitingText(t.status, t.approval ?? "person")}</p>
+      )}
+      {t.status === "closed" && (
+        <section aria-label="Not answered" className="space-y-3 rounded-lg border border-border-strong bg-surface-bg p-4">
+          <p className="text-text-primary">{CLOSED_TEXT}</p>
+          {onAskAgain && (
+            <button type="button" onClick={onAskAgain} className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-on-primary">
+              {ASK_AGAIN}
+            </button>
+          )}
+        </section>
+      )}
       {t.status === "failed" && (
         <p className="text-sm text-state-danger-text">Something went wrong on our side — our team can see this ticket.</p>
       )}

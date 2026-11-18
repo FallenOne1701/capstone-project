@@ -4,7 +4,7 @@ export type Intent =
   | "fee_question" | "fund_fact" | "how_to_process" | "advice_request"
   | "performance_request" | "account_issue" | "out_of_scope";
 export type Language = "en" | "hi" | "hinglish";
-export type TicketStatus = "received" | "in_review" | "answered" | "failed";
+export type TicketStatus = "received" | "in_review" | "answered" | "failed" | "closed";
 
 export interface Preview {
   redacted_text: string;
@@ -31,6 +31,7 @@ export interface TicketView {
   language: Language;
   intent: Intent | null;
   checks: Checks | null;
+  approval: "auto" | "person";
 }
 
 export interface Checks {
