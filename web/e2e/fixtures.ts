@@ -1,15 +1,8 @@
-import { expect, type APIRequestContext, type Page } from "@playwright/test";
+import { expect, type APIRequestContext } from "@playwright/test";
 
 export const API = "http://localhost:8001";
 export const CONSOLE_PASSWORD = "e2e-pass-123";
 export const CONSOLE_HEADERS = { "X-Console-Key": CONSOLE_PASSWORD };
-
-export async function login(page: Page, path = "/console"): Promise<void> {
-  await page.goto(path);
-  await page.getByLabel("Console password").fill(CONSOLE_PASSWORD);
-  await page.getByRole("button", { name: "Sign in" }).click();
-  await expect(page.getByRole("button", { name: "Sign out" })).toBeVisible();
-}
 
 export async function createTicket(request: APIRequestContext, text: string): Promise<string> {
   const r = await request.post(`${API}/api/ask`, { data: { text } });

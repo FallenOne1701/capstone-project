@@ -6,6 +6,7 @@ import { ApiError, ask, preview as fetchPreview, transcribe } from "@/lib/api";
 import { STT_FAIL } from "@/lib/labels";
 import type { Recording } from "@/lib/recorder";
 import type { Preview } from "@/lib/types";
+import { TicketStatus } from "@/components/ticket/TicketStatus";
 import { ConfirmCard } from "./ConfirmCard";
 import { MicButton } from "./MicButton";
 
@@ -16,8 +17,9 @@ function message(err: unknown): string {
   return err instanceof ApiError ? err.detail : "Something went wrong — please try again.";
 }
 
-export function AskFlow() {
+export function AskFlow({ initialCode = null }: { initialCode?: string | null }) {
   const router = useRouter();
+  const [code, setCode] = useState<string | null>(initialCode);
   const [phase, setPhase] = useState<Phase>("compose");
   const [text, setText] = useState("");
   const [channel, setChannel] = useState<"text" | "voice">("text");
@@ -66,11 +68,37 @@ export function AskFlow() {
     setError(null);
     try {
       const r = await ask({ text, scheme_id: chosen, channel });
-      router.push(`/t/${r.code}`);
+      setCode(r.code);
+      router.replace(`/?t=${r.code}`, { scroll: false }); // a reload or shared link keeps the answer
     } catch (err) {
       setError(message(err));
       setPhase("confirm");
     }
+  }
+
+  if (code) {
+    return (
+      <div className="space-y-4">
+        <p className="text-xs text-text-tertiary">
+          Ticket <span className="font-mono-token">{code}</span>
+        </p>
+        <TicketStatus code={code} />
+        <button
+          type="button"
+          onClick={() => {
+            setCode(null);
+            setPreview(null);
+            setText("");
+            setChosen(null);
+            setPhase("compose");
+            router.replace("/", { scroll: false });
+          }}
+          className="rounded-md border border-border-strong px-4 py-2 text-sm"
+        >
+          Ask another question
+        </button>
+      </div>
+    );
   }
 
   if (preview && (phase === "confirm" || phase === "submitting")) {

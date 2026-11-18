@@ -32,7 +32,7 @@ test("no Hindi voice: Listen reads the English answer at once and keeps speaking
         intent: "fee_question",
       },
     }));
-  await page.goto("/t/GRW-HINDI1");
+  await page.goto("/?t=GRW-HINDI1");
   await expect(page.getByRole("region", { name: "Answer" })).toContainText("एग्ज़िट");
   await page.getByRole("button", { name: /Listen/ }).click();
   await expect(page.getByText("No Hindi voice on this device — reading in English.")).toBeVisible();

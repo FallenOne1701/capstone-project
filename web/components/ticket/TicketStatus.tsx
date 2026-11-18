@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ScopeNotice } from "@/components/ask/ScopeNotice";
+import { ChecksPanel } from "./ChecksPanel";
 import { ApiError, ticket as fetchTicket } from "@/lib/api";
 import { scopeNotice, statusLabel } from "@/lib/labels";
 import { loadVoices, planSpeech, speechLang } from "@/lib/speech";
@@ -141,7 +142,7 @@ export function TicketStatus({ code }: { code: string }) {
       {scopeNotice(t.intent) && <ScopeNotice text={scopeNotice(t.intent)!} />}
 
       {t.status === "received" && <p className="text-sm text-text-secondary">We&apos;ve got your question and are preparing an answer.</p>}
-      {t.status === "in_review" && <p className="text-sm text-text-secondary">A person is checking the answer before it&apos;s sent to you.</p>}
+      {t.status === "in_review" && <p className="text-sm text-text-secondary">Our agents are checking the answer against official sources and the rules…</p>}
       {t.status === "failed" && (
         <p className="text-sm text-state-danger-text">Something went wrong on our side — our team can see this ticket.</p>
       )}
@@ -167,6 +168,7 @@ export function TicketStatus({ code }: { code: string }) {
               </button>
             )}
           </div>
+          {t.checks && <ChecksPanel checks={t.checks} />}
           {noHindiVoice && (
             <p className="mt-2 text-sm text-text-secondary">No Hindi voice on this device — reading in English.</p>
           )}

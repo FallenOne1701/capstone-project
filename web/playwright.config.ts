@@ -42,6 +42,7 @@ export default defineConfig({
         CONSOLE_PASSWORD,
         E2E_SEED: "1",
         TICKET_WORKER_INLINE: "0",
+        AUTO_APPROVE: "1",
         SCHEDULER_ENABLED: "0",
         CORPUS_BOOTSTRAP: "0",
         // never reach Google from tests, whatever api/.env holds
