@@ -20,7 +20,11 @@ cd api && .venv/Scripts/python -m pytest -q                       # ~6 min, offl
 .venv/Scripts/python -m uvicorn --factory app.main:create_app --port 8000
 # console endpoints need header X-Console-Key: <CONSOLE_PASSWORD from api/.env>
 .venv/Scripts/python scripts/verify_weekly.py --log ../.superpowers/server.log
+
+cd web && npm run dev          # /ask + /console on :3000 (NEXT_PUBLIC_API_URL in web/.env.local)
+npm test && npm run build && npm run e2e   # vitest, build, Playwright (own API :8001 + web :3001, e2e DB, no LLM/Google)
 ```
+- Next 16.4.2 sometimes prints a security advisory and exits 1 on `next dev`/`next build` in agent sessions; rerunning works. Upgrading Next is the user's call (pinned to match M3).
 `api/mcp_server/` is MCP Server 1 vendored (build: `npm ci && npm run build`); `api/.env` holds keys (never commit).
 
 ## Working rules
