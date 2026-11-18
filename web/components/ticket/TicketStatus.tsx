@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { ScopeNotice } from "@/components/ask/ScopeNotice";
 import { ApiError, ticket as fetchTicket } from "@/lib/api";
 import { SCOPE_INTENTS, statusLabel } from "@/lib/labels";
-import { loadVoices, pickVoice, speechLang } from "@/lib/speech";
+import { loadVoices, planSpeech, speechLang } from "@/lib/speech";
 import { useClientValue } from "@/lib/useClient";
 import type { TicketView } from "@/lib/types";
 
@@ -49,34 +49,34 @@ interface ListenProps { text: string; englishText: string; lang: "en-IN" | "hi-I
 
 function Listen({ text, englishText, lang, onFallback }: ListenProps) {
   const [speaking, setSpeaking] = useState(false);
+  const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const supported = useClientValue(() => "speechSynthesis" in window, false);
+
+  // Load voices up front: iOS only speaks when speak() runs inside the tap itself, not after an await.
   useEffect(() => {
+    if (!("speechSynthesis" in window)) return;
+    const synth = window.speechSynthesis;
+    let alive = true;
+    void loadVoices(synth).then((v) => alive && setVoices(v));
     return () => {
-      if (typeof window !== "undefined" && "speechSynthesis" in window) window.speechSynthesis.cancel();
+      alive = false;
+      synth.cancel(); // leaving the page stops the reading
     };
   }, []);
   if (!supported) return null;
 
-  async function toggle() {
+  function toggle() {
     const synth = window.speechSynthesis;
     if (speaking) {
       synth.cancel();
       setSpeaking(false);
       return;
     }
-    const voices = await loadVoices(synth);
-    let { voice, fellBack } = pickVoice(voices, lang);
-    let say = text;
-    if (fellBack) {
-      // no Hindi voice on this device: show and read the English answer instead
-      onFallback();
-      ({ voice } = pickVoice(voices, "en-IN"));
-      say = englishText;
-      fellBack = false;
-    }
-    const u = new SpeechSynthesisUtterance(say);
-    u.lang = voice?.lang ?? (say === text ? lang : "en-IN");
-    if (voice) u.voice = voice;
+    const plan = planSpeech(voices.length ? voices : synth.getVoices(), lang, text, englishText);
+    if (plan.fellBack) onFallback(); // no Hindi voice: the page switches to the English text being read
+    const u = new SpeechSynthesisUtterance(plan.text);
+    u.lang = plan.voice?.lang ?? plan.lang;
+    if (plan.voice) u.voice = plan.voice;
     u.onend = u.onerror = () => setSpeaking(false);
     synth.cancel();
     synth.speak(u);
@@ -153,7 +153,6 @@ export function TicketStatus({ code }: { code: string }) {
           </p>
           <div className="mt-3 flex flex-wrap items-center gap-3">
             <Listen
-              key={lang}
               text={shown}
               englishText={t.answer ?? shown}
               lang={lang}
@@ -163,7 +162,7 @@ export function TicketStatus({ code }: { code: string }) {
               }}
             />
             {t.answer_local && (
-              <button type="button" onClick={() => setEnglish((e) => !e)} className="text-sm text-primary underline">
+              <button type="button" onClick={() => { window.speechSynthesis?.cancel(); setEnglish((e) => !e); }} className="text-sm text-primary underline">
                 {english ? "Show Hindi" : "Show English"}
               </button>
             )}

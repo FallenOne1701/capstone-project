@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { loadVoices, pickVoice, speechLang } from "./speech";
+import { loadVoices, pickVoice, planSpeech, speechLang } from "./speech";
 
 const v = (lang: string, name = lang) => ({ lang, name });
 
@@ -53,5 +53,19 @@ describe("loadVoices", () => {
   it("gives up after the timeout", async () => {
     const synth = { getVoices: () => [], addEventListener() {}, removeEventListener() {} };
     expect(await loadVoices(synth, 20)).toEqual([]);
+  });
+});
+
+describe("planSpeech", () => {
+  const en = { lang: "en-IN", name: "Rishi" };
+  const hi = { lang: "hi-IN", name: "Lekha" };
+  it("reads the Hindi text with a Hindi voice", () => {
+    expect(planSpeech([en, hi], "hi-IN", "हिंदी", "English")).toEqual({ voice: hi, text: "हिंदी", lang: "hi-IN", fellBack: false });
+  });
+  it("with no Hindi voice, reads the English text in English", () => {
+    expect(planSpeech([en], "hi-IN", "हिंदी", "English")).toEqual({ voice: en, text: "English", lang: "en-IN", fellBack: true });
+  });
+  it("reads English as is", () => {
+    expect(planSpeech([en], "en-IN", "English", "English")).toEqual({ voice: en, text: "English", lang: "en-IN", fellBack: false });
   });
 });

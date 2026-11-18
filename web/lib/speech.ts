@@ -45,3 +45,10 @@ export function loadVoices<V>(synth: SynthLike<V>, timeoutMs = 1500): Promise<V[
     synth.addEventListener("voiceschanged", done);
   });
 }
+
+/** What to say and with which voice; with no Hindi voice the English text is read instead (and flagged). */
+export function planSpeech<V extends VoiceLike>(voices: V[], want: SpeechLang, text: string, englishText: string) {
+  const { voice, fellBack } = pickVoice(voices, want);
+  if (!fellBack) return { voice, text, lang: want, fellBack };
+  return { voice: pickVoice(voices, "en-IN").voice, text: englishText, lang: "en-IN" as SpeechLang, fellBack };
+}
