@@ -57,10 +57,23 @@ async def _whisper(audio: bytes, filename: str, language: str | None = None) -> 
     return resp.model_dump() if hasattr(resp, "model_dump") else dict(resp)
 
 
+_SENTENCE = re.compile(r"[.!?।]+(?=\s|$)|\n+|\band\b")
+
+
+def _is_phantom(text: str) -> bool:
+    """Only filler ("Thank you. Bye.") or Whisper reading back its own prompt — nobody asked anything."""
+    norm = _norm(text)
+    if norm and norm in _norm(_PROMPT):
+        return True
+    parts = [_norm(p) for p in _SENTENCE.split(text.lower())]
+    parts = [p for p in parts if p]
+    return bool(parts) and all(p in _PHANTOMS for p in parts)
+
+
 def _check(payload: dict) -> str:
     text = (payload.get("text") or "").strip()
     probs = [seg.get("no_speech_prob", 0.0) for seg in payload.get("segments") or []]
-    if not text or _norm(text) in _PHANTOMS or (probs and sum(probs) / len(probs) >= NO_SPEECH_MEAN):
+    if not text or _is_phantom(text) or (probs and sum(probs) / len(probs) >= NO_SPEECH_MEAN):
         raise NoSpeech()
     return text
 

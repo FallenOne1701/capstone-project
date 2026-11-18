@@ -79,6 +79,16 @@ STT_FAIL = "Couldn't hear that — try again or type"
 VOICE_DOWN = "Voice is unavailable right now — please type your question."
 
 
+async def _capped(stream, limit: int):
+    """Pass the body through, refusing it once it passes `limit` — chunked uploads have no Content-Length."""
+    total = 0
+    async for chunk in stream:
+        total += len(chunk)
+        if total > limit:
+            raise HTTPException(413, "recording too large")
+        yield chunk
+
+
 class _InMemoryParser(MultiPartParser):
     spool_max_size = 1 << 30  # never roll an upload over to a temp file: audio stays in memory
 
@@ -91,7 +101,9 @@ async def voice_transcribe(request: Request):
     audio = b""
     try:
         try:
-            form = await _InMemoryParser(request.headers, request.stream()).parse()
+            parser = _InMemoryParser(request.headers, _capped(request.stream(), s.voice_max_bytes + 65_536),
+                                     max_files=1, max_fields=2)
+            form = await parser.parse()
         except MultiPartException:
             raise HTTPException(422, STT_FAIL)
         upload = form.get("audio")

@@ -164,3 +164,57 @@ def test_real_question_mentioning_thanks_is_kept(client, whisper):
     _, replies = whisper
     replies.append(_payload("Thank you. What is the exit load of HDFC mid cap?", no_speech=0.0))
     assert _post(client).status_code == 200
+
+
+@pytest.mark.parametrize("text", [
+    "Thank you. Thank you.", "Thank you. Bye.", "Thanks for watching and please subscribe.",
+    "Question about HDFC mutual funds on Groww, in English, Hindi or Hinglish.",   # Whisper echoing its prompt
+    "Question about HDFC mutual funds on Groww",
+])
+def test_repeated_phantoms_and_prompt_echo_rejected(client, whisper, text):
+    _, replies = whisper
+    replies.append(_payload(text, no_speech=0.0))
+    r = _post(client)
+    assert r.status_code == 422 and r.json()["detail"] == FAIL
+
+
+def test_upload_without_content_length_is_capped(client, whisper):
+    calls, _ = whisper
+    boundary = "xyzBOUNDARY"
+    head = (f"--{boundary}\r\nContent-Disposition: form-data; name=\"duration_ms\"\r\n\r\n2500\r\n"
+            f"--{boundary}\r\nContent-Disposition: form-data; name=\"audio\"; filename=\"q.webm\"\r\n"
+            "Content-Type: audio/webm\r\n\r\n").encode()
+
+    def body():   # a generator body is sent chunked, with no Content-Length header
+        yield head
+        for _ in range(7):
+            yield b"\x1a" * 1_000_000
+        yield f"\r\n--{boundary}--\r\n".encode()
+
+    r = client.post("/api/voice/transcribe", content=body(),
+                    headers={"content-type": f"multipart/form-data; boundary={boundary}"})
+    assert r.status_code == 413
+    assert calls == []
+
+
+def test_capped_stream_stops_reading_past_the_limit():
+    import asyncio
+
+    from fastapi import HTTPException
+
+    from app.api.public import _capped
+    pulled = []
+
+    async def source():
+        for i in range(7):
+            pulled.append(i)
+            yield b"x" * 1_000_000
+
+    async def drain():
+        async for _ in _capped(source(), 5_000_000):
+            pass
+
+    with pytest.raises(HTTPException) as e:
+        asyncio.run(drain())
+    assert e.value.status_code == 413
+    assert len(pulled) == 6   # stopped as soon as the limit was crossed, not after reading everything
