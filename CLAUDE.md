@@ -36,60 +36,33 @@ The assignment brief was pasted into the 2026-11-18 session. Its key rules:
   Both hold every Ruling, the final-review results and the deferred minors.
 - **GitHub:** private `FallenOne1701/capstone-project`. Each plan = its own branch + PR.
 
-## Status (end of 2026-11-18 session)
+## Status (end of 2026-11-18 session, Plan 3c done)
 
-**Branch:** `plan-3-console-voice`, 28 commits ahead of `main`. Not pushed, no PR. Head `654899e`. Working tree clean.
+**Branch:** `plan-3-console-voice` (Plans 3, 3b, 3c), not pushed, no PR. Head `c83e55d`.
 
-**Plan 3 — done:**
-- voice input (Whisper, in-memory audio, silence/phantom + Urdu guards);
-- clarify ("Mid Cap or Small Cap?");
-- background worker;
-- validated Hindi replies;
-- Listen (en-IN/hi-IN);
-- Playwright harness.
+**Plan 3c — done (one page, a person approves):**
+- spec `docs/superpowers/specs/2026-11-18-one-page-human-approval-design.md`, plan `docs/superpowers/plans/2026-11-18-plan-3c-one-page-human-approval.md`.
+- `AUTO_APPROVE` defaults **0**. With it off, no reply or Google write happens without a click (the auto mode from Plan 3b still works when set to 1).
+- Open page API `app/api/desk.py` (`/api/desk/*`, actor `page`):
+  - limits: 30 clicks per 10 min per visitor; weekly run once an hour;
+  - Approve on a reply must send the reply text the person saw, otherwise 409 "This draft changed — review it again.";
+  - the weekly view shows the newest *ready* run plus `latest_attempt`;
+  - a new run supersedes older waiting/failed Google writes (audit verb `supersede`).
+- Page `/`: Ask → **Queue** (Approve / Edit / Reject / Re-run) → This week. "This week" adds an approval list stating exactly what is written where, explainers, sources and "Run weekly now".
+- Ticket status `closed` on reject: the asker sees "We couldn't answer this one." + **Ask again**.
+- Google failures show in plain words (`plain_error`); the raw error stays in the audit log.
+- Final review (opus): 0 Critical. All Important fixed (plus 2 re-graded minors). Deferred minors:
+  - no length cap on edit text;
+  - Retry after a Google timeout may double-write;
+  - a daily cap on open weekly runs (think about this for the deploy);
+  - the `models.py` status comment.
 
-Its final review fixes are applied.
+**Tests at head:** API 425 passed (full run ~6–24 min depending on load), web vitest 48, Playwright 20 (`AUTO_APPROVE=0`, approval via `/api/desk`), build + lint ok.
 
-**Plan 3b — done:**
-- **Single page `/`** with inline answers, a "How this was checked" panel and a weekly section, fed by `GET /api/weekly/summary` and `checks` on `GET /api/tickets/{code}`.
-- **Auto-approval** `app/approvals/auto.py`, actor `auto-reviewer`:
-  - a fixed fallback reply for blocked drafts;
-  - weekly auto-delivery with hourly retry, max 6.
-- **Advice and off-topic refusals** (banking, loans, cards…) with `OUT_OF_SCOPE_REPLY`.
-- **Rate limits:** `app/guard/ratelimit.py`, keyed on the last X-Forwarded-For hop when `TRUST_PROXY=1`.
-- **Removed:** `/console`, `/t` and `/ask` now redirect to `/`.
-
-Final review: 0 Critical. Important 1 (MF account questions misread as banking) and Important 2 (XFF spoofing) are fixed. Important 3 (in_review tickets never auto-decided) becomes moot with the next step.
-
-**Tests at head:**
-- API 391+ passed (~8 min);
-- web vitest 37 passed;
-- Playwright 15 passed;
-- build ok.
-
-**Live (2026-11-18):** the user approved weekly run 5's actions #25 (Google Doc append) and #26 (Gmail draft to d***@hotmail.com, unsent). Both executed. The Google refresh token was valid that day.
-
-### DECIDED NEXT STEP — write + build "Plan 3c: one page, a person approves"
-
-The user read the brief and their M3 app (https://multi-agentic-system-aj1q.vercel.app: one workbench page, "Approve draft" disabled until the reviewer passes, approve creates an email draft only). Their decision: keep ONE link, but bring the human gate back on the same page. **No password**: the brief doesn't require one, so any human click counts.
-
-Agreed design. Write it as a short amendment spec, then the plan via superpowers:writing-plans; the user reviews the plan before building.
-- **Ask** section: as now (voice/text → confirm → ticket, inline answer once approved, Listen, checks panel).
-- **Queue** section, the restored Plan 3 console Queue as a section:
-  - each ticket's draft, citation, reviewer flags and routing note;
-  - **Approve / Edit / Reject**, with Approve disabled until the reviewer passes;
-  - Re-run desk for failed tickets.
-- **Weekly** section:
-  - themes with counts, window and review ids; quotes; repeated questions;
-  - the fee explainer and the canonical explainers being reused;
-  - sources with last-checked dates;
-  - an approval list showing exactly what will be written and where ("Append to the weekly pulse Google Doc (id)", "Gmail draft to the product team (d***@…), not sent"), each with its own **Approve / Reject** and **Retry** on failure;
-  - a "Run weekly now" button.
-- **Settings:**
-  - `AUTO_APPROVE` default **0**. Keep auto mode as an off-by-default switch and document it as a design choice.
-  - The scheduler builds the pulse; the writes wait for a click.
-- **API:** the approve / edit / reject / retry / reprocess / weekly-run / queue / sources / explainers endpoints are reachable without `X-Console-Key`, audited with actor `page`. Keep the rate limits; consider limits on the action endpoints.
-- **Reuse the deleted Plan 3 UI from git history:** `web/components/console/*`, `web/app/console/*` at commit `a51acef^` (last version before they were removed; e.g. `git show a51acef^:web/components/console/QueueItem.tsx`).
+**Live (2026-11-18):**
+- Plan 3b: run 5's Doc append + Gmail draft were approved by the user and executed.
+- Plan 3c: with the real API and LLM, GRW-GAA782 waited for a person, was approved and published; GRW-RDUM36 was rejected and closed.
+- No Google actions were touched during 3c.
 
 ### Then Plan 4
 - Evals: feasibility, edit isolation (diff state before/after), grounding/compliance with PAN / account number / phone, in both loops.
