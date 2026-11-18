@@ -1,13 +1,16 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
+from starlette.formparsers import MultiPartException, MultiPartParser
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app import deps
+from app.config import get_settings
 from app.db import SessionLocal, get_db
 from app.models import Ticket
 from app.tickets import service as ts
+from app.voice import stt
 
 router = APIRouter(prefix="/api")
 
@@ -53,3 +56,49 @@ def ticket_status(code: str, db: Session = Depends(get_db)):
     return {"code": t.code, "status": t.status, "question": t.question_redacted,
             "answer": t.answer_text if t.status == "answered" else None, "answered_at": t.answered_at,
             "language": t.language}
+
+
+STT_FAIL = "Couldn't hear that — try again or type"
+VOICE_DOWN = "Voice is unavailable right now — please type your question."
+
+
+class _InMemoryParser(MultiPartParser):
+    spool_max_size = 1 << 30  # never roll an upload over to a temp file: audio stays in memory
+
+
+@router.post("/voice/transcribe")
+async def voice_transcribe(request: Request):
+    s = get_settings()
+    if int(request.headers.get("content-length") or 0) > s.voice_max_bytes + 65_536:
+        raise HTTPException(413, "recording too large")
+    audio = b""
+    try:
+        try:
+            form = await _InMemoryParser(request.headers, request.stream()).parse()
+        except MultiPartException:
+            raise HTTPException(422, STT_FAIL)
+        upload = form.get("audio")
+        try:
+            duration = int(form.get("duration_ms") or 0)
+        except ValueError:
+            duration = 0
+        if upload is None or isinstance(upload, str):
+            raise HTTPException(422, STT_FAIL)
+        audio = await upload.read()
+        await upload.close()
+        if len(audio) > s.voice_max_bytes:
+            raise HTTPException(413, "recording too large")
+        if not audio or not (s.voice_min_ms <= duration <= s.voice_max_ms):
+            raise HTTPException(422, STT_FAIL)
+        try:
+            transcript = await stt.transcribe(audio, upload.filename or "clip.webm")
+        except stt.NoSpeech:
+            raise HTTPException(422, STT_FAIL)
+        except stt.VoiceUnavailable:
+            raise HTTPException(503, VOICE_DOWN)
+    finally:
+        del audio
+    try:
+        return await ts.preview(transcript.text, language=stt.language_hint(transcript))
+    except ValueError:
+        raise HTTPException(422, STT_FAIL)

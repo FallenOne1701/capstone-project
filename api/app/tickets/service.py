@@ -33,6 +33,7 @@ class PreviewOut(BaseModel):
     language: str
     needs_clarification: bool
     options: list[str]
+    scheme_names: list[str] = []
 
 
 def _validate(text: str) -> str:
@@ -48,14 +49,21 @@ def _scheme_names() -> dict[str, str]:
     return {s["scheme_id"]: s["scheme_name"] for s in load_schemes()["schemes"]}
 
 
-async def preview(text: str) -> PreviewOut:
+def short_name(name: str) -> str:
+    """"HDFC Mid Cap Fund Direct Growth" → "HDFC Mid Cap" (the name people say)."""
+    i = name.find(" Fund")
+    return name[:i] if i > 0 else name
+
+
+async def preview(text: str, *, language: str | None = None) -> PreviewOut:
     red = redact(_validate(text))
     intent = await classify_intent(red.text)
     names = _scheme_names()
     multi = len(intent.scheme_ids) > 1
     return PreviewOut(redacted_text=red.text, pii_types=red.pii_types, intent=intent.intent,
-                      scheme_ids=intent.scheme_ids, language=intent.language, needs_clarification=multi,
-                      options=[names.get(s, s) for s in intent.scheme_ids] if multi else [])
+                      scheme_ids=intent.scheme_ids, language=language or intent.language, needs_clarification=multi,
+                      options=[names.get(s, s) for s in intent.scheme_ids] if multi else [],
+                      scheme_names=[short_name(names.get(s, s)) for s in intent.scheme_ids])
 
 
 async def create_ticket(db: Session, text: str, *, channel: str = "text") -> tuple[Ticket, IntentResult]:

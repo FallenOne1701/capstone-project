@@ -52,6 +52,12 @@ class Settings(BaseSettings):
 
     max_message_chars: int = 500
 
+    # Voice (Plan 3)
+    groq_stt_model: str = "whisper-large-v3-turbo"
+    voice_max_bytes: int = 5_000_000
+    voice_min_ms: int = 1000
+    voice_max_ms: int = 61000
+
     # Weekly loop (Plan 2)
     data_outbox_dir: Path = API_ROOT / "data" / "outbox"
     scheduler_enabled: bool = False
