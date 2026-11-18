@@ -20,7 +20,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ t
         answer against official pages and the rules, and a person approves it before you see it.
       </p>
       <section aria-label="Ask a question" className="mt-6 rounded-xl border border-border-subtle bg-surface-panel p-5 shadow-sm">
-        <AskFlow key={code ?? "new"} initialCode={code ?? null} />
+        <AskFlow initialCode={code ?? null} />
       </section>
       <QueueSection />
       <WeeklySection />

@@ -1,8 +1,9 @@
 import { expect, test } from "@playwright/test";
-import { createTicket, waitForStatus } from "./fixtures";
+import { approveTicket, createTicket, waitForStatus } from "./fixtures";
 
 test("a ticket link shows the checked answer and how it was checked", async ({ page, request }) => {
   const code = await createTicket(request, "What is the expense ratio of HDFC Small Cap Fund?");
+  await approveTicket(request, code);
   await waitForStatus(request, code, "answered");
   await page.goto(`/t/${code}`);                       // old links still work
   await expect(page).toHaveURL(new RegExp(`/\\?t=${code}$`));

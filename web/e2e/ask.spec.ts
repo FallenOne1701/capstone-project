@@ -1,13 +1,16 @@
 import { expect, test } from "@playwright/test";
+import { approveTicket } from "./fixtures";
 
-test("typed question is answered on the same page", async ({ page }) => {
+test("typed question is answered on the same page once a person approves", async ({ page, request }) => {
   await page.goto("/");
   await page.getByLabel("Your question", { exact: true }).fill("What is the exit load of HDFC Mid Cap Fund?");
   await page.getByRole("button", { name: "Continue" }).click();
   await expect(page.getByText("Fee question · HDFC Mid Cap")).toBeVisible();
   await page.getByRole("button", { name: "Send question" }).click();
+  await expect(page).toHaveURL(/\/\?t=GRW-[A-Z0-9]{6}$/);
+  const code = new URL(page.url()).searchParams.get("t")!;
+  await approveTicket(request, code);
   await expect(page.getByRole("region", { name: "Answer" })).toContainText("Last checked", { timeout: 45_000 });
-  await expect(page).toHaveURL(/\/(\?t=GRW-[A-Z0-9]{6})?$/);
   await expect(page.getByRole("button", { name: "Ask another question" })).toBeVisible();
 });
 

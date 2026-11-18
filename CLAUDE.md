@@ -107,8 +107,8 @@ Agreed design. Write it as a short amendment spec, then the plan via superpowers
 ```bash
 cd api && .venv/Scripts/python -m pytest -q                       # ~8 min, offline (USE_LLM=0 in tests)
 .venv/Scripts/python -m uvicorn --factory app.main:create_app --port 8000
-# /api/console/* needs header X-Console-Key: <CONSOLE_PASSWORD from api/.env> (until Plan 3c opens them to the page)
-# settings: AUTO_APPROVE, SCHEDULER_ENABLED, TRUST_PROXY; tests set AUTO_APPROVE=0 unless a test turns it on
+# /api/desk/* is the page's open approval API (actor "page", rate-limited); /api/console/* still needs X-Console-Key
+# settings: AUTO_APPROVE (default 0 = a person approves), SCHEDULER_ENABLED, TRUST_PROXY
 .venv/Scripts/python scripts/verify_weekly.py --log ../.superpowers/server.log
 
 cd web && npm run dev          # the single page on :3000 (NEXT_PUBLIC_API_URL in web/.env.local)
