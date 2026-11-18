@@ -1,6 +1,6 @@
 # Single-page autonomous support desk — design
 
-Date: 2026-11-18 · Amends `2026-11-17-support-desk-design.md` (that spec stays binding wherever this one is silent).
+Date: 2026-11-18 · Status: implemented in Plan 3b · Amends `2026-11-17-support-desk-design.md` (that spec stays binding wherever this one is silent).
 
 ## Intent
 

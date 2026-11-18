@@ -8,20 +8,22 @@ Final project: one deployed system for Groww (HDFC mutual funds) with a **respon
 - Live execution ledger for the current plan: `.superpowers/sdd/<plan>/progress.md` (git-ignored; read it first when resuming).
 - GitHub: private `FallenOne1701/capstone-project`. Each plan = its own branch + PR.
 
-## Status (2026-11-17)
-- Plan 2: done — 290 tests green, live runs 3–4 delivered to Google Doc + Gmail draft after user approval, Link 2 verified live (brokerage question → reused canonical explainer #4). Fresh-context final review fixed (ledger: `docs/superpowers/plans/2026-11-17-plan-2-ledger.md`, incl. deferred items for Plan 3/4). PR open for user review — do not merge without their say-so.
-- Known limit for Plan 3/4: the MCP Doc append is plain text, so `#` headings show literally in the Doc.
-- Failed Google actions (e.g. expired token) can be retried: `POST /api/console/actions/{id}/retry`.
-- Google OAuth app could not be published (restricted Gmail scope) → stays in Testing; refresh token expires every 7 days: re-run `npm run auth` in `C:/Users/dhruv/MCP Server 1` and update `GOOGLE_REFRESH_TOKEN` before demo/deploy.
+## Status (2026-11-18)
+- Plans 1–2 merged. Plan 3 (voice, Hindi replies, worker) + Plan 3b (single page, auto-approval) built on branch `plan-3-console-voice`, not pushed. Ledgers: `.superpowers/sdd/2026-11-17-plan-3-console-and-voice/`, `.superpowers/sdd/2026-11-18-plan-3b-single-page-autonomous/`.
+- Product decision (user, 2026-11-18): ONE public page `/`, no console page, no human approval. The reviewer agent (actor `auto-reviewer`) approves passing replies and the weekly Doc/Gmail-draft delivery; blocked drafts get a fixed fallback; advice and off-topic (banking, loans, cards…) are refused with fixed replies. Design: `docs/superpowers/specs/2026-11-18-single-page-autonomous-desk-design.md`.
+- Google OAuth app stays in Testing → refresh token expires every 7 days: re-run `npm run auth` in `C:/Users/dhruv/MCP Server 1` and update `GOOGLE_REFRESH_TOKEN` before demos/Mondays (user chose this over a service account; service account = stretch goal after Plan 4). The page shows delivery as "pending (retrying)" / "failed — sign-in expired".
+- Known limit: the MCP Doc append is plain text, so `#` headings show literally in the Doc.
+- Next: Plan 4 (evals, Railway + Vercel deploy; set TRUST_PROXY=1, SCHEDULER_ENABLED=1, one uvicorn worker).
 
 ## Run it
 ```bash
 cd api && .venv/Scripts/python -m pytest -q                       # ~6 min, offline (USE_LLM=0 in tests)
 .venv/Scripts/python -m uvicorn --factory app.main:create_app --port 8000
-# console endpoints need header X-Console-Key: <CONSOLE_PASSWORD from api/.env>
+# /api/console/* (unlinked, for operators/tests) needs header X-Console-Key: <CONSOLE_PASSWORD from api/.env>
+# settings: AUTO_APPROVE (default 1), SCHEDULER_ENABLED, TRUST_PROXY; tests set AUTO_APPROVE=0 unless a test turns it on
 .venv/Scripts/python scripts/verify_weekly.py --log ../.superpowers/server.log
 
-cd web && npm run dev          # /ask + /console on :3000 (NEXT_PUBLIC_API_URL in web/.env.local)
+cd web && npm run dev          # the single page on :3000 (NEXT_PUBLIC_API_URL in web/.env.local)
 npm test && npm run build && npm run e2e   # vitest, build, Playwright (own API :8001 + web :3001, e2e DB, no LLM/Google)
 ```
 - Next 16.4.2 sometimes prints a security advisory and exits 1 on `next dev`/`next build` in agent sessions; rerunning works. Upgrading Next is the user's call (pinned to match M3).
