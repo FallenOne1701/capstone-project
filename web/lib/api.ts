@@ -2,8 +2,9 @@ import type {
   Action, AskResult, DraftView, Explainer, Preview, QueueItem, RefreshResult, Source, TicketView, WeeklyLatest,
 } from "./types";
 
+import { clearKey, getKey } from "./session";
+
 export const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000").replace(/\/$/, "");
-export const KEY_STORAGE = "consoleKey";
 
 export class ApiError extends Error {
   constructor(public status: number, public detail: string) {
@@ -12,18 +13,10 @@ export class ApiError extends Error {
   }
 }
 
-function readKey(): string | null {
-  try {
-    return sessionStorage.getItem(KEY_STORAGE);
-  } catch {
-    return null;
-  }
-}
-
 export async function api<T>(path: string, init?: RequestInit, opts?: { console?: boolean; key?: string }): Promise<T> {
   const headers = new Headers(init?.headers);
   if (opts?.console) {
-    const key = opts.key ?? readKey();
+    const key = opts.key ?? getKey();
     if (key) headers.set("X-Console-Key", key);
   }
   if (typeof init?.body === "string" && !headers.has("content-type")) {
@@ -37,6 +30,8 @@ export async function api<T>(path: string, init?: RequestInit, opts?: { console?
   }
   const body = await res.json().catch(() => null);
   if (!res.ok) {
+    // a stored console key that stopped working (password changed): drop it so the gate shows again
+    if (res.status === 401 && opts?.console && !opts.key) clearKey();
     const d = body?.detail;
     throw new ApiError(res.status, typeof d === "string" ? d : `Request failed (${res.status})`);
   }

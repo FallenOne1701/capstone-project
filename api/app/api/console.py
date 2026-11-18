@@ -38,7 +38,7 @@ def queue(db: Session = Depends(get_db)):
         out.append({"code": t.code, "status": t.status, "intent": t.intent, "language": t.language,
                     "question": t.question_redacted, "pii_types": t.pii_types, "created_at": t.created_at,
                     "draft": _draft_out(d, db),
-                    "action": {"id": a.id, "status": a.status, "target": a.target_label} if a else None})
+                    "action": {"id": a.id, "status": a.status, "target": a.target_label, "error": a.error} if a else None})
     return out
 
 

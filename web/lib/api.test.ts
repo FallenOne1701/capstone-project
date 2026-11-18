@@ -53,3 +53,12 @@ describe("api", () => {
     expect(headersOf(f).get("X-Console-Key")).toBe("ok");
   });
 });
+
+describe("console session", () => {
+  it("a 401 on a console call clears the stored key", async () => {
+    store.set("consoleKey", "old");
+    mockFetch(401, { detail: "console key required" });
+    await api("/api/console/queue", undefined, { console: true }).catch(() => null);
+    expect(store.has("consoleKey")).toBe(false);
+  });
+});
