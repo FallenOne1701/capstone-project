@@ -11,7 +11,7 @@ from app import deps
 from app.config import get_settings
 from app.db import SessionLocal, get_db
 from app.models import Ticket
-from app.tickets import service as ts
+from app.tickets import service as ts, worker
 from app.voice import stt
 
 router = APIRouter(prefix="/api")
@@ -47,7 +47,10 @@ async def ask(body: AskIn, db: Session = Depends(get_db)):
         t, intent = await ts.create_ticket(db, body.text, channel=body.channel, scheme_id=body.scheme_id)
     except ValueError as e:
         raise HTTPException(422, str(e))
-    await _process(t.id, db)  # synchronous in Plan 1; Plan 3 moves this to a worker queue for latency
+    if get_settings().ticket_worker_inline:
+        await _process(t.id, db)
+    else:
+        worker.submit(t.id)   # the page shows "received" at once and polls for "in review"
     notice = ts.SCOPE_NOTICE if intent.intent in ("advice_request", "performance_request") else None
     return {"code": t.code, "status": db.get(Ticket, t.id).status, "notice": notice}
 

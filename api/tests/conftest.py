@@ -2,6 +2,7 @@ import os
 os.environ["USE_LLM"] = "0"
 os.environ["DATABASE_URL"] = "sqlite://"
 os.environ["CONSOLE_PASSWORD"] = "test-pass"
+os.environ["TICKET_WORKER_INLINE"] = "1"
 
 import pytest
 from fastapi.testclient import TestClient

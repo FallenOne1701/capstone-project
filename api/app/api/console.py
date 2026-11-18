@@ -9,6 +9,7 @@ from app.corpus.refresh import refresh_corpus
 from app.db import get_db
 from app.deps import require_console
 from app.models import Action, Draft, Source, Ticket
+from app.tickets import worker
 
 router = APIRouter(prefix="/api/console", dependencies=[Depends(require_console)])
 
@@ -70,6 +71,20 @@ def retry(action_id: int, db: Session = Depends(get_db)):
 def reject(action_id: int, db: Session = Depends(get_db)):
     a = _guard(ap.reject, db, action_id, "console")
     return {"id": a.id, "status": a.status}
+
+
+@router.post("/tickets/{code}/reprocess")
+def reprocess(code: str, db: Session = Depends(get_db)):
+    t = db.query(Ticket).filter_by(code=code).one_or_none()
+    if t is None:
+        raise HTTPException(404, "ticket not found")
+    if t.status not in ("failed", "received"):
+        raise HTTPException(409, f"ticket is {t.status}; only failed or received tickets can be re-run")
+    t.status = "received"
+    ap.audit(db, "console", "reprocess", "ticket", t.id)
+    db.commit()
+    worker.submit(t.id)
+    return {"code": t.code, "status": "received"}
 
 
 @router.get("/sources")

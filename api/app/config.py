@@ -57,6 +57,7 @@ class Settings(BaseSettings):
     voice_max_bytes: int = 5_000_000
     voice_min_ms: int = 1000
     voice_max_ms: int = 61000
+    ticket_worker_inline: bool = False  # tests: process tickets inside the /api/ask request
 
     # Weekly loop (Plan 2)
     data_outbox_dir: Path = API_ROOT / "data" / "outbox"

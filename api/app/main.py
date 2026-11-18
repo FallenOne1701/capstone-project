@@ -39,6 +39,18 @@ def _recover_runs() -> None:
         s.close()
 
 
+def _recover_tickets() -> None:
+    from app import db as dbmod
+    from app.tickets import worker
+    s = dbmod.SessionLocal()
+    try:
+        ids = worker.recover(s)
+        if ids:
+            log.warning("re-queued %d ticket(s) left unprocessed by a restart", len(ids))
+    finally:
+        s.close()
+
+
 def create_app(*, init_corpus: bool = True) -> FastAPI:
     from app.guard.logfilter import install_log_redaction
     install_log_redaction()
@@ -46,6 +58,7 @@ def create_app(*, init_corpus: bool = True) -> FastAPI:
     app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
     init_db()
     _recover_runs()
+    _recover_tickets()
 
     from app.api.console import router as console_router
     from app.api.public import router as public_router
