@@ -89,7 +89,7 @@ Agreed design. Write it as a short amendment spec, then the plan via superpowers
   - `AUTO_APPROVE` default **0**. Keep auto mode as an off-by-default switch and document it as a design choice.
   - The scheduler builds the pulse; the writes wait for a click.
 - **API:** the approve / edit / reject / retry / reprocess / weekly-run / queue / sources / explainers endpoints are reachable without `X-Console-Key`, audited with actor `page`. Keep the rate limits; consider limits on the action endpoints.
-- **Reuse the deleted Plan 3 UI from git history:** `web/components/console/*`, `web/app/console/*` at commit `3d7bfdf`/`c9aafc1`.
+- **Reuse the deleted Plan 3 UI from git history:** `web/components/console/*`, `web/app/console/*` at commit `a51acef^` (last version before they were removed; e.g. `git show a51acef^:web/components/console/QueueItem.tsx`).
 
 ### Then Plan 4
 - Evals: feasibility, edit isolation (diff state before/after), grounding/compliance with PAN / account number / phone, in both loops.
