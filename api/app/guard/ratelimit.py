@@ -21,11 +21,15 @@ class RateLimiter:
         self.limit, self.window, self.clock = limit, window_s, clock
         self._hits: dict[str, deque[float]] = defaultdict(deque)
         self._lock = threading.Lock()
+        self._swept = clock()
 
     def hit(self, key: str) -> bool:
         """Record one request for `key`; False when it would exceed the limit (the request is not counted)."""
         now = self.clock()
         with self._lock:
+            if now - self._swept >= min(self.window, 60):   # forget idle clients so memory can't grow forever
+                self._hits = defaultdict(deque, {k: q for k, q in self._hits.items() if q and now - q[-1] < self.window})
+                self._swept = now
             q = self._hits[key]
             while q and now - q[0] >= self.window:
                 q.popleft()
@@ -36,24 +40,25 @@ class RateLimiter:
 
 
 def _fresh():
-    return (RateLimiter(10, 600), RateLimiter(30, 600), RateLimiter(3, 60), RateLimiter(300, 86_400))
+    return (RateLimiter(10, 600), RateLimiter(30, 600), RateLimiter(3, 60),
+            RateLimiter(300, 86_400), RateLimiter(900, 86_400), RateLimiter(150, 86_400))
 
 
-_ask, _preview, _voice, _ask_daily = _fresh()
+_ask, _preview, _voice, _ask_daily, _preview_daily, _voice_daily = _fresh()
 
 
 def reset_limits() -> None:
-    global _ask, _preview, _voice, _ask_daily
-    _ask, _preview, _voice, _ask_daily = _fresh()
+    global _ask, _preview, _voice, _ask_daily, _preview_daily, _voice_daily
+    _ask, _preview, _voice, _ask_daily, _preview_daily, _voice_daily = _fresh()
 
 
 def client_key(request: Request) -> str:
-    """Behind a proxy (Railway) every visitor arrives from the proxy's IP: use the forwarded client when trusted."""
+    """Behind a proxy (Railway) every visitor arrives from the proxy's IP. The proxy APPENDS the real client to
+    X-Forwarded-For, so trust only the last hop — earlier hops are whatever the client chose to send."""
     if get_settings().trust_proxy:
-        fwd = request.headers.get("x-forwarded-for", "")
-        first = fwd.split(",")[0].strip()
-        if first:
-            return first
+        hops = [h.strip() for h in request.headers.get("x-forwarded-for", "").split(",") if h.strip()]
+        if hops:
+            return hops[-1]
     return request.client.host if request.client else "unknown"
 
 
@@ -70,7 +75,9 @@ def limit_ask(request: Request) -> None:
 
 def limit_preview(request: Request) -> None:
     _check(_preview, client_key(request))
+    _check(_preview_daily, "all")
 
 
 def limit_voice(request: Request) -> None:
     _check(_voice, client_key(request))
+    _check(_voice_daily, "all")

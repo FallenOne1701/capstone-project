@@ -70,3 +70,20 @@ def test_named_fund_question_is_never_off_topic_even_without_llm():
     # USE_LLM=0 in tests: the classifier can't ask the LLM, but a named HDFC fund keeps it in scope
     r = asyncio.run(classify_intent("When was HDFC Mid Cap Fund launched?"))
     assert r.intent == "fund_fact"
+
+
+@pytest.mark.parametrize("q,expected", [
+    ("My redemption money was not credited to my bank account", "account_issue"),
+    ("My SIP via UPI was debited but units not credited", "account_issue"),
+    ("How do I change the bank account linked to my mutual fund?", "how_to_process"),
+    ("How long does redemption take to reach my bank account?", "how_to_process"),
+    ("Can I pay my SIP using UPI autopay?", "how_to_process"),
+    ("Which statement do I need for ITR filing of mutual fund gains?", "how_to_process"),
+])
+def test_mutual_fund_questions_mentioning_a_bank_stay_in_scope(q, expected):
+    assert asyncio.run(classify_intent(q)).intent == expected, q
+
+
+@pytest.mark.parametrize("q", ["What is the best way to download my capital gains statement?"])
+def test_best_way_is_not_advice(q):
+    assert asyncio.run(classify_intent(q)).intent != "advice_request"

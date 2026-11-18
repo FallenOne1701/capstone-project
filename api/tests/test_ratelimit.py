@@ -25,7 +25,7 @@ def test_window_slides():
 
 def test_forwarded_for_used_only_when_trusted(client, monkeypatch):
     def burst(ip):
-        return [client.post("/api/ask/preview", json=Q, headers={"X-Forwarded-For": f"{ip}, 10.0.0.1"}).status_code
+        return [client.post("/api/ask/preview", json=Q, headers={"X-Forwarded-For": f"10.0.0.1, {ip}"}).status_code
                 for _ in range(16)]
     # untrusted: both "visitors" are the same socket client, sharing one limit of 30
     assert 429 not in burst("1.1.1.1") and 429 in burst("2.2.2.2")
@@ -46,3 +46,25 @@ def test_voice_limit_three_per_minute(client):
     codes = [client.post("/api/voice/transcribe", files=files, data={"duration_ms": "2500"}).status_code
              for _ in range(4)]
     assert codes[:3] == [503, 503, 503] and codes[3] == 429   # USE_LLM=0 → 503 until the limit is hit
+
+
+def test_spoofed_forwarded_for_cannot_dodge_the_limit(client, monkeypatch):
+    # the proxy appends the real client as the LAST hop; anything before it was typed by the client
+    monkeypatch.setattr(get_settings(), "trust_proxy", True)
+    codes = [client.post("/api/ask/preview", json=Q,
+                         headers={"X-Forwarded-For": f"6.6.6.{i}, 203.0.113.7"}).status_code for i in range(31)]
+    assert codes[-1] == 429
+
+
+def test_preview_and_voice_have_server_wide_caps(monkeypatch):
+    assert ratelimit._preview_daily.limit > 0 and ratelimit._voice_daily.limit > 0
+
+
+def test_idle_keys_are_dropped():
+    now = [0.0]
+    lim = RateLimiter(2, 10, clock=lambda: now[0])
+    for i in range(50):
+        lim.hit(f"k{i}")
+    now[0] = 11
+    lim.hit("fresh")
+    assert len(lim._hits) == 1
