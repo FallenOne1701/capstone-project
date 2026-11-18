@@ -16,7 +16,7 @@ from app.desk.contracts import (ComplianceResult, FactsResult, OrchestratorOutpu
 from app.desk.facts import run_facts
 from app.desk.pattern import run_pattern, team_for
 from app.desk.reviewer import review_draft, rewrite_draft
-from app.desk.templates import ACCOUNT_REPLY, ADVICE_REFUSAL, PERFORMANCE_REFUSAL, covered_reply, not_covered_reply
+from app.desk.templates import ACCOUNT_REPLY, ADVICE_REFUSAL, OUT_OF_SCOPE_REPLY, PERFORMANCE_REFUSAL, covered_reply, not_covered_reply
 from app.intent.classifier import IntentResult
 
 SURGE_RECENT = 40
@@ -42,7 +42,9 @@ class _S(TypedDict, total=False):
 
 async def _facts(s: _S):
     c = s["ctx"]
-    return {"facts": await asyncio.to_thread(run_facts, s["text"], c["retriever"], c["last_checked"])}
+    ids = s["intent"].scheme_ids
+    return {"facts": await asyncio.to_thread(run_facts, s["text"], c["retriever"], c["last_checked"],
+                                             ids[0] if len(ids) == 1 else None)}
 
 
 async def _pattern(s: _S):
@@ -72,7 +74,7 @@ _GRAPH = _build()
 
 
 def _disposition(intent: IntentResult, f: FactsResult, p: PatternResult, c: ComplianceResult) -> str:
-    if c.advice_refusal:
+    if c.advice_refusal or intent.intent == "out_of_scope":
         return "refuse"
     if intent.intent == "account_issue":
         return "account"
@@ -114,7 +116,10 @@ def merge_draft(intent: IntentResult, f: FactsResult, p: PatternResult, c: Compl
     disp = _disposition(intent, f, p, c)
     citation = last_checked = None
     if disp == "refuse":
-        reply = PERFORMANCE_REFUSAL if "performance_claim" in c.flags else ADVICE_REFUSAL
+        if intent.intent == "out_of_scope" and not c.advice_refusal:
+            reply = OUT_OF_SCOPE_REPLY
+        else:
+            reply = PERFORMANCE_REFUSAL if "performance_claim" in c.flags else ADVICE_REFUSAL
     elif disp == "account":
         reply = ACCOUNT_REPLY
     elif disp == "handoff":

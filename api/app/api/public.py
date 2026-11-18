@@ -1,19 +1,30 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException
+from datetime import date
+from typing import Literal
+
+from fastapi import APIRouter, Depends, HTTPException, Request
+from starlette.formparsers import MultiPartException, MultiPartParser
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app import deps
+from app.config import get_settings
+from app.guard.ratelimit import limit_ask, limit_preview, limit_voice
 from app.db import SessionLocal, get_db
-from app.models import Ticket
-from app.tickets import service as ts
+from app.desk.templates import OUT_OF_SCOPE_REPLY
+from app.models import Action, DraftTranslation, Ticket
+from app.tickets import service as ts, worker
+from app.voice import stt
+from app.weekly.summary import build_summary, ticket_checks
 
 router = APIRouter(prefix="/api")
 
 
 class AskIn(BaseModel):
     text: str
+    scheme_id: str | None = None
+    channel: Literal["text", "voice"] = "text"
 
 
 async def _process(ticket_id: int, db: Session | None = None):
@@ -26,7 +37,7 @@ async def _process(ticket_id: int, db: Session | None = None):
             db.close()
 
 
-@router.post("/ask/preview")
+@router.post("/ask/preview", dependencies=[Depends(limit_preview)])
 async def ask_preview(body: AskIn):
     try:
         return await ts.preview(body.text)
@@ -34,14 +45,18 @@ async def ask_preview(body: AskIn):
         raise HTTPException(422, str(e))
 
 
-@router.post("/ask")
+@router.post("/ask", dependencies=[Depends(limit_ask)])
 async def ask(body: AskIn, db: Session = Depends(get_db)):
     try:
-        t, intent = await ts.create_ticket(db, body.text)
+        t, intent = await ts.create_ticket(db, body.text, channel=body.channel, scheme_id=body.scheme_id)
     except ValueError as e:
         raise HTTPException(422, str(e))
-    await _process(t.id, db)  # synchronous in Plan 1; Plan 3 moves this to a worker queue for latency
-    notice = ts.SCOPE_NOTICE if intent.intent in ("advice_request", "performance_request") else None
+    if get_settings().ticket_worker_inline:
+        await _process(t.id, db)
+    else:
+        worker.submit(t.id)   # the page shows "received" at once and polls for "in review"
+    notice = (ts.SCOPE_NOTICE if intent.intent in ("advice_request", "performance_request")
+              else OUT_OF_SCOPE_REPLY if intent.intent == "out_of_scope" else None)
     return {"code": t.code, "status": db.get(Ticket, t.id).status, "notice": notice}
 
 
@@ -52,4 +67,81 @@ def ticket_status(code: str, db: Session = Depends(get_db)):
         raise HTTPException(404, "ticket not found")
     return {"code": t.code, "status": t.status, "question": t.question_redacted,
             "answer": t.answer_text if t.status == "answered" else None, "answered_at": t.answered_at,
-            "language": t.language}
+            "language": t.language, "intent": t.intent, "answer_local": _published_translation(db, t),
+            "checks": ticket_checks(db, t), "approval": "auto" if get_settings().auto_approve else "person"}
+
+
+@router.get("/weekly/summary")
+def weekly_summary(db: Session = Depends(get_db)):
+    body = build_summary(db, date.today())
+    if body is None:
+        raise HTTPException(404, "no weekly pulse yet")
+    return body
+
+
+def _published_translation(db: Session, t: Ticket) -> dict | None:
+    """The Hindi text of the draft whose reply_publish was executed — never one still awaiting approval."""
+    if t.status != "answered":
+        return None
+    row = (db.query(DraftTranslation).join(Action, Action.draft_id == DraftTranslation.draft_id)
+           .filter(Action.type == "reply_publish", Action.status == "executed", Action.target_ref == t.code)
+           .order_by(Action.id.desc()).first())
+    return {"language": row.language, "text": row.text} if row else None
+
+
+STT_FAIL = "Couldn't hear that — try again or type"
+VOICE_DOWN = "Voice is unavailable right now — please type your question."
+
+
+async def _capped(stream, limit: int):
+    """Pass the body through, refusing it once it passes `limit` — chunked uploads have no Content-Length."""
+    total = 0
+    async for chunk in stream:
+        total += len(chunk)
+        if total > limit:
+            raise HTTPException(413, "recording too large")
+        yield chunk
+
+
+class _InMemoryParser(MultiPartParser):
+    spool_max_size = 1 << 30  # never roll an upload over to a temp file: audio stays in memory
+
+
+@router.post("/voice/transcribe", dependencies=[Depends(limit_voice)])
+async def voice_transcribe(request: Request):
+    s = get_settings()
+    if int(request.headers.get("content-length") or 0) > s.voice_max_bytes + 65_536:
+        raise HTTPException(413, "recording too large")
+    audio = b""
+    try:
+        try:
+            parser = _InMemoryParser(request.headers, _capped(request.stream(), s.voice_max_bytes + 65_536),
+                                     max_files=1, max_fields=2)
+            form = await parser.parse()
+        except MultiPartException:
+            raise HTTPException(422, STT_FAIL)
+        upload = form.get("audio")
+        try:
+            duration = int(form.get("duration_ms") or 0)
+        except ValueError:
+            duration = 0
+        if upload is None or isinstance(upload, str):
+            raise HTTPException(422, STT_FAIL)
+        audio = await upload.read()
+        await upload.close()
+        if len(audio) > s.voice_max_bytes:
+            raise HTTPException(413, "recording too large")
+        if not audio or not (s.voice_min_ms <= duration <= s.voice_max_ms):
+            raise HTTPException(422, STT_FAIL)
+        try:
+            transcript = await stt.transcribe(audio, upload.filename or "clip.webm")
+        except stt.NoSpeech:
+            raise HTTPException(422, STT_FAIL)
+        except stt.VoiceUnavailable:
+            raise HTTPException(503, VOICE_DOWN)
+    finally:
+        del audio
+    try:
+        return await ts.preview(transcript.text, language=stt.language_hint(transcript))
+    except ValueError:
+        raise HTTPException(422, STT_FAIL)

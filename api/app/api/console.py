@@ -8,7 +8,8 @@ from app.approvals import service as ap
 from app.corpus.refresh import refresh_corpus
 from app.db import get_db
 from app.deps import require_console
-from app.models import Action, Draft, Source, Ticket
+from app.models import Action, Draft, DraftTranslation, Source, Ticket
+from app.tickets import worker
 
 router = APIRouter(prefix="/api/console", dependencies=[Depends(require_console)])
 
@@ -17,27 +18,29 @@ class EditIn(BaseModel):
     reply: str
 
 
-def _draft_out(d: Draft | None):
+def _draft_out(d: Draft | None, db: Session | None = None):
     if d is None:
         return None
-    return {"id": d.id, "reply": d.reply, "citation": d.citation, "last_checked": d.last_checked,
+    tr = db.query(DraftTranslation).filter_by(draft_id=d.id).one_or_none() if db is not None else None
+    return {"translation": {"language": tr.language, "text": tr.text} if tr else None,"id": d.id, "reply": d.reply, "citation": d.citation, "last_checked": d.last_checked,
             "disposition": d.disposition, "routing": {"team": d.routing_team, "priority": d.routing_priority,
                                                       "why": d.routing_why},
             "review_status": d.review_status, "review_failures": d.review_failures, "searched": d.searched,
             "reused_explainer_id": d.reused_explainer_id, "edited": d.edited}
 
 
+def queue_item(db: Session, t: Ticket) -> dict:
+    d = db.query(Draft).filter_by(ticket_id=t.id).order_by(Draft.id.desc()).first()
+    a = db.query(Action).filter_by(draft_id=d.id).order_by(Action.id.desc()).first() if d else None
+    return {"code": t.code, "status": t.status, "intent": t.intent, "language": t.language,
+            "question": t.question_redacted, "pii_types": t.pii_types, "created_at": t.created_at,
+            "draft": _draft_out(d, db),
+            "action": {"id": a.id, "status": a.status, "target": a.target_label, "error": a.error} if a else None}
+
+
 @router.get("/queue")
 def queue(db: Session = Depends(get_db)):
-    out = []
-    for t in db.query(Ticket).order_by(Ticket.created_at.desc(), Ticket.id.desc()).limit(200):
-        d = db.query(Draft).filter_by(ticket_id=t.id).order_by(Draft.id.desc()).first()
-        a = db.query(Action).filter_by(draft_id=d.id).order_by(Action.id.desc()).first() if d else None
-        out.append({"code": t.code, "status": t.status, "intent": t.intent, "language": t.language,
-                    "question": t.question_redacted, "pii_types": t.pii_types, "created_at": t.created_at,
-                    "draft": _draft_out(d),
-                    "action": {"id": a.id, "status": a.status, "target": a.target_label} if a else None})
-    return out
+    return [queue_item(db, t) for t in db.query(Ticket).order_by(Ticket.created_at.desc(), Ticket.id.desc()).limit(200)]
 
 
 def _guard(fn, *args):
@@ -51,7 +54,7 @@ def _guard(fn, *args):
 
 @router.post("/drafts/{draft_id}/edit")
 def edit(draft_id: int, body: EditIn, db: Session = Depends(get_db)):
-    return _draft_out(_guard(ap.edit_draft, db, draft_id, body.reply, "console"))
+    return _draft_out(_guard(ap.edit_draft, db, draft_id, body.reply, "console"), db)
 
 
 @router.post("/actions/{action_id}/approve")
@@ -72,6 +75,25 @@ def reject(action_id: int, db: Session = Depends(get_db)):
     return {"id": a.id, "status": a.status}
 
 
+def reprocess_ticket(db: Session, code: str, actor: str) -> dict:
+    """Run the desk again on a failed (or stuck) ticket; shared by the console and the page."""
+    t = db.query(Ticket).filter_by(code=code).one_or_none()
+    if t is None:
+        raise HTTPException(404, "ticket not found")
+    if t.status not in ("failed", "received"):
+        raise HTTPException(409, f"ticket is {t.status}; only failed or received tickets can be re-run")
+    t.status = "received"
+    ap.audit(db, actor, "reprocess", "ticket", t.id)
+    db.commit()
+    worker.submit(t.id)
+    return {"code": t.code, "status": "received"}
+
+
+@router.post("/tickets/{code}/reprocess")
+def reprocess(code: str, db: Session = Depends(get_db)):
+    return reprocess_ticket(db, code, "console")
+
+
 @router.get("/sources")
 def sources(db: Session = Depends(get_db)):
     return [{"url": s.url, "title": s.title, "kind": s.kind, "status": s.status,
@@ -86,7 +108,6 @@ def refresh(db: Session = Depends(get_db)):
 
 
 # --- Weekly loop, explainers, actions (Plan 2) -------------------------------------------------
-import asyncio  # noqa: E402
 import threading  # noqa: E402
 from datetime import datetime, timezone  # noqa: E402
 
@@ -113,10 +134,10 @@ def _explainer_out(db: Session, e: Explainer) -> dict:
 def _run_in_background(run_id: int) -> None:
     def go():
         from app import db as dbmod
-        from app.weekly.run import run_weekly
+        from app.approvals.auto import weekly_and_deliver
         s = dbmod.SessionLocal()
         try:
-            asyncio.run(run_weekly(s, now=datetime.now(timezone.utc), run_id=run_id))
+            weekly_and_deliver(s, now=datetime.now(timezone.utc), run_id=run_id)
         finally:
             s.close()
     threading.Thread(target=go, daemon=True).start()
@@ -138,6 +159,10 @@ def weekly_latest(db: Session = Depends(get_db)):
     run = db.query(WeeklyRun).order_by(WeeklyRun.id.desc()).first()
     if run is None:
         raise HTTPException(404, "no weekly runs yet")
+    return weekly_view(db, run)
+
+
+def weekly_view(db: Session, run: WeeklyRun) -> dict:
     s = get_settings()
     themes = db.query(Theme).filter_by(run_id=run.id).order_by(Theme.rank).all()
     acts = db.query(Action).filter_by(source_ref=f"weekly_run:{run.id}").all()

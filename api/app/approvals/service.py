@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from app.desk.contracts import FactsResult, OrchestratorOutput, RoutingNote
 from app.desk.reviewer import review_draft
 from app.guard.pii import redact
-from app.models import Action, AuditLog, Draft, Explainer
+from app.models import Action, AuditLog, Draft, DraftTranslation, Explainer, Ticket
 
 MIN_REPLY_CHARS = 10
 
@@ -77,12 +77,40 @@ def approve(db: Session, action_id: int, actor: str) -> Action:
 
 
 def retry(db: Session, action_id: int, actor: str) -> Action:
-    """A failed action (e.g. expired Google token) is re-run on an explicit human click — never automatically."""
+    """Re-run a failed action (e.g. expired Google token): by a person, or by the auto-reviewer's capped weekly retry."""
     a = _get(db, action_id)
     _claim(db, action_id, "approved", from_status="failed")
     db.refresh(a)
     audit(db, actor, "retry", "action", a.id)
     return _execute(db, a, actor)
+
+
+DELIVERY = ("doc_append", "email_draft")
+
+
+def plain_error(raw: str) -> str:
+    """What the person on the page reads when a Google write fails; the raw error stays in the audit log."""
+    low = raw.lower()
+    if "invalid_grant" in low or "token has been expired" in low:
+        return "Google sign-in has expired — the owner needs to reconnect Google, then press Retry."
+    if low.startswith("timeouterror") or "timed out" in low:
+        return "Google didn't answer in time. Check the Doc or Gmail drafts before pressing Retry — it may have gone through."
+    detail = raw.split(": ", 1)[1] if ": " in raw else raw
+    return f"The Google write failed: {detail}"[:500]
+
+
+def supersede_older_deliveries(db: Session, run_id: int) -> int:
+    """A new weekly pulse replaces older ones: their waiting or failed Google writes can no longer be approved."""
+    older = (db.query(Action).filter(Action.type.in_(DELIVERY), Action.status.in_(("pending", "failed")),
+                                     Action.source_ref != f"weekly_run:{run_id}").all())
+    for a in older:
+        a.status, a.decided_at = "rejected", _now()
+        audit(db, "scheduler", "supersede", "action", a.id, f"replaced by weekly_run:{run_id}")
+        if a.type == "doc_append":
+            ex = _run_explainer(db, a)
+            if ex is not None and ex.status == "draft":
+                ex.status = "rejected"
+    return len(older)
 
 
 def _execute(db: Session, a: Action, actor: str) -> Action:
@@ -91,8 +119,9 @@ def _execute(db: Session, a: Action, actor: str) -> Action:
     try:
         ref = EXECUTORS[a.type](db, a)
     except Exception as exc:  # noqa: BLE001  — no silent retry; the failure is recorded on the action
-        a.status, a.error = "failed", redact(f"{type(exc).__name__}: {exc}").text[:500]
-        audit(db, actor, "fail", "action", a.id, a.error)
+        raw = redact(f"{type(exc).__name__}: {exc}").text[:500]
+        a.status, a.error = "failed", plain_error(raw) if a.type in DELIVERY else raw
+        audit(db, actor, "fail", "action", a.id, raw)
         db.commit()
         return a
     a.status, a.executed_at = "executed", _now()
@@ -106,11 +135,15 @@ def _execute(db: Session, a: Action, actor: str) -> Action:
     return a
 
 
-def reject(db: Session, action_id: int, actor: str) -> Action:
+def reject(db: Session, action_id: int, actor: str, *, close_ticket: bool = True) -> Action:
     a = _get(db, action_id)
     _claim(db, action_id, "rejected")
     db.refresh(a)
     audit(db, actor, "reject", "action", a.id)
+    if a.type == "reply_publish" and close_ticket:
+        t = db.query(Ticket).filter_by(code=a.target_ref).one_or_none()
+        if t is not None and t.status in ("received", "in_review"):
+            t.status = "closed"   # the asker sees "We couldn't answer this one." and can ask again
     if a.type == "doc_append":
         ex = _run_explainer(db, a)
         if ex is not None and ex.status == "draft":
@@ -136,6 +169,8 @@ def edit_draft(db: Session, draft_id: int, new_reply: str, actor: str) -> Draft:
                          last_checked=d.last_checked, searched=[]) if d.citation and d.last_checked else None)
     review = review_draft(out, facts=facts, round=1)
     d.reply, d.edited = reply, True
+    # the edited English is what the human approved; an old Hindi version would no longer match it
+    db.query(DraftTranslation).filter_by(draft_id=d.id).delete()
     d.review_status = "pass" if review.status == "pass" else "blocked"
     d.review_failures = [f.model_dump() for f in review.failures]
     audit(db, actor, "edit", "draft", d.id, f"review={d.review_status}")

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 import logging
 from datetime import datetime, timezone
 
@@ -13,7 +12,7 @@ log = logging.getLogger(__name__)
 
 
 def _weekly_job() -> None:
-    from app.weekly.run import run_weekly, start_run
+    from app.weekly.run import start_run
     db = SessionLocal()
     try:
         now = datetime.now(timezone.utc)
@@ -22,7 +21,8 @@ def _weekly_job() -> None:
         except ValueError:
             log.warning("scheduled weekly run skipped: a run is already running")
             return
-        run = asyncio.run(run_weekly(db, now=now, run_id=pre.id))
+        from app.approvals.auto import weekly_and_deliver
+        run = weekly_and_deliver(db, now=now, run_id=pre.id)
         log.info("scheduled weekly run %s -> %s", run.id, run.status)
     finally:
         db.close()
@@ -37,6 +37,19 @@ def _refresh_job() -> None:
         db.close()
 
 
+def _delivery_retry_job() -> None:
+    from app.approvals.auto import retry_failed_deliveries
+    if not get_settings().auto_approve:   # a person is in charge: failed writes wait for their Retry click
+        return
+    db = SessionLocal()
+    try:
+        n = retry_failed_deliveries(db)
+        if n:
+            log.info("retried %d failed Google delivery action(s)", n)
+    finally:
+        db.close()
+
+
 def start_scheduler():
     if not get_settings().scheduler_enabled:
         return None
@@ -46,6 +59,7 @@ def start_scheduler():
     sch.add_job(_weekly_job, CronTrigger(day_of_week="mon", hour=9, minute=0), id="weekly_loop", replace_existing=True)
     sch.add_job(_refresh_job, CronTrigger(day_of_week="sun", hour=21, minute=0), id="corpus_refresh",
                 replace_existing=True)
+    sch.add_job(_delivery_retry_job, CronTrigger(minute=5), id="delivery_retry", replace_existing=True)
     sch.start()
-    log.info("scheduler started: weekly loop Mon 09:00 IST, corpus refresh Sun 21:00 IST")
+    log.info("scheduler started: weekly loop Mon 09:00 IST, corpus refresh Sun 21:00 IST, delivery retry hourly")
     return sch

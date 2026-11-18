@@ -2,12 +2,21 @@ import os
 os.environ["USE_LLM"] = "0"
 os.environ["DATABASE_URL"] = "sqlite://"
 os.environ["CONSOLE_PASSWORD"] = "test-pass"
+os.environ["TICKET_WORKER_INLINE"] = "1"
+os.environ["AUTO_APPROVE"] = "0"   # Plan 1-3 tests keep pending actions; Plan 3b tests turn it on
 
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.pool import StaticPool
 
 from app import db as dbmod
+
+
+@pytest.fixture(autouse=True)
+def _fresh_rate_limits():
+    from app.guard.ratelimit import reset_limits
+    reset_limits()
+    yield
 
 
 @pytest.fixture()

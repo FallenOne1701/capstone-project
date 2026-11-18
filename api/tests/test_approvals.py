@@ -58,7 +58,7 @@ def test_reject_leaves_queue_untouched(db_session, two_tickets):
     before = _snapshot(db_session)
     reject(db_session, a0.id, "agent")
     diff = _diff(before, _snapshot(db_session))
-    assert diff["actions"] == [a0.id] and diff["tickets"] == [] and diff["drafts"] == []
+    assert diff["actions"] == [a0.id] and diff["tickets"] == [t0.id] and diff["drafts"] == []   # its own ticket closes
     assert len(diff["audit_log"]) == 1
 
 

@@ -52,6 +52,17 @@ class Settings(BaseSettings):
 
     max_message_chars: int = 500
 
+    # Voice (Plan 3)
+    groq_stt_model: str = "whisper-large-v3-turbo"
+    voice_max_bytes: int = 5_000_000
+    voice_min_ms: int = 1000
+    voice_max_ms: int = 61000
+    trust_proxy: bool = False  # behind Railway's proxy: rate-limit by the first X-Forwarded-For hop
+    auto_approve: bool = False  # off: a person approves every reply and Google write on the page; on: the reviewer agent does
+    ticket_worker_inline: bool = False  # tests: process tickets inside the /api/ask request
+    e2e_seed: bool = False  # Playwright stack only; honoured only with USE_LLM=0
+    corpus_bootstrap: bool = True  # e2e: never fetch pages or rebuild the shared index at startup
+
     # Weekly loop (Plan 2)
     data_outbox_dir: Path = API_ROOT / "data" / "outbox"
     scheduler_enabled: bool = False
