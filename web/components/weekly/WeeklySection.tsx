@@ -1,6 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { ExplainersList } from "@/components/desk/ExplainersList";
+import { SourcesList } from "@/components/desk/SourcesList";
+import { WeeklyApprovals } from "@/components/desk/WeeklyApprovals";
 import { ApiError, weeklySummary } from "@/lib/api";
 import { weekHeading } from "@/lib/labels";
 import type { WeeklySummary } from "@/lib/types";
@@ -10,6 +13,8 @@ type State = { kind: "loading" } | { kind: "none" } | { kind: "error" } | { kind
 /** This week's review pulse, rebuilt automatically every Monday from Play Store reviews. */
 export function WeeklySection() {
   const [state, setState] = useState<State>({ kind: "loading" });
+  const [version, setVersion] = useState(0);
+  const refresh = useCallback(() => setVersion((v) => v + 1), []);
 
   useEffect(() => {
     let alive = true;
@@ -19,7 +24,7 @@ export function WeeklySection() {
     return () => {
       alive = false;
     };
-  }, []);
+  }, [version]); // a finished "Run weekly now" reloads the pulse
 
   return (
     <section aria-label="Weekly pulse" className="mt-8 rounded-xl border border-border-subtle bg-surface-panel p-5 shadow-sm">
@@ -27,6 +32,11 @@ export function WeeklySection() {
       {state.kind === "none" && <p className="text-sm text-text-secondary">The first weekly pulse hasn&apos;t run yet.</p>}
       {state.kind === "error" && <p className="text-sm text-text-secondary">The weekly pulse can&apos;t be loaded right now.</p>}
       {state.kind === "ok" && <Pulse data={state.data} />}
+      <div className="mt-6 space-y-4 border-t border-border-subtle pt-5">
+        <WeeklyApprovals onRunDone={refresh} />
+        <ExplainersList />
+        <SourcesList />
+      </div>
     </section>
   );
 }

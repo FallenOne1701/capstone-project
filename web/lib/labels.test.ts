@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ASK_AGAIN, CLOSED_TEXT, clarifyQuestion, intentLabel, scopeNotice, statusLabel, waitingText, weekHeading } from "./labels";
+import { actionTitle, ASK_AGAIN, CLOSED_TEXT, clarifyQuestion, intentLabel, scopeNotice, statusLabel, waitingText, weekHeading } from "./labels";
 import type { Preview } from "./types";
 
 const base: Preview = {
@@ -72,5 +72,16 @@ describe("Plan 3c: who approves, closed tickets", () => {
   it("gives the exact rejected copy", () => {
     expect(CLOSED_TEXT).toBe("We couldn't answer this one.");
     expect(ASK_AGAIN).toBe("Ask again");
+  });
+});
+
+describe("actionTitle", () => {
+  it("says the Gmail draft is not sent", () => {
+    expect(actionTitle({ type: "email_draft", target_label: "Gmail draft to the product team (d***@x.com)" }))
+      .toBe("Gmail draft to the product team (d***@x.com), not sent");
+  });
+  it("keeps the Doc target as the API states it", () => {
+    expect(actionTitle({ type: "doc_append", target_label: "Append to the weekly pulse Google Doc (DOC1)" }))
+      .toBe("Append to the weekly pulse Google Doc (DOC1)");
   });
 });

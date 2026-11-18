@@ -62,3 +62,8 @@ export function weekHeading(weekEnding: string, stale: boolean): string {
   const when = `${d} ${MONTHS[m - 1]} ${y}`;
   return `${stale ? "Latest pulse" : "This week"} · week ending ${when}`;
 }
+
+/** The approval title states exactly what is written where; the Gmail one also says it is never sent. */
+export function actionTitle(a: { type: string; target_label: string }): string {
+  return a.type === "email_draft" ? `${a.target_label}, not sent` : a.target_label;
+}

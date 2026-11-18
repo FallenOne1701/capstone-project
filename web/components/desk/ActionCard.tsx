@@ -1,6 +1,7 @@
 "use client";
 
 import type { Action } from "@/lib/types";
+import { actionTitle } from "@/lib/labels";
 import { ActionButtons } from "./ActionButtons";
 
 const CONFIRM: Record<string, string> = {
@@ -21,7 +22,7 @@ export function ActionCard({ a, onDone }: { a: Action; onDone: () => void }) {
       <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
         <span className="font-mono-token text-sm text-text-tertiary">#{a.id}</span>
         <span className="font-medium">{TYPE[a.type] ?? a.type}</span>
-        <span className="text-sm text-text-secondary">{a.target_label}</span>
+        <span className="text-sm text-text-secondary">{actionTitle(a)}</span>
       </header>
       <p className="mt-1 text-xs text-text-tertiary">
         created {when(a.created_at)} · decided {when(a.decided_at)}
@@ -30,7 +31,7 @@ export function ActionCard({ a, onDone }: { a: Action; onDone: () => void }) {
       </p>
       {a.content && (
         <details className="mt-3">
-          <summary className="cursor-pointer text-sm text-primary">Content preview</summary>
+          <summary className="cursor-pointer text-sm text-primary">Exactly what will be written</summary>
           <pre className="font-mono-token mt-2 max-h-96 overflow-auto whitespace-pre-wrap rounded-md bg-surface-bg p-3 text-xs">{a.content}</pre>
         </details>
       )}
