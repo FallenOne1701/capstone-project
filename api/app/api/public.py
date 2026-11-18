@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import date
 from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -14,6 +15,7 @@ from app.desk.templates import OUT_OF_SCOPE_REPLY
 from app.models import Action, DraftTranslation, Ticket
 from app.tickets import service as ts, worker
 from app.voice import stt
+from app.weekly.summary import build_summary, ticket_checks
 
 router = APIRouter(prefix="/api")
 
@@ -64,7 +66,16 @@ def ticket_status(code: str, db: Session = Depends(get_db)):
         raise HTTPException(404, "ticket not found")
     return {"code": t.code, "status": t.status, "question": t.question_redacted,
             "answer": t.answer_text if t.status == "answered" else None, "answered_at": t.answered_at,
-            "language": t.language, "intent": t.intent, "answer_local": _published_translation(db, t)}
+            "language": t.language, "intent": t.intent, "answer_local": _published_translation(db, t),
+            "checks": ticket_checks(db, t)}
+
+
+@router.get("/weekly/summary")
+def weekly_summary(db: Session = Depends(get_db)):
+    body = build_summary(db, date.today())
+    if body is None:
+        raise HTTPException(404, "no weekly pulse yet")
+    return body
 
 
 def _published_translation(db: Session, t: Ticket) -> dict | None:
