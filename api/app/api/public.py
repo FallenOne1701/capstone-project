@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 
 from app import deps
 from app.config import get_settings
+from app.guard.ratelimit import limit_ask, limit_preview, limit_voice
 from app.db import SessionLocal, get_db
 from app.desk.templates import OUT_OF_SCOPE_REPLY
 from app.models import Action, DraftTranslation, Ticket
@@ -36,7 +37,7 @@ async def _process(ticket_id: int, db: Session | None = None):
             db.close()
 
 
-@router.post("/ask/preview")
+@router.post("/ask/preview", dependencies=[Depends(limit_preview)])
 async def ask_preview(body: AskIn):
     try:
         return await ts.preview(body.text)
@@ -44,7 +45,7 @@ async def ask_preview(body: AskIn):
         raise HTTPException(422, str(e))
 
 
-@router.post("/ask")
+@router.post("/ask", dependencies=[Depends(limit_ask)])
 async def ask(body: AskIn, db: Session = Depends(get_db)):
     try:
         t, intent = await ts.create_ticket(db, body.text, channel=body.channel, scheme_id=body.scheme_id)
@@ -106,7 +107,7 @@ class _InMemoryParser(MultiPartParser):
     spool_max_size = 1 << 30  # never roll an upload over to a temp file: audio stays in memory
 
 
-@router.post("/voice/transcribe")
+@router.post("/voice/transcribe", dependencies=[Depends(limit_voice)])
 async def voice_transcribe(request: Request):
     s = get_settings()
     if int(request.headers.get("content-length") or 0) > s.voice_max_bytes + 65_536:

@@ -12,6 +12,13 @@ from sqlalchemy.pool import StaticPool
 from app import db as dbmod
 
 
+@pytest.fixture(autouse=True)
+def _fresh_rate_limits():
+    from app.guard.ratelimit import reset_limits
+    reset_limits()
+    yield
+
+
 @pytest.fixture()
 def db_session(monkeypatch):
     from sqlalchemy import create_engine
