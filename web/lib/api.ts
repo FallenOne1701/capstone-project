@@ -1,4 +1,4 @@
-import type { AskResult, Preview, TicketView, WeeklySummary } from "./types";
+import type { AskResult, DraftView, Explainer, Preview, QueueItem, Source, TicketView, WeeklyLatest, WeeklySummary } from "./types";
 
 export const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000").replace(/\/$/, "");
 
@@ -29,7 +29,7 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
   return body as T;
 }
 
-const post = (body: unknown): RequestInit => ({ method: "POST", body: JSON.stringify(body) });
+const post = (body?: unknown): RequestInit => ({ method: "POST", body: body === undefined ? undefined : JSON.stringify(body) });
 
 export const preview = (text: string) => api<Preview>("/api/ask/preview", post({ text }));
 export const ask = (b: { text: string; scheme_id?: string | null; channel?: "text" | "voice" }) =>
@@ -43,3 +43,17 @@ export function transcribe(blob: Blob, durationMs: number): Promise<Preview> {
   return api<Preview>("/api/voice/transcribe", { method: "POST", body: fd });
 }
 export const weeklySummary = () => api<WeeklySummary>("/api/weekly/summary");
+
+// The page's approval desk (Plan 3c): open routes, every click audited as "page".
+type Status = { id: number; status: string; error?: string | null };
+const enc = encodeURIComponent;
+export const deskQueue = () => api<QueueItem[]>("/api/desk/queue");
+export const approve = (id: number) => api<Status>(`/api/desk/actions/${id}/approve`, post());
+export const reject = (id: number) => api<Status>(`/api/desk/actions/${id}/reject`, post());
+export const retry = (id: number) => api<Status>(`/api/desk/actions/${id}/retry`, post());
+export const editDraft = (id: number, reply: string) => api<DraftView>(`/api/desk/drafts/${id}/edit`, post({ reply }));
+export const reprocess = (code: string) => api<{ code: string; status: string }>(`/api/desk/tickets/${enc(code)}/reprocess`, post());
+export const weeklyLatest = () => api<WeeklyLatest>("/api/desk/weekly/latest");
+export const weeklyRun = () => api<{ status: string; run_id: number }>("/api/desk/weekly/run", post());
+export const sources = () => api<Source[]>("/api/desk/sources");
+export const explainers = () => api<Explainer[]>("/api/desk/explainers");

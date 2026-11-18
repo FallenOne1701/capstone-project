@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { api, ApiError, ask } from "./api";
+import { api, ApiError, approve, ask, deskQueue, editDraft } from "./api";
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -33,5 +33,28 @@ describe("api", () => {
     expect(err).toBeInstanceOf(ApiError);
     expect(err.status).toBe(429);
     expect(err.detail).toBe("You've asked a lot of questions quickly — please wait a few minutes.");
+  });
+});
+
+describe("desk api (Plan 3c)", () => {
+  it("approves on the open desk route with no console key", async () => {
+    const f = mockFetch(200, { id: 7, status: "executed" });
+    await approve(7);
+    expect(f.mock.calls[0][0]).toMatch(/\/api\/desk\/actions\/7\/approve$/);
+    expect(f.mock.calls[0][1]?.method).toBe("POST");
+    expect(new Headers(f.mock.calls[0][1]?.headers).get("X-Console-Key")).toBeNull();
+  });
+
+  it("posts an edit as JSON", async () => {
+    const f = mockFetch(200, {});
+    await editDraft(3, "x");
+    expect(f.mock.calls[0][0]).toMatch(/\/api\/desk\/drafts\/3\/edit$/);
+    expect(JSON.parse(f.mock.calls[0][1]!.body as string)).toEqual({ reply: "x" });
+  });
+
+  it("reads the queue from the desk", async () => {
+    const f = mockFetch(200, []);
+    await deskQueue();
+    expect(f.mock.calls[0][0]).toMatch(/\/api\/desk\/queue$/);
   });
 });
