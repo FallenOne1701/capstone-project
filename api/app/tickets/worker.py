@@ -9,6 +9,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 from sqlalchemy.orm import Session
 
+from app.config import get_settings
 from app.models import Ticket
 
 log = logging.getLogger(__name__)
@@ -25,8 +26,18 @@ def _job(ticket_id: int) -> None:
         t = db.get(Ticket, ticket_id)
         if t is None or t.status != "received":   # already processed by an earlier submit
             return
-        asyncio.run(process_ticket(db, ticket_id, retriever=deps.get_retriever(),
-                                   themes_provider=deps.get_themes_provider()))
+        run = lambda: asyncio.run(process_ticket(db, ticket_id, retriever=deps.get_retriever(),  # noqa: E731
+                                                 themes_provider=deps.get_themes_provider()))
+        run()
+        db.expire_all()
+        if db.get(Ticket, ticket_id).status == "failed":   # one more try before giving up
+            db.get(Ticket, ticket_id).status = "received"
+            db.commit()
+            run()
+            db.expire_all()
+            if db.get(Ticket, ticket_id).status == "failed" and get_settings().auto_approve:
+                from app.approvals.auto import publish_fallback
+                publish_fallback(db, ticket_id, "desk error")   # nobody waits forever
     except Exception:  # noqa: BLE001  (process_ticket marks the ticket failed itself; this is a last resort)
         log.exception("desk job crashed for ticket id %s", ticket_id)
     finally:

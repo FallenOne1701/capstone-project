@@ -14,6 +14,21 @@ ACCOUNT_REPLY = (
 )
 
 
+FALLBACK_GENERIC_NAME = "HDFC mutual funds"
+FALLBACK_GENERIC_URL = REFUSAL_LINK
+
+
+def fallback_reply(scheme_id: str | None) -> tuple[str, str]:
+    """Fixed safe reply when the checks block a draft or the desk fails: no facts. Returns (reply, page url for the record)."""
+    from app.config import load_schemes
+    s = next((x for x in load_schemes()["schemes"] if x["scheme_id"] == scheme_id), None) if scheme_id else None
+    name = s["scheme_name"].split(" Fund")[0] if s else FALLBACK_GENERIC_NAME
+    url = s["url"] if s else FALLBACK_GENERIC_URL
+    # no link in the text: the reviewer allows links only next to a checked fact
+    return (f"We couldn't confirm an answer to this from official sources. "
+            f"Please see the official {name} page on Groww for its published details."), url
+
+
 def not_covered_reply(searched: list[str]) -> str:
     where = ", ".join(searched[:6]) if searched else "our HDFC scheme pages"
     return f"Our official sources don't cover this question. Searched: {where}."

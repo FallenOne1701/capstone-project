@@ -135,6 +135,9 @@ async def process_ticket(db: Session, ticket_id: int, *, retriever, themes_provi
         audit(db, "desk", "create", "draft", d.id, f"disposition={d.disposition} review={d.review_status}")
         audit(db, "desk", "create", "action", a.id, "reply_publish")
         db.commit()
+        if get_settings().auto_approve:
+            from app.approvals.auto import auto_decide
+            auto_decide(db, t.id)
         return d
     except Exception as exc:  # noqa: BLE001
         db.rollback()

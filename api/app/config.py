@@ -57,6 +57,7 @@ class Settings(BaseSettings):
     voice_max_bytes: int = 5_000_000
     voice_min_ms: int = 1000
     voice_max_ms: int = 61000
+    auto_approve: bool = True  # the reviewer agent publishes passing replies and weekly deliveries
     ticket_worker_inline: bool = False  # tests: process tickets inside the /api/ask request
     e2e_seed: bool = False  # Playwright stack only; honoured only with USE_LLM=0
     corpus_bootstrap: bool = True  # e2e: never fetch pages or rebuild the shared index at startup

@@ -3,6 +3,7 @@ os.environ["USE_LLM"] = "0"
 os.environ["DATABASE_URL"] = "sqlite://"
 os.environ["CONSOLE_PASSWORD"] = "test-pass"
 os.environ["TICKET_WORKER_INLINE"] = "1"
+os.environ["AUTO_APPROVE"] = "0"   # Plan 1-3 tests keep pending actions; Plan 3b tests turn it on
 
 import pytest
 from fastapi.testclient import TestClient

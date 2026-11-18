@@ -77,7 +77,7 @@ def approve(db: Session, action_id: int, actor: str) -> Action:
 
 
 def retry(db: Session, action_id: int, actor: str) -> Action:
-    """A failed action (e.g. expired Google token) is re-run on an explicit human click — never automatically."""
+    """Re-run a failed action (e.g. expired Google token): by a person, or by the auto-reviewer's capped weekly retry."""
     a = _get(db, action_id)
     _claim(db, action_id, "approved", from_status="failed")
     db.refresh(a)
