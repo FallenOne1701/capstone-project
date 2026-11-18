@@ -85,9 +85,11 @@ def create_app(*, init_corpus: bool = True) -> FastAPI:
     _e2e_seed()
 
     from app.api.console import router as console_router
+    from app.api.desk import router as desk_router
     from app.api.public import router as public_router
     app.include_router(public_router)
     app.include_router(console_router)
+    app.include_router(desk_router)
 
     @app.get("/health")
     def health(db: Session = Depends(get_db)):

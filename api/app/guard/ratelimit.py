@@ -14,6 +14,8 @@ from fastapi import HTTPException, Request
 from app.config import get_settings
 
 RATE_MSG = "You've asked a lot of questions quickly — please wait a few minutes."
+DESK_MSG = "Too many clicks in a short time — please wait a few minutes."
+WEEKLY_MSG = "The weekly pulse was run in the last hour — please try again later."
 
 
 class RateLimiter:
@@ -41,15 +43,16 @@ class RateLimiter:
 
 def _fresh():
     return (RateLimiter(10, 600), RateLimiter(30, 600), RateLimiter(3, 60),
-            RateLimiter(300, 86_400), RateLimiter(900, 86_400), RateLimiter(150, 86_400))
+            RateLimiter(300, 86_400), RateLimiter(900, 86_400), RateLimiter(150, 86_400),
+            RateLimiter(30, 600), RateLimiter(1, 3600))
 
 
-_ask, _preview, _voice, _ask_daily, _preview_daily, _voice_daily = _fresh()
+_ask, _preview, _voice, _ask_daily, _preview_daily, _voice_daily, _desk, _weekly = _fresh()
 
 
 def reset_limits() -> None:
-    global _ask, _preview, _voice, _ask_daily, _preview_daily, _voice_daily
-    _ask, _preview, _voice, _ask_daily, _preview_daily, _voice_daily = _fresh()
+    global _ask, _preview, _voice, _ask_daily, _preview_daily, _voice_daily, _desk, _weekly
+    _ask, _preview, _voice, _ask_daily, _preview_daily, _voice_daily, _desk, _weekly = _fresh()
 
 
 def client_key(request: Request) -> str:
@@ -62,9 +65,9 @@ def client_key(request: Request) -> str:
     return request.client.host if request.client else "unknown"
 
 
-def _check(limiter: RateLimiter, key: str) -> None:
+def _check(limiter: RateLimiter, key: str, msg: str = RATE_MSG) -> None:
     if not limiter.hit(key):
-        raise HTTPException(429, RATE_MSG)
+        raise HTTPException(429, msg)
 
 
 def limit_ask(request: Request) -> None:
@@ -81,3 +84,13 @@ def limit_preview(request: Request) -> None:
 def limit_voice(request: Request) -> None:
     _check(_voice, client_key(request))
     _check(_voice_daily, "all")
+
+
+def limit_desk(request: Request) -> None:
+    """The page's approve / edit / reject / retry / re-run clicks: open to anyone, so capped per visitor."""
+    _check(_desk, client_key(request), DESK_MSG)
+
+
+def limit_weekly_run(request: Request) -> None:
+    """One weekly run an hour for everyone: each run fetches reviews and makes LLM calls."""
+    _check(_weekly, "all", WEEKLY_MSG)

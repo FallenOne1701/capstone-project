@@ -29,17 +29,18 @@ def _draft_out(d: Draft | None, db: Session | None = None):
             "reused_explainer_id": d.reused_explainer_id, "edited": d.edited}
 
 
+def queue_item(db: Session, t: Ticket) -> dict:
+    d = db.query(Draft).filter_by(ticket_id=t.id).order_by(Draft.id.desc()).first()
+    a = db.query(Action).filter_by(draft_id=d.id).order_by(Action.id.desc()).first() if d else None
+    return {"code": t.code, "status": t.status, "intent": t.intent, "language": t.language,
+            "question": t.question_redacted, "pii_types": t.pii_types, "created_at": t.created_at,
+            "draft": _draft_out(d, db),
+            "action": {"id": a.id, "status": a.status, "target": a.target_label, "error": a.error} if a else None}
+
+
 @router.get("/queue")
 def queue(db: Session = Depends(get_db)):
-    out = []
-    for t in db.query(Ticket).order_by(Ticket.created_at.desc(), Ticket.id.desc()).limit(200):
-        d = db.query(Draft).filter_by(ticket_id=t.id).order_by(Draft.id.desc()).first()
-        a = db.query(Action).filter_by(draft_id=d.id).order_by(Action.id.desc()).first() if d else None
-        out.append({"code": t.code, "status": t.status, "intent": t.intent, "language": t.language,
-                    "question": t.question_redacted, "pii_types": t.pii_types, "created_at": t.created_at,
-                    "draft": _draft_out(d, db),
-                    "action": {"id": a.id, "status": a.status, "target": a.target_label, "error": a.error} if a else None})
-    return out
+    return [queue_item(db, t) for t in db.query(Ticket).order_by(Ticket.created_at.desc(), Ticket.id.desc()).limit(200)]
 
 
 def _guard(fn, *args):
@@ -74,18 +75,23 @@ def reject(action_id: int, db: Session = Depends(get_db)):
     return {"id": a.id, "status": a.status}
 
 
-@router.post("/tickets/{code}/reprocess")
-def reprocess(code: str, db: Session = Depends(get_db)):
+def reprocess_ticket(db: Session, code: str, actor: str) -> dict:
+    """Run the desk again on a failed (or stuck) ticket; shared by the console and the page."""
     t = db.query(Ticket).filter_by(code=code).one_or_none()
     if t is None:
         raise HTTPException(404, "ticket not found")
     if t.status not in ("failed", "received"):
         raise HTTPException(409, f"ticket is {t.status}; only failed or received tickets can be re-run")
     t.status = "received"
-    ap.audit(db, "console", "reprocess", "ticket", t.id)
+    ap.audit(db, actor, "reprocess", "ticket", t.id)
     db.commit()
     worker.submit(t.id)
     return {"code": t.code, "status": "received"}
+
+
+@router.post("/tickets/{code}/reprocess")
+def reprocess(code: str, db: Session = Depends(get_db)):
+    return reprocess_ticket(db, code, "console")
 
 
 @router.get("/sources")
