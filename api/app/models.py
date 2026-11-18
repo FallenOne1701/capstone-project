@@ -62,6 +62,16 @@ class Draft(Base):
     edited: Mapped[bool] = mapped_column(Boolean, default=False)
 
 
+class DraftTranslation(Base):
+    """Hindi version of a draft, shown to the approver and published only with it (additive table)."""
+    __tablename__ = "draft_translations"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    draft_id: Mapped[int] = mapped_column(ForeignKey("drafts.id"), unique=True, index=True)
+    language: Mapped[str] = mapped_column(String(8), default="hi")
+    text: Mapped[str] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
 class Action(Base):
     __tablename__ = "actions"
     id: Mapped[int] = mapped_column(primary_key=True)

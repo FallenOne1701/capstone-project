@@ -14,11 +14,12 @@ from app.corpus.refresh import last_checked_for
 from app.desk.contracts import FactsResult, OrchestratorOutput, RoutingNote
 from app.desk.orchestrator import run_desk
 from app.desk.reviewer import review_draft
+from app.desk.translate import translate_reply, validate_translation
 from app.link.canonical import find_canonical, reuse_reply
 from app.guard.pii import redact
 from app.intent.classifier import IntentResult, classify_intent
 from app.link.question_keys import question_key
-from app.models import Action, Draft, Ticket
+from app.models import Action, Draft, DraftTranslation, Ticket
 
 log = logging.getLogger(__name__)
 SCOPE_NOTICE = "We share facts only and can't advise on buying, selling or returns."
@@ -83,6 +84,14 @@ async def create_ticket(db: Session, text: str, *, channel: str = "text",
     return t, intent
 
 
+async def _add_translation(db: Session, d: Draft) -> None:
+    out = await translate_reply(d.reply)
+    probs = validate_translation(d.reply, out) if out else ["no translation"]
+    if not probs:
+        db.add(DraftTranslation(draft_id=d.id, language="hi", text=out))
+    audit(db, "desk", "translate", "draft", d.id, "ok" if not probs else f"discarded:{probs[0]}")
+
+
 async def process_ticket(db: Session, ticket_id: int, *, retriever, themes_provider: Callable = lambda db: []) -> Draft | None:
     t = db.get(Ticket, ticket_id)
     try:
@@ -116,6 +125,8 @@ async def process_ticket(db: Session, ticket_id: int, *, retriever, themes_provi
                   reused_explainer_id=reused_id)
         db.add(d)
         db.flush()
+        if t.language in ("hi", "hinglish") and d.review_status == "pass":
+            await _add_translation(db, d)
         a = Action(type="reply_publish", target_label=f"Reply to ticket {t.code}", target_ref=t.code, draft_id=d.id,
                    source_ref=f"ticket:{t.id}")
         db.add(a)

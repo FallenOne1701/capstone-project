@@ -8,7 +8,7 @@ from app.approvals import service as ap
 from app.corpus.refresh import refresh_corpus
 from app.db import get_db
 from app.deps import require_console
-from app.models import Action, Draft, Source, Ticket
+from app.models import Action, Draft, DraftTranslation, Source, Ticket
 from app.tickets import worker
 
 router = APIRouter(prefix="/api/console", dependencies=[Depends(require_console)])
@@ -18,10 +18,11 @@ class EditIn(BaseModel):
     reply: str
 
 
-def _draft_out(d: Draft | None):
+def _draft_out(d: Draft | None, db: Session | None = None):
     if d is None:
         return None
-    return {"id": d.id, "reply": d.reply, "citation": d.citation, "last_checked": d.last_checked,
+    tr = db.query(DraftTranslation).filter_by(draft_id=d.id).one_or_none() if db is not None else None
+    return {"translation": {"language": tr.language, "text": tr.text} if tr else None,"id": d.id, "reply": d.reply, "citation": d.citation, "last_checked": d.last_checked,
             "disposition": d.disposition, "routing": {"team": d.routing_team, "priority": d.routing_priority,
                                                       "why": d.routing_why},
             "review_status": d.review_status, "review_failures": d.review_failures, "searched": d.searched,
@@ -36,7 +37,7 @@ def queue(db: Session = Depends(get_db)):
         a = db.query(Action).filter_by(draft_id=d.id).order_by(Action.id.desc()).first() if d else None
         out.append({"code": t.code, "status": t.status, "intent": t.intent, "language": t.language,
                     "question": t.question_redacted, "pii_types": t.pii_types, "created_at": t.created_at,
-                    "draft": _draft_out(d),
+                    "draft": _draft_out(d, db),
                     "action": {"id": a.id, "status": a.status, "target": a.target_label} if a else None})
     return out
 
@@ -52,7 +53,7 @@ def _guard(fn, *args):
 
 @router.post("/drafts/{draft_id}/edit")
 def edit(draft_id: int, body: EditIn, db: Session = Depends(get_db)):
-    return _draft_out(_guard(ap.edit_draft, db, draft_id, body.reply, "console"))
+    return _draft_out(_guard(ap.edit_draft, db, draft_id, body.reply, "console"), db)
 
 
 @router.post("/actions/{action_id}/approve")

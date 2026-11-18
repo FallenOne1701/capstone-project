@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from app.desk.contracts import FactsResult, OrchestratorOutput, RoutingNote
 from app.desk.reviewer import review_draft
 from app.guard.pii import redact
-from app.models import Action, AuditLog, Draft, Explainer
+from app.models import Action, AuditLog, Draft, DraftTranslation, Explainer
 
 MIN_REPLY_CHARS = 10
 
@@ -136,6 +136,8 @@ def edit_draft(db: Session, draft_id: int, new_reply: str, actor: str) -> Draft:
                          last_checked=d.last_checked, searched=[]) if d.citation and d.last_checked else None)
     review = review_draft(out, facts=facts, round=1)
     d.reply, d.edited = reply, True
+    # the edited English is what the human approved; an old Hindi version would no longer match it
+    db.query(DraftTranslation).filter_by(draft_id=d.id).delete()
     d.review_status = "pass" if review.status == "pass" else "blocked"
     d.review_failures = [f.model_dump() for f in review.failures]
     audit(db, actor, "edit", "draft", d.id, f"review={d.review_status}")

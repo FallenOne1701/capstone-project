@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from app import deps
 from app.config import get_settings
 from app.db import SessionLocal, get_db
-from app.models import Ticket
+from app.models import Action, DraftTranslation, Ticket
 from app.tickets import service as ts, worker
 from app.voice import stt
 
@@ -62,7 +62,17 @@ def ticket_status(code: str, db: Session = Depends(get_db)):
         raise HTTPException(404, "ticket not found")
     return {"code": t.code, "status": t.status, "question": t.question_redacted,
             "answer": t.answer_text if t.status == "answered" else None, "answered_at": t.answered_at,
-            "language": t.language}
+            "language": t.language, "intent": t.intent, "answer_local": _published_translation(db, t)}
+
+
+def _published_translation(db: Session, t: Ticket) -> dict | None:
+    """The Hindi text of the draft whose reply_publish was executed — never one still awaiting approval."""
+    if t.status != "answered":
+        return None
+    row = (db.query(DraftTranslation).join(Action, Action.draft_id == DraftTranslation.draft_id)
+           .filter(Action.type == "reply_publish", Action.status == "executed", Action.target_ref == t.code)
+           .order_by(Action.id.desc()).first())
+    return {"language": row.language, "text": row.text} if row else None
 
 
 STT_FAIL = "Couldn't hear that — try again or type"
