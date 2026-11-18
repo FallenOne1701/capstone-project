@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import re
+import unicodedata
 
 from pydantic import BaseModel
 
@@ -13,6 +14,18 @@ log = logging.getLogger(__name__)
 NO_SPEECH_MEAN = 0.6
 _PROMPT = "Question about HDFC mutual funds on Groww, in English, Hindi or Hinglish."
 _DEVANAGARI = re.compile(r"[ऀ-ॿ]")
+# What Whisper says when there is no speech. Groq returns no_speech_prob 0 even for silence, so the
+# whole transcript being one of these is the reliable signal (a real question around them is kept).
+_PHANTOMS = {
+    "thank you", "thank you very much", "thanks", "thanks for watching", "thank you for watching",
+    "please subscribe", "you", "bye", "bye bye", "okay", "ok", "hmm", "uh", "um",
+    "subtitles by the amara org community", "धन्यवाद", "शुक्रिया",
+}
+
+
+def _norm(text: str) -> str:
+    # drop punctuation only (Unicode P*); Devanagari vowel signs are not \w, so a \w-based strip would break them
+    return " ".join("".join(" " if unicodedata.category(c).startswith("P") else c for c in text.lower()).split())
 
 
 class NoSpeech(Exception):
@@ -47,7 +60,7 @@ async def _whisper(audio: bytes, filename: str, language: str | None = None) -> 
 def _check(payload: dict) -> str:
     text = (payload.get("text") or "").strip()
     probs = [seg.get("no_speech_prob", 0.0) for seg in payload.get("segments") or []]
-    if not text or (probs and sum(probs) / len(probs) >= NO_SPEECH_MEAN):
+    if not text or _norm(text) in _PHANTOMS or (probs and sum(probs) / len(probs) >= NO_SPEECH_MEAN):
         raise NoSpeech()
     return text
 

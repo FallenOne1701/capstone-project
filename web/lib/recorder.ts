@@ -33,7 +33,22 @@ export function formatClock(ms: number): string {
 }
 
 export type RecorderState = "idle" | "recording" | "denied" | "error";
-export interface Recording { blob: Blob; durationMs: number }
+/** Peak level below this (0–1) means nobody spoke: Whisper would invent "Thank you." from it. */
+export const SILENCE_LEVEL = 0.03;
+
+/** Loudest sample of AnalyserNode byte time-domain data (128 is zero), as 0–1. */
+export function levelOf(bytes: Uint8Array): number {
+  let max = 0;
+  for (const b of bytes) max = Math.max(max, Math.abs(b - 128));
+  return max / 128;
+}
+
+/** null = not measured (no audio context, or stopped before the first sample): let the server decide. */
+export function isSilent(peak: number | null): boolean {
+  return peak !== null && peak < SILENCE_LEVEL;
+}
+
+export interface Recording { blob: Blob; durationMs: number; peak: number | null }
 
 /**
  * Microphone recording held in memory only. Stops itself at MAX_MS (the result goes to onAutoStop)
@@ -48,6 +63,8 @@ export function useRecorder(onAutoStop?: (r: Recording | null) => void) {
   const startedAt = useRef(0);
   const tick = useRef<ReturnType<typeof setInterval> | null>(null);
   const cap = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const meter = useRef<{ ctx: AudioContext; analyser: AnalyserNode; buf: Uint8Array<ArrayBuffer> } | null>(null);
+  const peak = useRef<number | null>(null);
   const autoStop = useRef(onAutoStop);
   useEffect(() => {
     autoStop.current = onAutoStop;
@@ -57,6 +74,8 @@ export function useRecorder(onAutoStop?: (r: Recording | null) => void) {
     if (tick.current) clearInterval(tick.current);
     if (cap.current) clearTimeout(cap.current);
     tick.current = cap.current = null;
+    void meter.current?.ctx.close().catch(() => undefined);
+    meter.current = null;
     stream.current?.getTracks().forEach((t) => t.stop());
     stream.current = null;
   }, []);
@@ -75,7 +94,7 @@ export function useRecorder(onAutoStop?: (r: Recording | null) => void) {
         rec.current = null;
         release();
         setState("idle");
-        resolve(blob.size ? { blob, durationMs } : null);
+        resolve(blob.size ? { blob, durationMs, peak: peak.current } : null);
       };
       r.stop();
     });
@@ -100,7 +119,23 @@ export function useRecorder(onAutoStop?: (r: Recording | null) => void) {
       setElapsed(0);
       r.start(250);
       setState("recording");
-      tick.current = setInterval(() => setElapsed(Date.now() - startedAt.current), 200);
+      peak.current = null;
+      try {
+        const ctx = new AudioContext();
+        const analyser = ctx.createAnalyser();
+        ctx.createMediaStreamSource(stream.current).connect(analyser);
+        meter.current = { ctx, analyser, buf: new Uint8Array(analyser.fftSize) };
+      } catch {
+        meter.current = null; // no Web Audio: skip the silence check
+      }
+      tick.current = setInterval(() => {
+        setElapsed(Date.now() - startedAt.current);
+        const m = meter.current;
+        if (m && m.ctx.state === "running") {
+          m.analyser.getByteTimeDomainData(m.buf);
+          peak.current = Math.max(peak.current ?? 0, levelOf(m.buf));
+        }
+      }, 200);
       cap.current = setTimeout(() => {
         void stop().then((res) => autoStop.current?.(res));
       }, MAX_MS);

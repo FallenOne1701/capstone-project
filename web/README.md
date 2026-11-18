@@ -47,3 +47,5 @@ npm run e2e         # Playwright smoke tests
 - **`next dev` on :3001.** The browser tests run here.
 
 Chromium runs with a fake microphone. The first run needs `npx playwright install chromium`.
+
+Stop any `npm run dev` for this folder first: Next allows only one dev server per project directory.

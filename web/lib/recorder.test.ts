@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatClock, MAX_MS, MIN_MS, pickMimeType, voiceSupport } from "./recorder";
+import { formatClock, isSilent, levelOf, MAX_MS, MIN_MS, pickMimeType, voiceSupport } from "./recorder";
 
 describe("pickMimeType", () => {
   it("prefers webm/opus", () => {
@@ -34,5 +34,19 @@ describe("limits and clock", () => {
   it("formats the live timer", () => {
     expect(formatClock(7_400)).toBe("0:07");
     expect(formatClock(60_000)).toBe("1:00");
+  });
+});
+
+describe("silence detection", () => {
+  it("measures the loudest sample of byte time-domain data (128 = zero)", () => {
+    expect(levelOf(new Uint8Array([128, 128, 128]))).toBe(0);
+    expect(levelOf(new Uint8Array([128, 192, 64]))).toBeCloseTo(0.5, 2);
+  });
+  it("treats a clip that never got louder than background as silent", () => {
+    expect(isSilent(0.01)).toBe(true);
+    expect(isSilent(0.2)).toBe(false);
+  });
+  it("does not judge a clip it could not measure", () => {
+    expect(isSilent(null)).toBe(false);
   });
 });

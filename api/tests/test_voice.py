@@ -148,3 +148,19 @@ def test_audio_never_written_to_disk(client, whisper, monkeypatch):
         monkeypatch.setattr(tempfile, name, no_temp)
     r = _post(client)
     assert r.status_code == 200, r.text
+
+
+@pytest.mark.parametrize("text", ["Thank you.", " thank you ", "Thanks for watching!", "you", "Bye.",
+                                  "Subtitles by the Amara.org community", "धन्यवाद।"])
+def test_known_whisper_phantoms_rejected_even_with_zero_no_speech_prob(client, whisper, text):
+    # Groq reports no_speech_prob 0 for silent clips (seen live), so the phrase itself must be caught
+    _, replies = whisper
+    replies.append(_payload(text, no_speech=0.0))
+    r = _post(client)
+    assert r.status_code == 422 and r.json()["detail"] == FAIL
+
+
+def test_real_question_mentioning_thanks_is_kept(client, whisper):
+    _, replies = whisper
+    replies.append(_payload("Thank you. What is the exit load of HDFC mid cap?", no_speech=0.0))
+    assert _post(client).status_code == 200

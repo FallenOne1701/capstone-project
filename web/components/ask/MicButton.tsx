@@ -2,7 +2,7 @@
 
 import { STT_FAIL } from "@/lib/labels";
 import { useClientValue } from "@/lib/useClient";
-import { browserVoiceSupport, formatClock, MAX_MS, MIN_MS, type Recording, useRecorder, type VoiceSupport } from "@/lib/recorder";
+import { browserVoiceSupport, formatClock, isSilent, MAX_MS, MIN_MS, type Recording, useRecorder, type VoiceSupport } from "@/lib/recorder";
 
 const UNSUPPORTED: Record<Exclude<VoiceSupport, "ok">, string> = {
   insecure: "Voice input needs a secure (https) page — please type your question.",
@@ -19,7 +19,7 @@ interface Props {
 export function MicButton({ disabled, onRecorded, onError }: Props) {
   const support = useClientValue<VoiceSupport | null>(browserVoiceSupport, null);
   const deliver = (r: Recording | null) => {
-    if (!r || r.durationMs < MIN_MS) onError(STT_FAIL);
+    if (!r || r.durationMs < MIN_MS || isSilent(r.peak)) onError(STT_FAIL);
     else onRecorded(r);
   };
   const { state, elapsedMs, start, stop } = useRecorder(deliver);
