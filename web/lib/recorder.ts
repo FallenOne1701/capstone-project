@@ -49,7 +49,9 @@ export function useRecorder(onAutoStop?: (r: Recording | null) => void) {
   const tick = useRef<ReturnType<typeof setInterval> | null>(null);
   const cap = useRef<ReturnType<typeof setTimeout> | null>(null);
   const autoStop = useRef(onAutoStop);
-  autoStop.current = onAutoStop;
+  useEffect(() => {
+    autoStop.current = onAutoStop;
+  });
 
   const release = useCallback(() => {
     if (tick.current) clearInterval(tick.current);

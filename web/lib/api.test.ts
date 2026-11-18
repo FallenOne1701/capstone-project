@@ -14,7 +14,9 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals());
 
 function mockFetch(status: number, body: unknown) {
-  const f = vi.fn(async (_url: string, _init?: RequestInit) => new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } }));
+  // typed (url, init) so tests can read mock.calls[0][1]
+  const f = vi.fn<(url: string, init?: RequestInit) => Promise<Response>>(async () =>
+    new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } }));
   vi.stubGlobal("fetch", f);
   return f;
 }

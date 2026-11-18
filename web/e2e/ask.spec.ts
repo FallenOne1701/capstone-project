@@ -7,6 +7,7 @@ test("typed question becomes a ticket", async ({ page }) => {
   await expect(page.getByText("Fee question · HDFC Mid Cap")).toBeVisible();
   await page.getByRole("button", { name: "Send question" }).click();
   await expect(page).toHaveURL(/\/t\/GRW-[A-Z0-9]{6}$/);
+  await expect(page.getByText(/^(received|in review)$/).first()).toBeVisible();
 });
 
 test("personal details are hidden before sending", async ({ page }) => {

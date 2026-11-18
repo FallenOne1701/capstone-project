@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { STT_FAIL } from "@/lib/labels";
+import { useClientValue } from "@/lib/useClient";
 import { browserVoiceSupport, formatClock, MAX_MS, MIN_MS, type Recording, useRecorder, type VoiceSupport } from "@/lib/recorder";
 
 const UNSUPPORTED: Record<Exclude<VoiceSupport, "ok">, string> = {
@@ -17,14 +17,12 @@ interface Props {
 }
 
 export function MicButton({ disabled, onRecorded, onError }: Props) {
-  const [support, setSupport] = useState<VoiceSupport | null>(null);
+  const support = useClientValue<VoiceSupport | null>(browserVoiceSupport, null);
   const deliver = (r: Recording | null) => {
     if (!r || r.durationMs < MIN_MS) onError(STT_FAIL);
     else onRecorded(r);
   };
   const { state, elapsedMs, start, stop } = useRecorder(deliver);
-
-  useEffect(() => setSupport(browserVoiceSupport()), []);
 
   if (support === null) return null;
   if (support !== "ok") {
