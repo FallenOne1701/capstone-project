@@ -57,3 +57,14 @@ test("approvals page filters actions", async ({ page }) => {
   await page.getByRole("tab", { name: "executed" }).click();
   await expect(page.getByText("Append to the weekly pulse Google Doc")).toHaveCount(0);
 });
+
+test("explainers and sources render", async ({ page }) => {
+  await login(page, "/console/explainers");
+  await expect(page.getByRole("heading", { name: "Explainers" })).toBeVisible();
+  await expect(page.getByRole("article", { name: /^Explainer \d+/ }).first()).toBeVisible();
+  await page.getByRole("link", { name: "Sources" }).click();
+  await expect(page.getByRole("heading", { name: "Sources" })).toBeVisible();
+  const rows = page.getByRole("table").getByRole("row");
+  await expect.poll(() => rows.count()).toBeGreaterThanOrEqual(16); // header + ≥15 sources
+  await expect(page.getByRole("button", { name: "Refresh now" })).toBeEnabled();
+});
