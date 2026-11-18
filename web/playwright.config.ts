@@ -24,6 +24,7 @@ export default defineConfig({
   reporter: [["list"]],
   use: {
     baseURL: "http://localhost:3001",
+    actionTimeout: 15_000,
     ...devices["Desktop Chrome"],
     launchOptions: { args: ["--use-fake-device-for-media-stream", "--use-fake-ui-for-media-stream"] },
     permissions: ["microphone"],
