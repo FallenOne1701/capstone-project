@@ -68,7 +68,7 @@ def ticket_status(code: str, db: Session = Depends(get_db)):
     return {"code": t.code, "status": t.status, "question": t.question_redacted,
             "answer": t.answer_text if t.status == "answered" else None, "answered_at": t.answered_at,
             "language": t.language, "intent": t.intent, "answer_local": _published_translation(db, t),
-            "checks": ticket_checks(db, t)}
+            "checks": ticket_checks(db, t), "approval": "auto" if get_settings().auto_approve else "person"}
 
 
 @router.get("/weekly/summary")

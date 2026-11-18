@@ -39,6 +39,8 @@ def _refresh_job() -> None:
 
 def _delivery_retry_job() -> None:
     from app.approvals.auto import retry_failed_deliveries
+    if not get_settings().auto_approve:   # a person is in charge: failed writes wait for their Retry click
+        return
     db = SessionLocal()
     try:
         n = retry_failed_deliveries(db)

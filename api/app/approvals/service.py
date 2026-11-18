@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from app.desk.contracts import FactsResult, OrchestratorOutput, RoutingNote
 from app.desk.reviewer import review_draft
 from app.guard.pii import redact
-from app.models import Action, AuditLog, Draft, DraftTranslation, Explainer
+from app.models import Action, AuditLog, Draft, DraftTranslation, Explainer, Ticket
 
 MIN_REPLY_CHARS = 10
 
@@ -111,6 +111,10 @@ def reject(db: Session, action_id: int, actor: str) -> Action:
     _claim(db, action_id, "rejected")
     db.refresh(a)
     audit(db, actor, "reject", "action", a.id)
+    if a.type == "reply_publish":
+        t = db.query(Ticket).filter_by(code=a.target_ref).one_or_none()
+        if t is not None and t.status in ("received", "in_review"):
+            t.status = "closed"   # the asker sees "We couldn't answer this one." and can ask again
     if a.type == "doc_append":
         ex = _run_explainer(db, a)
         if ex is not None and ex.status == "draft":
