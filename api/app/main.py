@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from app.config import get_settings
 from app.db import SessionLocal, get_db, init_db
 
 log = logging.getLogger(__name__)
@@ -72,7 +73,8 @@ def create_app(*, init_corpus: bool = True) -> FastAPI:
         return {"db": "ok", "corpus": corpus_status()}
 
     if init_corpus:
-        threading.Thread(target=_bootstrap_corpus, daemon=True).start()
+        if get_settings().corpus_bootstrap:
+            threading.Thread(target=_bootstrap_corpus, daemon=True).start()
         from app.scheduler import start_scheduler
         app.state.scheduler = start_scheduler()
     return app
