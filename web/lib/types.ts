@@ -42,3 +42,16 @@ export interface Checks {
   reused_explainer: number | null;
   fallback: string | null;
 }
+
+export interface WeeklySummary {
+  week_ending: string;
+  window_start: string | null;
+  window_end: string | null;
+  stale: boolean;
+  review_count: number | null;
+  themes: { label: string; count: number; recent_count: number }[];
+  quotes: { text: string; theme: string | null }[];
+  repeated: { label: string; count: number }[];
+  explainer: { title: string; bullets: { text: string; url: string }[]; last_checked: string } | null;
+  delivery: { doc: string; email_draft: string };
+}

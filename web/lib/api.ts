@@ -1,4 +1,4 @@
-import type { AskResult, Preview, TicketView } from "./types";
+import type { AskResult, Preview, TicketView, WeeklySummary } from "./types";
 
 export const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000").replace(/\/$/, "");
 
@@ -42,3 +42,4 @@ export function transcribe(blob: Blob, durationMs: number): Promise<Preview> {
   fd.append("duration_ms", String(Math.round(durationMs)));
   return api<Preview>("/api/voice/transcribe", { method: "POST", body: fd });
 }
+export const weeklySummary = () => api<WeeklySummary>("/api/weekly/summary");

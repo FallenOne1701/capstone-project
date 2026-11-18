@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { clarifyQuestion, intentLabel, scopeNotice, statusLabel } from "./labels";
+import { clarifyQuestion, intentLabel, scopeNotice, statusLabel, weekHeading } from "./labels";
 import type { Preview } from "./types";
 
 const base: Preview = {
@@ -49,5 +49,14 @@ describe("scopeNotice", () => {
   });
   it("has no notice for fund questions", () => {
     expect(scopeNotice("fee_question")).toBeNull();
+  });
+});
+
+describe("weekHeading", () => {
+  it("calls a recent pulse this week", () => {
+    expect(weekHeading("2026-11-17", false)).toBe("This week · week ending 17 Nov 2026");
+  });
+  it("never calls an old pulse this week", () => {
+    expect(weekHeading("2026-11-03", true)).toBe("Latest pulse · week ending 3 Nov 2026");
   });
 });

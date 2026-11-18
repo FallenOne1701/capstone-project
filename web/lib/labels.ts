@@ -42,3 +42,12 @@ export function scopeNotice(intent: string | null | undefined): string | null {
   if (intent === "out_of_scope") return OUT_OF_SCOPE_NOTICE;
   return null;
 }
+
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+/** "This week · week ending 17 Nov 2026"; an older pulse is never called this week. */
+export function weekHeading(weekEnding: string, stale: boolean): string {
+  const [y, m, d] = weekEnding.split("-").map(Number);
+  const when = `${d} ${MONTHS[m - 1]} ${y}`;
+  return `${stale ? "Latest pulse" : "This week"} · week ending ${when}`;
+}

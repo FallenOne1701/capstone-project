@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { AskFlow } from "@/components/ask/AskFlow";
 import { PublicShell } from "@/components/PublicShell";
+import { WeeklySection } from "@/components/weekly/WeeklySection";
 
 export const metadata: Metadata = {
   title: "Groww Support Desk",
@@ -20,6 +21,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ t
       <section aria-label="Ask a question" className="mt-6 rounded-xl border border-border-subtle bg-surface-panel p-5 shadow-sm">
         <AskFlow key={code ?? "new"} initialCode={code ?? null} />
       </section>
+      <WeeklySection />
     </PublicShell>
   );
 }
