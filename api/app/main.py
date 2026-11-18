@@ -52,6 +52,28 @@ def _recover_tickets() -> None:
         s.close()
 
 
+def _e2e_seed() -> None:
+    s = get_settings()
+    if not s.e2e_seed:
+        return
+    if s.use_llm:
+        log.warning("E2E_SEED ignored: it only runs with USE_LLM=0")
+        return
+    from app import db as dbmod
+    from app.e2e_seed import seed
+
+    def go():
+        db = dbmod.SessionLocal()
+        try:
+            seed(db)
+        finally:
+            db.close()
+    # uvicorn --factory calls create_app inside its event loop; the seed's asyncio.run needs its own thread
+    t = threading.Thread(target=go)
+    t.start()
+    t.join()
+
+
 def create_app(*, init_corpus: bool = True) -> FastAPI:
     from app.guard.logfilter import install_log_redaction
     install_log_redaction()
@@ -60,6 +82,7 @@ def create_app(*, init_corpus: bool = True) -> FastAPI:
     init_db()
     _recover_runs()
     _recover_tickets()
+    _e2e_seed()
 
     from app.api.console import router as console_router
     from app.api.public import router as public_router

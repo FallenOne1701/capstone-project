@@ -35,3 +35,25 @@ test("edit re-reviews the draft before approval", async ({ page, request }) => {
   await card.getByRole("button", { name: "Save edit" }).click();
   await expect(card.getByText(/edited/i).first()).toBeVisible();
 });
+
+test("pulse page shows themes and actions", async ({ page }) => {
+  await login(page, "/console/pulse");
+  await expect(page.getByRole("heading", { name: "Weekly pulse" })).toBeVisible();
+  const themes = page.getByRole("list", { name: "Themes" });
+  await expect(themes.getByRole("listitem").first()).toBeVisible();
+  await themes.getByText("Review ids").first().click();
+  await expect(themes.getByText(/rv_[a-z2-7]+/).first()).toBeVisible();
+  await expect(page.getByRole("region", { name: "Pulse text" })).toContainText("Groww Weekly Review Pulse");
+  const acts = page.getByRole("article", { name: /^Action \d+/ });
+  await expect(acts).toHaveCount(2);
+  await expect(acts.getByRole("button", { name: "Approve" })).toHaveCount(2);
+});
+
+test("approvals page filters actions", async ({ page }) => {
+  await login(page, "/console/approvals");
+  await expect(page.getByRole("heading", { name: "Approvals" })).toBeVisible();
+  await expect(page.getByRole("tab", { name: "pending" })).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByText("Append to the weekly pulse Google Doc").first()).toBeVisible();
+  await page.getByRole("tab", { name: "executed" }).click();
+  await expect(page.getByText("Append to the weekly pulse Google Doc")).toHaveCount(0);
+});

@@ -30,7 +30,7 @@ export function usePoll<T>(fetcher: () => Promise<T>, ms: number) {
       alive = false;
       if (id) clearInterval(id);
     };
-  }, [reload, ms]);
+  }, [reload, ms, fetcher]); // a new fetcher (e.g. another filter tab) loads at once
 
   return { data, error, reload };
 }
