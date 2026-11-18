@@ -1,7 +1,7 @@
 "use client";
 
 import { Redacted } from "@/components/Redacted";
-import { clarifyQuestion, intentLabel, SCOPE_INTENTS } from "@/lib/labels";
+import { clarifyQuestion, intentLabel, scopeNotice } from "@/lib/labels";
 import type { Preview } from "@/lib/types";
 import { ScopeNotice } from "./ScopeNotice";
 
@@ -62,7 +62,7 @@ export function ConfirmCard({ preview, chosen, onChoose, onEdit, onSend, sending
         </fieldset>
       )}
 
-      {SCOPE_INTENTS.includes(preview.intent) && <ScopeNotice />}
+      {scopeNotice(preview.intent) && <ScopeNotice text={scopeNotice(preview.intent)!} />}
 
       <div className="flex flex-wrap items-center gap-3 pt-2">
         <button

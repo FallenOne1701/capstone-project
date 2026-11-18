@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ScopeNotice } from "@/components/ask/ScopeNotice";
 import { ApiError, ticket as fetchTicket } from "@/lib/api";
-import { SCOPE_INTENTS, statusLabel } from "@/lib/labels";
+import { scopeNotice, statusLabel } from "@/lib/labels";
 import { loadVoices, planSpeech, speechLang } from "@/lib/speech";
 import { useClientValue } from "@/lib/useClient";
 import type { TicketView } from "@/lib/types";
@@ -138,7 +138,7 @@ export function TicketStatus({ code }: { code: string }) {
         <p className="text-xs font-medium uppercase tracking-wide text-text-tertiary">Your question</p>
         <p className="mt-1 text-text-primary">{t.question}</p>
       </div>
-      {t.intent && SCOPE_INTENTS.includes(t.intent) && <ScopeNotice />}
+      {scopeNotice(t.intent) && <ScopeNotice text={scopeNotice(t.intent)!} />}
 
       {t.status === "received" && <p className="text-sm text-text-secondary">We&apos;ve got your question and are preparing an answer.</p>}
       {t.status === "in_review" && <p className="text-sm text-text-secondary">A person is checking the answer before it&apos;s sent to you.</p>}

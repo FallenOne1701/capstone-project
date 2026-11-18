@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from app import deps
 from app.config import get_settings
 from app.db import SessionLocal, get_db
+from app.desk.templates import OUT_OF_SCOPE_REPLY
 from app.models import Action, DraftTranslation, Ticket
 from app.tickets import service as ts, worker
 from app.voice import stt
@@ -51,7 +52,8 @@ async def ask(body: AskIn, db: Session = Depends(get_db)):
         await _process(t.id, db)
     else:
         worker.submit(t.id)   # the page shows "received" at once and polls for "in review"
-    notice = ts.SCOPE_NOTICE if intent.intent in ("advice_request", "performance_request") else None
+    notice = (ts.SCOPE_NOTICE if intent.intent in ("advice_request", "performance_request")
+              else OUT_OF_SCOPE_REPLY if intent.intent == "out_of_scope" else None)
     return {"code": t.code, "status": db.get(Ticket, t.id).status, "notice": notice}
 
 

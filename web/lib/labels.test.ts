@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { clarifyQuestion, intentLabel, statusLabel } from "./labels";
+import { clarifyQuestion, intentLabel, scopeNotice, statusLabel } from "./labels";
 import type { Preview } from "./types";
 
 const base: Preview = {
@@ -35,5 +35,19 @@ describe("statusLabel", () => {
     expect(statusLabel("in_review")).toBe("in review");
     expect(statusLabel("answered")).toBe("answered");
     expect(statusLabel("failed")).toBe("failed");
+  });
+});
+
+describe("scopeNotice", () => {
+  it("uses the facts-only notice for advice and returns", () => {
+    expect(scopeNotice("advice_request")).toBe("We share facts only and can't advise on buying, selling or returns");
+    expect(scopeNotice("performance_request")).toBe("We share facts only and can't advise on buying, selling or returns");
+  });
+  it("uses the off-topic notice for banking and other products", () => {
+    expect(scopeNotice("out_of_scope")).toBe(
+      "We only answer factual questions about HDFC mutual funds on Groww. We can't help with banking, loans, cards, insurance or other products, and we never give advice.");
+  });
+  it("has no notice for fund questions", () => {
+    expect(scopeNotice("fee_question")).toBeNull();
   });
 });

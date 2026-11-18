@@ -8,6 +8,10 @@ PERFORMANCE_REFUSAL = (
     "We can't share past or projected figures for any fund. "
     "Please refer to the scheme's official page on Groww for its published information."
 )
+OUT_OF_SCOPE_REPLY = (
+    "We only answer factual questions about HDFC mutual funds on Groww. "
+    "We can't help with banking, loans, cards, insurance or other products, and we never give advice."
+)
 ACCOUNT_REPLY = (
     "We can't see or change individual accounts from here. "
     "Please raise this through Help & Support in the Groww app so the team can check your account."

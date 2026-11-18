@@ -32,6 +32,12 @@ _ADVICE = _rx(r"should i", r"shall i", r"is (?:it|this|the \w+(?: \w+)?(?: fund)
               r"recommend", r"better (?:fund|option|to)", r"buy", r"sell", r"switch (?:to|from)",
               r"lena chahiye", r"le lu", r"lu kya", r"kharid\w*", r"bech\w*", r"accha hai", r"sahi hai",
               r"invest karu", r"stay invested", r"exit now")
+_ADVICE_MORE = _rx(r"good idea", r"is (?:it|this) worth", r"worth it", r"best", r"what should i (?:buy|invest|do)",
+                   r"where (?:should|can) i (?:invest|put)", r"suggest\w*")
+_OFF_TOPIC = _rx(r"bank (?:account|rate)s?", r"savings? account", r"current account", r"fixed deposits?", r"fds?",
+                 r"(?:personal|home|car|gold|education|business) loans?", r"loans?", r"emi", r"credit cards?",
+                 r"debit cards?", r"insurance", r"income tax return", r"itr", r"tax filing", r"interest rates?",
+                 r"stocks?", r"shares", r"crypto\w*", r"bitcoin", r"upi", r"neft", r"imps")
 _PERF = _rx(r"returns?", r"cagr", r"xirr", r"performance", r"how much (?:will|did|can) (?:i|it) (?:earn|make|get|grow|gain)",
             r"kitna return", r"profit", r"nav (?:prediction|forecast|tomorrow|target)", r"outperform\w*", r"beat the market")
 _ACCOUNT = _rx(r"not credited", r"debited", r"refund", r"stuck", r"failed", r"pending since",
@@ -76,7 +82,9 @@ async def classify_intent(redacted_text: str) -> IntentResult:
 
     if _HOWTO_TXN.search(text) and not re.search(r"(?i)\bshould i\b", text):
         return mk("how_to_process")
-    if _ADVICE.search(text):
+    if _OFF_TOPIC.search(text) and not hints.scheme_ids:
+        return mk("out_of_scope")   # banking, loans, cards…: not something this desk answers
+    if _ADVICE.search(text) or _ADVICE_MORE.search(text):
         return mk("advice_request")
     if _PERF.search(text):
         return mk("performance_request")
@@ -91,4 +99,6 @@ async def classify_intent(redacted_text: str) -> IntentResult:
     data = await complete_json(_LLM_SYSTEM, text, fast=True)
     if data and data.get("intent") in INTENTS:
         return mk(data["intent"], "llm")
+    if hints.scheme_ids:   # names an HDFC fund: in scope even when the LLM is unavailable
+        return mk("fund_fact", "default")
     return mk("out_of_scope", "default")

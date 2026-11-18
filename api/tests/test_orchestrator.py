@@ -4,7 +4,7 @@ from datetime import date
 import pytest
 
 from app.desk.orchestrator import run_desk
-from app.desk.templates import ACCOUNT_REPLY, ADVICE_REFUSAL, PERFORMANCE_REFUSAL
+from app.desk.templates import ACCOUNT_REPLY, ADVICE_REFUSAL, OUT_OF_SCOPE_REPLY, PERFORMANCE_REFUSAL
 from app.guard.scope import sentence_count
 from app.intent.classifier import classify_intent
 from tests.conftest_corpus import build_fixture_retriever
@@ -41,8 +41,15 @@ def test_template_dispositions(retriever, text, expected):
 
 
 def test_not_covered_names_searched(retriever):
-    r = desk("Who is the CEO of Groww?", retriever)
+    # an in-scope fund question our sources don't cover (Plan 3b: off-topic questions are refused instead)
+    r = desk("When was HDFC Mid Cap Fund launched?", retriever)
     assert r.draft.disposition == "handoff" and "Searched:" in r.draft.reply
+    assert r.review.status == "pass"
+
+
+def test_off_topic_question_is_refused(retriever):
+    r = desk("Who is the CEO of Groww?", retriever)
+    assert r.draft.disposition == "refuse" and r.draft.reply == OUT_OF_SCOPE_REPLY
     assert r.review.status == "pass"
 
 

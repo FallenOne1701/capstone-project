@@ -33,3 +33,12 @@ export function statusLabel(s: string): StatusWord {
 export const SCOPE_INTENTS: Intent[] = ["advice_request", "performance_request"];
 export const SCOPE_NOTICE = "We share facts only and can't advise on buying, selling or returns";
 export const STT_FAIL = "Couldn't hear that — try again or type";
+export const OUT_OF_SCOPE_NOTICE =
+  "We only answer factual questions about HDFC mutual funds on Groww. We can't help with banking, loans, cards, insurance or other products, and we never give advice.";
+
+/** Shown at once on the confirm card and ticket: advice/returns → facts-only notice; off-topic → what we answer. */
+export function scopeNotice(intent: string | null | undefined): string | null {
+  if (intent === "advice_request" || intent === "performance_request") return SCOPE_NOTICE;
+  if (intent === "out_of_scope") return OUT_OF_SCOPE_NOTICE;
+  return null;
+}
