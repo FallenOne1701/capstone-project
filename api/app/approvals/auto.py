@@ -65,3 +65,52 @@ def publish_fallback(db: Session, ticket_id: int, reason: str) -> Action:
         db.commit()
         return a
     return approve(db, a.id, AUTO_ACTOR)
+
+
+# --- Weekly delivery ---------------------------------------------------------------------------------
+DELIVERY_TYPES = ("doc_append", "email_draft")
+MAX_DELIVERY_ATTEMPTS = 6
+
+
+def auto_deliver(db: Session, run_id: int) -> list[Action]:
+    """Approve a finished run's Google Doc append, then its Gmail draft (the draft is never sent)."""
+    from app.models import WeeklyRun
+    run = db.get(WeeklyRun, run_id)
+    if run is None or run.status != "awaiting_approval":
+        return []
+    out = []
+    for type_ in DELIVERY_TYPES:   # Doc first: approving it marks the explainer canonical (Link 2)
+        a = db.query(Action).filter_by(source_ref=f"weekly_run:{run_id}", type=type_, status="pending").first()
+        if a is not None:
+            out.append(approve(db, a.id, AUTO_ACTOR))
+    return out
+
+
+def weekly_and_deliver(db: Session, *, now, fetcher=None, run_id: int | None = None):
+    """The whole Monday job: build the pulse, then deliver it when auto-approval is on."""
+    import asyncio
+
+    from app.config import get_settings
+    from app.weekly.run import run_weekly
+    kw = {"fetcher": fetcher} if fetcher is not None else {}
+    run = asyncio.run(run_weekly(db, now=now, run_id=run_id, **kw))
+    if get_settings().auto_approve and run.status == "awaiting_approval":
+        auto_deliver(db, run.id)
+    return run
+
+
+def _auto_retries(db: Session, action_id: int) -> int:
+    from app.models import AuditLog
+    return db.query(AuditLog).filter_by(actor=AUTO_ACTOR, verb="retry", entity="action", entity_id=action_id).count()
+
+
+def retry_failed_deliveries(db: Session, *, max_attempts: int = MAX_DELIVERY_ATTEMPTS) -> int:
+    """Hourly: re-run failed Google writes (usually an expired sign-in), up to max_attempts each. Never replies."""
+    from app.approvals.service import retry
+    n = 0
+    failed = db.query(Action).filter(Action.status == "failed", Action.type.in_(DELIVERY_TYPES)).all()
+    for a in failed:
+        if _auto_retries(db, a.id) < max_attempts:
+            retry(db, a.id, AUTO_ACTOR)
+            n += 1
+    return n

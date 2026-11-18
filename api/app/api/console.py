@@ -102,7 +102,6 @@ def refresh(db: Session = Depends(get_db)):
 
 
 # --- Weekly loop, explainers, actions (Plan 2) -------------------------------------------------
-import asyncio  # noqa: E402
 import threading  # noqa: E402
 from datetime import datetime, timezone  # noqa: E402
 
@@ -129,10 +128,10 @@ def _explainer_out(db: Session, e: Explainer) -> dict:
 def _run_in_background(run_id: int) -> None:
     def go():
         from app import db as dbmod
-        from app.weekly.run import run_weekly
+        from app.approvals.auto import weekly_and_deliver
         s = dbmod.SessionLocal()
         try:
-            asyncio.run(run_weekly(s, now=datetime.now(timezone.utc), run_id=run_id))
+            weekly_and_deliver(s, now=datetime.now(timezone.utc), run_id=run_id)
         finally:
             s.close()
     threading.Thread(target=go, daemon=True).start()
