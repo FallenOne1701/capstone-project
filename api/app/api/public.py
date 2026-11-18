@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Literal
+
 from fastapi import APIRouter, Depends, HTTPException, Request
 from starlette.formparsers import MultiPartException, MultiPartParser
 from pydantic import BaseModel
@@ -17,6 +19,8 @@ router = APIRouter(prefix="/api")
 
 class AskIn(BaseModel):
     text: str
+    scheme_id: str | None = None
+    channel: Literal["text", "voice"] = "text"
 
 
 async def _process(ticket_id: int, db: Session | None = None):
@@ -40,7 +44,7 @@ async def ask_preview(body: AskIn):
 @router.post("/ask")
 async def ask(body: AskIn, db: Session = Depends(get_db)):
     try:
-        t, intent = await ts.create_ticket(db, body.text)
+        t, intent = await ts.create_ticket(db, body.text, channel=body.channel, scheme_id=body.scheme_id)
     except ValueError as e:
         raise HTTPException(422, str(e))
     await _process(t.id, db)  # synchronous in Plan 1; Plan 3 moves this to a worker queue for latency

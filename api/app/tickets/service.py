@@ -66,9 +66,12 @@ async def preview(text: str, *, language: str | None = None) -> PreviewOut:
                       scheme_names=[short_name(names.get(s, s)) for s in intent.scheme_ids])
 
 
-async def create_ticket(db: Session, text: str, *, channel: str = "text") -> tuple[Ticket, IntentResult]:
+async def create_ticket(db: Session, text: str, *, channel: str = "text",
+                        scheme_id: str | None = None) -> tuple[Ticket, IntentResult]:
     red = redact(_validate(text))
     intent = await classify_intent(red.text)
+    if scheme_id and scheme_id in intent.scheme_ids:  # the answer to "Mid Cap or Small Cap?"; anything else is ignored
+        intent = intent.model_copy(update={"scheme_ids": [scheme_id]})
     t = Ticket(code="GRW-" + "".join(secrets.choice(_ALPH) for _ in range(6)), channel=channel,
                language=intent.language, question_redacted=red.text, pii_types=red.pii_types,
                intent=intent.intent, scheme_id=intent.scheme_ids[0] if len(intent.scheme_ids) == 1 else None,
@@ -84,6 +87,8 @@ async def process_ticket(db: Session, ticket_id: int, *, retriever, themes_provi
     t = db.get(Ticket, ticket_id)
     try:
         intent = await classify_intent(t.question_redacted)
+        if t.scheme_id and t.scheme_id in intent.scheme_ids:
+            intent = intent.model_copy(update={"scheme_ids": [t.scheme_id]})
         ex = find_canonical(db, intent, t.question_redacted)
         reuse = reuse_reply(ex, intent) if ex is not None else None
         if reuse is not None:

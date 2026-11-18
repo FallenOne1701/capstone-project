@@ -8,6 +8,8 @@ Flow (implementation-plan Step 2):
 
 from __future__ import annotations
 
+import dataclasses
+
 import logging
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
@@ -259,6 +261,7 @@ class Retriever:
         query: str,
         *,
         top_k: int | None = None,
+        scheme_id: str | None = None,
     ) -> RetrievalResult:
         """
         Find the best Groww snippet for a factual question.
@@ -267,6 +270,9 @@ class Retriever:
         """
         q = (query or "").strip()
         hints = parse_query(q, schemes=self.schemes)
+        if scheme_id and scheme_id in hints.scheme_ids:
+            # the user answered "Mid Cap or Small Cap?": search only the fund they chose
+            hints = dataclasses.replace(hints, scheme_ids=(scheme_id,))
         min_sim = float(self.settings.retrieval_min_similarity)
 
         if not q:

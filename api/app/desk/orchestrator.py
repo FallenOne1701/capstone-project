@@ -42,7 +42,9 @@ class _S(TypedDict, total=False):
 
 async def _facts(s: _S):
     c = s["ctx"]
-    return {"facts": await asyncio.to_thread(run_facts, s["text"], c["retriever"], c["last_checked"])}
+    ids = s["intent"].scheme_ids
+    return {"facts": await asyncio.to_thread(run_facts, s["text"], c["retriever"], c["last_checked"],
+                                             ids[0] if len(ids) == 1 else None)}
 
 
 async def _pattern(s: _S):
