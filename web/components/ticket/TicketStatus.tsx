@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { ScopeNotice } from "@/components/ask/ScopeNotice";
 import { ChecksPanel } from "./ChecksPanel";
 import { ApiError, ticket as fetchTicket } from "@/lib/api";
-import { ASK_AGAIN, CLOSED_TEXT, scopeNotice, statusLabel, waitingText } from "@/lib/labels";
+import { ASK_AGAIN, CLOSED_TEXT, nextPollMs, scopeNotice, statusLabel, waitingText } from "@/lib/labels";
 import { loadVoices, planSpeech, speechLang } from "@/lib/speech";
 import { useClientValue } from "@/lib/useClient";
 import type { TicketView } from "@/lib/types";
@@ -107,7 +107,10 @@ export function TicketStatus({ code, onAskAgain }: { code: string; onAskAgain?: 
         if (!alive) return;
         setT(next);
         setError(null);
-        if (next.status === "answered" || next.status === "failed" || next.status === "closed") return;
+        const wait = nextPollMs(next.status);
+        if (wait === null) return;
+        timer.current = setTimeout(poll, wait);
+        return;
       } catch (e) {
         if (!alive) return;
         if (e instanceof ApiError && e.status === 404) {

@@ -67,3 +67,10 @@ export function weekHeading(weekEnding: string, stale: boolean): string {
 export function actionTitle(a: { type: string; target_label: string }): string {
   return a.type === "email_draft" ? `${a.target_label}, not sent` : a.target_label;
 }
+
+/** How long the asker's page waits before asking again; null = stop. A failed ticket can still be re-run by a
+ * person in the queue, so it is watched slowly instead of given up on. */
+export function nextPollMs(status: string): number | null {
+  if (status === "answered" || status === "closed") return null;
+  return status === "failed" ? 15000 : 3000;
+}

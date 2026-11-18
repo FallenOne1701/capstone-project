@@ -19,12 +19,12 @@ export function WeeklyApprovals({ onRunDone }: { onRunDone?: () => void }) {
     if (running === null) return;
     const id = setInterval(async () => {
       try {
-        const latest = await weeklyLatest();
-        if (latest.run.id === running && latest.run.status !== "running") {
+        const attempt = (await weeklyLatest()).latest_attempt;
+        if (attempt && attempt.id === running && attempt.status !== "running") {
           setRunning(null);
           await reload();
           onRunDone?.();
-          if (latest.run.status === "failed") setMsg(`The weekly run failed: ${latest.run.error ?? "unknown error"}`);
+          if (attempt.status === "failed") setMsg(`The weekly run failed: ${attempt.error ?? "unknown error"}`);
         }
       } catch {
         /* keep waiting; the server may be busy with the run */
@@ -69,6 +69,11 @@ export function WeeklyApprovals({ onRunDone }: { onRunDone?: () => void }) {
       {msg && <p role="alert" className="text-sm text-state-danger-text">{msg}</p>}
       {missing && <p className="text-sm text-text-secondary">No weekly run yet.</p>}
       {error && !missing && <p role="alert" className="text-sm text-state-danger-text">{error}</p>}
+      {data?.latest_attempt && data.latest_attempt.id !== data.run.id && data.latest_attempt.status === "failed" && (
+        <p className="text-sm text-state-warn-text">
+          The newest weekly run failed ({data.latest_attempt.error ?? "unknown error"}); these are still from the last good run.
+        </p>
+      )}
       {data?.actions.map((a) => <ActionCard key={a.id} a={a} onDone={reload} />)}
       {data && data.actions.length === 0 && (
         <p className="text-sm text-text-secondary">

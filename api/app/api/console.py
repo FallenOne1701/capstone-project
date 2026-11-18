@@ -159,6 +159,10 @@ def weekly_latest(db: Session = Depends(get_db)):
     run = db.query(WeeklyRun).order_by(WeeklyRun.id.desc()).first()
     if run is None:
         raise HTTPException(404, "no weekly runs yet")
+    return weekly_view(db, run)
+
+
+def weekly_view(db: Session, run: WeeklyRun) -> dict:
     s = get_settings()
     themes = db.query(Theme).filter_by(run_id=run.id).order_by(Theme.rank).all()
     acts = db.query(Action).filter_by(source_ref=f"weekly_run:{run.id}").all()

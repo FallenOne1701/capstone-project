@@ -11,6 +11,8 @@ interface Props {
   /** asked before approving, e.g. "This writes to Google Docs" */
   confirmText?: string;
   approveDisabledReason?: string;
+  /** a reply draft's text as shown: approving sends it so a changed draft is never published unseen */
+  seenReply?: string;
   onDone: () => void;
 }
 
@@ -30,7 +32,7 @@ export function StatusBadge({ status }: { status: string }) {
   );
 }
 
-export function ActionButtons({ id, status, error, confirmText, approveDisabledReason, onDone }: Props) {
+export function ActionButtons({ id, status, error, confirmText, approveDisabledReason, seenReply, onDone }: Props) {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
 
@@ -58,7 +60,7 @@ export function ActionButtons({ id, status, error, confirmText, approveDisabledR
               type="button"
               disabled={busy || !!approveDisabledReason}
               title={approveDisabledReason}
-              onClick={() => (!confirmText || window.confirm(confirmText)) && act(approve)}
+              onClick={() => (!confirmText || window.confirm(confirmText)) && act((i) => approve(i, seenReply))}
               className={`${btn} bg-primary text-on-primary`}
             >
               Approve

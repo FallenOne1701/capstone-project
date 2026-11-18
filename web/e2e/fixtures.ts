@@ -17,16 +17,19 @@ export async function waitForStatus(request: APIRequestContext, code: string, st
 /** Human mode (AUTO_APPROVE=0): approve a ticket's pending reply the way the page does, via the open desk API. */
 export async function approveTicket(request: APIRequestContext, code: string): Promise<void> {
   let actionId: number | undefined;
+  let reply: string | undefined;
   await expect
     .poll(async () => {
       const items = (await (await request.get(`${API}/api/desk/queue`)).json()) as {
-        code: string; action: { id: number; status: string } | null;
+        code: string; action: { id: number; status: string } | null; draft: { reply: string } | null;
       }[];
-      const a = items.find((i) => i.code === code)?.action;
+      const item = items.find((i) => i.code === code);
+      const a = item?.action;
       actionId = a && a.status === "pending" ? a.id : undefined;
+      reply = item?.draft?.reply;
       return actionId !== undefined;
     }, { timeout: 45_000 })
     .toBe(true);
-  const r = await request.post(`${API}/api/desk/actions/${actionId}/approve`);
+  const r = await request.post(`${API}/api/desk/actions/${actionId}/approve`, { data: { reply } });
   expect(r.ok()).toBeTruthy();
 }

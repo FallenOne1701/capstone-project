@@ -62,3 +62,28 @@ test("weekly approvals say exactly where they write, and fail safely without Goo
   await expect(doc.getByText(/PULSE_DOC_ID was not set/)).toBeVisible();
   await expect(doc.getByRole("button", { name: "Retry" })).toBeVisible();
 });
+
+test("Edit opens with the draft that arrived after the card first showed", async ({ page }) => {
+  // the first queue answers show the ticket without its draft yet, as when the desk is still working
+  let target: string | null = null;
+  let held = 2;
+  await page.route("**/api/desk/queue", async (route) => {
+    const res = await route.fetch();
+    const items = (await res.json()) as { code: string; status: string; draft: unknown; action: unknown }[];
+    const i = items.findIndex((x) => x.code === target);
+    if (i >= 0 && held > 0) {
+      held -= 1;
+      items[i] = { ...items[i], status: "received", draft: null, action: null };
+    }
+    await route.fulfill({ response: res, json: items });
+  });
+  const code = await askOnPage(page, "What is the minimum SIP of HDFC Flexi Cap Fund?");
+  target = code;
+  const card = page.getByRole("region", { name: "Queue" }).getByRole("article", { name: code });
+  await expect(card.getByText("Waiting for the desk…")).toBeVisible({ timeout: 15_000 });
+  await expect(card.getByText(/review: /)).toBeVisible({ timeout: 45_000 });
+  const shown = (await card.locator("p.whitespace-pre-line").first().textContent())!.trim();
+  await card.getByRole("button", { name: "Edit" }).click();
+  await expect(card.getByLabel("Edit reply")).toHaveValue(shown);
+  expect(shown.length).toBeGreaterThan(10);
+});

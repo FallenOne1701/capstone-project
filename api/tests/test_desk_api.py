@@ -37,8 +37,8 @@ def test_desk_needs_no_key(client):
 
 
 def test_page_approve_publishes_and_audits_as_page(client, db_session):
-    t, _, a = _ticket(db_session, "GRW-DESK01")
-    r = client.post(f"/api/desk/actions/{a.id}/approve")
+    t, d, a = _ticket(db_session, "GRW-DESK01")
+    r = client.post(f"/api/desk/actions/{a.id}/approve", json={"reply": d.reply})
     assert r.status_code == 200 and r.json()["status"] == "executed"
     db_session.refresh(t)
     assert t.status == "answered"
@@ -47,15 +47,15 @@ def test_page_approve_publishes_and_audits_as_page(client, db_session):
 
 
 def test_second_approve_is_409(client, db_session):
-    _, _, a = _ticket(db_session, "GRW-DESK02")
-    assert client.post(f"/api/desk/actions/{a.id}/approve").status_code == 200
-    assert client.post(f"/api/desk/actions/{a.id}/approve").status_code == 409
+    _, d, a = _ticket(db_session, "GRW-DESK02")
+    assert client.post(f"/api/desk/actions/{a.id}/approve", json={"reply": d.reply}).status_code == 200
+    assert client.post(f"/api/desk/actions/{a.id}/approve", json={"reply": d.reply}).status_code == 409
     assert db_session.query(AuditLog).filter_by(verb="execute", entity="action", entity_id=a.id).count() == 1
 
 
 def test_blocked_draft_approve_is_409(client, db_session):
-    _, _, a = _ticket(db_session, "GRW-DESK03", review="blocked")
-    assert client.post(f"/api/desk/actions/{a.id}/approve").status_code == 409
+    _, d, a = _ticket(db_session, "GRW-DESK03", review="blocked")
+    assert client.post(f"/api/desk/actions/{a.id}/approve", json={"reply": d.reply}).status_code == 409
 
 
 def test_page_edit_redacts_pii(client, db_session):

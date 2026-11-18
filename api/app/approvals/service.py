@@ -85,14 +85,43 @@ def retry(db: Session, action_id: int, actor: str) -> Action:
     return _execute(db, a, actor)
 
 
+DELIVERY = ("doc_append", "email_draft")
+
+
+def plain_error(raw: str) -> str:
+    """What the person on the page reads when a Google write fails; the raw error stays in the audit log."""
+    low = raw.lower()
+    if "invalid_grant" in low or "token has been expired" in low:
+        return "Google sign-in has expired — the owner needs to reconnect Google, then press Retry."
+    if low.startswith("timeouterror") or "timed out" in low:
+        return "Google didn't answer in time. Check the Doc or Gmail drafts before pressing Retry — it may have gone through."
+    detail = raw.split(": ", 1)[1] if ": " in raw else raw
+    return f"The Google write failed: {detail}"[:500]
+
+
+def supersede_older_deliveries(db: Session, run_id: int) -> int:
+    """A new weekly pulse replaces older ones: their waiting or failed Google writes can no longer be approved."""
+    older = (db.query(Action).filter(Action.type.in_(DELIVERY), Action.status.in_(("pending", "failed")),
+                                     Action.source_ref != f"weekly_run:{run_id}").all())
+    for a in older:
+        a.status, a.decided_at = "rejected", _now()
+        audit(db, "scheduler", "supersede", "action", a.id, f"replaced by weekly_run:{run_id}")
+        if a.type == "doc_append":
+            ex = _run_explainer(db, a)
+            if ex is not None and ex.status == "draft":
+                ex.status = "rejected"
+    return len(older)
+
+
 def _execute(db: Session, a: Action, actor: str) -> Action:
     from app.approvals.executors import EXECUTORS
     db.commit()   # the claim is durable before any external call: no duplicate write on crash, no long DB lock
     try:
         ref = EXECUTORS[a.type](db, a)
     except Exception as exc:  # noqa: BLE001  — no silent retry; the failure is recorded on the action
-        a.status, a.error = "failed", redact(f"{type(exc).__name__}: {exc}").text[:500]
-        audit(db, actor, "fail", "action", a.id, a.error)
+        raw = redact(f"{type(exc).__name__}: {exc}").text[:500]
+        a.status, a.error = "failed", plain_error(raw) if a.type in DELIVERY else raw
+        audit(db, actor, "fail", "action", a.id, raw)
         db.commit()
         return a
     a.status, a.executed_at = "executed", _now()
@@ -106,12 +135,12 @@ def _execute(db: Session, a: Action, actor: str) -> Action:
     return a
 
 
-def reject(db: Session, action_id: int, actor: str) -> Action:
+def reject(db: Session, action_id: int, actor: str, *, close_ticket: bool = True) -> Action:
     a = _get(db, action_id)
     _claim(db, action_id, "rejected")
     db.refresh(a)
     audit(db, actor, "reject", "action", a.id)
-    if a.type == "reply_publish":
+    if a.type == "reply_publish" and close_ticket:
         t = db.query(Ticket).filter_by(code=a.target_ref).one_or_none()
         if t is not None and t.status in ("received", "in_review"):
             t.status = "closed"   # the asker sees "We couldn't answer this one." and can ask again

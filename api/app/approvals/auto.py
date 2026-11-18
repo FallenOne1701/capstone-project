@@ -31,7 +31,7 @@ def auto_decide(db: Session, ticket_id: int) -> Action | None:
     if d.review_status == "pass":
         return approve(db, a.id, AUTO_ACTOR)
     first = (d.review_failures or [{}])[0].get("check", "review")
-    reject(db, a.id, AUTO_ACTOR)
+    reject(db, a.id, AUTO_ACTOR, close_ticket=False)   # the fallback answers it; never show "closed" first
     return publish_fallback(db, ticket_id, first)
 
 

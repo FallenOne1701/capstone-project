@@ -138,10 +138,11 @@ export function QueueItem({ item, onChange }: { item: Item; onChange: () => void
                 status={a.status}
                 error={a.error}
                 approveDisabledReason={blocked ? "Edit it first — the reviewer blocked this draft" : undefined}
+                seenReply={d.reply}
                 onDone={onChange}
               />
               {a.status === "pending" && !editing && (
-                <button type="button" onClick={() => setEditing(true)} className="rounded-md border border-border-strong px-3 py-1.5 text-sm">
+                <button type="button" onClick={() => { setText(d.reply); setEditing(true); }} className="rounded-md border border-border-strong px-3 py-1.5 text-sm">
                   Edit
                 </button>
               )}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { actionTitle, ASK_AGAIN, CLOSED_TEXT, clarifyQuestion, intentLabel, scopeNotice, statusLabel, waitingText, weekHeading } from "./labels";
+import { actionTitle, ASK_AGAIN, nextPollMs, CLOSED_TEXT, clarifyQuestion, intentLabel, scopeNotice, statusLabel, waitingText, weekHeading } from "./labels";
 import type { Preview } from "./types";
 
 const base: Preview = {
@@ -83,5 +83,16 @@ describe("actionTitle", () => {
   it("keeps the Doc target as the API states it", () => {
     expect(actionTitle({ type: "doc_append", target_label: "Append to the weekly pulse Google Doc (DOC1)" }))
       .toBe("Append to the weekly pulse Google Doc (DOC1)");
+  });
+});
+
+describe("nextPollMs", () => {
+  it("stops only on a final answer or a closed ticket", () => {
+    expect(nextPollMs("answered")).toBeNull();
+    expect(nextPollMs("closed")).toBeNull();
+    expect(nextPollMs("in_review")).toBe(3000);
+  });
+  it("keeps watching a failed ticket slowly while a person can re-run it", () => {
+    expect(nextPollMs("failed")).toBe(15000);
   });
 });

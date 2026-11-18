@@ -8,7 +8,7 @@ from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session
 
 from app.approvals.executors import DOC_PLACEHOLDER, recipient_label, recipient_ref
-from app.approvals.service import audit
+from app.approvals.service import audit, supersede_older_deliveries
 from app.config import get_settings
 from app.guard.pii import redact
 from app.link.question_keys import repeated_questions
@@ -103,6 +103,7 @@ async def run_weekly(db: Session, *, now: datetime, fetcher=play_store_fetcher, 
         audit(db, "scheduler", "create", "weekly_run", run.id, f"themes={len(themes)} fee={fee.topic}")
         audit(db, "scheduler", "create", "action", doc.id, "doc_append")
         audit(db, "scheduler", "create", "action", mail.id, "email_draft")
+        supersede_older_deliveries(db, run.id)
         db.commit()
     except Exception as exc:  # noqa: BLE001
         db.rollback()

@@ -132,6 +132,8 @@ export interface WeeklyLatest {
   repeated: Repeated[];
   actions: Action[];
   explainer: Explainer | null;
+  /** the newest run, which may still be running or have failed while `run` is the newest ready one */
+  latest_attempt?: { id: number; status: string; error: string | null };
 }
 
 export interface Source {
