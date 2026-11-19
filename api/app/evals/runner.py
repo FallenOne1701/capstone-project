@@ -41,11 +41,14 @@ def _file_log(log_path: Path) -> None:
 def suites() -> dict:
     """name -> callable(db, ctx) returning a SuiteResult (sync or async). Filled in as suites are built."""
     from app.evals.feasibility import run_feasibility
+    from app.evals.grounding import run_grounding
     from app.evals.isolation import run_isolation
     reviews = API_ROOT / "tests" / "fixtures" / "reviews.json"
     reg: dict = {
         "feasibility": lambda db, ctx: run_feasibility(db, questions_path=DATASETS_DIR / "questions.yaml",
                                                        reviews_fixture=reviews),
         "isolation": lambda db, ctx: run_isolation(db),
+        "grounding": lambda db, ctx: run_grounding(db, adversarial_path=DATASETS_DIR / "adversarial.yaml",
+                                                   reviews_fixture=reviews, log_path=ctx["log_path"]),
     }
     return reg
