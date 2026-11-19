@@ -99,6 +99,11 @@ async def classify_intent(redacted_text: str) -> IntentResult:
     if _ACCOUNT.search(text):
         return mk("account_issue")
     if _FEE.search(text) or hints.fact_key in _FACT_KEYS_FEE:
+        if base["fact_key"] is None:
+            # "yearly charge" fires the fee rule but names no fee: ask the AI which one (eval run 2, u02)
+            data = await complete_json(_LLM_SYSTEM, text, fast=True)
+            if data and data.get("fact_key") in CORE_FACT_KEYS:
+                base["fact_key"] = data["fact_key"]
         return mk("fee_question")
     if _HOWTO.search(text):
         return mk("how_to_process")

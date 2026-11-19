@@ -57,3 +57,27 @@ def test_retriever_uses_a_given_fact_key(corpus):
     r = Retriever().retrieve(q, fact_key="exit_load")
     assert r.hints.fact_key == "exit_load"
     assert r.winner is not None and r.winner.fact_key == "exit_load"
+
+
+def test_rule_intent_without_a_fact_asks_the_ai_for_the_fact(monkeypatch):
+    # eval run 2 (u02): "charge" fires the fee rule, so the AI was never asked which fee
+    _fake_llm(monkeypatch, {"intent": "fee_question", "fact_key": "expense_ratio"})
+    r = asyncio.run(classifier.classify_intent("what's the yearly charge on the hdfc small cap thing"))
+    assert r.intent == "fee_question" and r.fact_key == "expense_ratio" and r.confidence == "rule"
+
+
+def test_rule_intent_keeps_its_own_intent_when_the_ai_disagrees(monkeypatch):
+    _fake_llm(monkeypatch, {"intent": "advice_request", "fact_key": "exit_load"})
+    r = asyncio.run(classifier.classify_intent("what's the yearly charge on the hdfc small cap thing"))
+    assert r.intent == "fee_question" and r.fact_key == "exit_load"
+
+
+def test_keyword_fact_needs_no_ai(monkeypatch):
+    calls = []
+    _fake_llm(monkeypatch, None)
+
+    async def spy(system, text, **kw):
+        calls.append(text)
+    monkeypatch.setattr(classifier, "complete_json", spy)
+    r = asyncio.run(classifier.classify_intent("What is the exit load of HDFC Small Cap Fund?"))
+    assert r.fact_key == "exit_load" and calls == []
