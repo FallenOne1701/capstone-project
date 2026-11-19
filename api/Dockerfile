@@ -17,13 +17,18 @@ RUN cd mcp_server && npm ci
 COPY mcp_server/src mcp_server/src
 RUN cd mcp_server && npm run build && npm prune --omit=dev
 
-# Python app (editable install so data files such as app/corpus/sources.yaml are read from /app)
+# Python dependencies first (read from pyproject.toml), so a code-only change reuses this layer and the model below
 COPY pyproject.toml ./
-COPY app app
-RUN pip install -e .
+RUN python -c "import tomllib; [print(d) for d in tomllib.load(open('pyproject.toml', 'rb'))['project']['dependencies']]" \
+      > /tmp/requirements.txt \
+ && pip install -r /tmp/requirements.txt
 
 # Embedding model baked into the image so first boot doesn't download it
 RUN python -c "from fastembed import TextEmbedding; TextEmbedding('BAAI/bge-small-en-v1.5')"
+
+# App code last; uvicorn imports `app` from /app (its working directory), so data files such as
+# app/corpus/sources.yaml are read in place
+COPY app app
 
 EXPOSE 8000
 CMD ["sh", "-c", "uvicorn --factory app.main:create_app --host 0.0.0.0 --port ${PORT:-8000} --workers 1"]

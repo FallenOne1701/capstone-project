@@ -61,8 +61,10 @@ def test_google_status_flags_missing_node_and_build(monkeypatch, tmp_path):
     assert {"node", "mcp_build"} <= set(google_status()["missing"])
 
 
-def test_health_is_200_while_corpus_empty(client):
+def test_health_is_200_while_corpus_empty(client, monkeypatch, tmp_path):
+    monkeypatch.setattr(get_settings(), "data_index_dir", tmp_path / "empty-index")
     r = client.get("/health")
     assert r.status_code == 200
     body = r.json()
     assert body["db"] == "ok" and set(body["google"]) == {"ready", "missing"}
+    assert body["corpus"]["ready"] is False   # first boot: the index is still being built
