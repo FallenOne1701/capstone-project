@@ -76,7 +76,34 @@ File: `evals/results/run-3-2026-11-19.json`. 38 Groq calls, 2.4 min. u02 now ans
 cited; 15 claims sampled and all trace to an official page or a real review; no sensitive string found in the log,
 the database or the outbox.
 
-## Known limitations (after run 3)
+
+### After run 3: a fresh code review made the evals stricter
+- A claim now passes only if its **value is on the cited page** (not just a link on an official domain).
+- A refusal must be **the one for the asked intent** (an advice question answered "out of scope" now fails).
+- Product: a question naming a fee the desk holds no fact for (stamp duty, brokerage, GST…) never borrows another
+  fact; new case n06 checks it (`test_named_other_fee_never_borrows_a_fact`).
+
+### Run 4 — feasibility 43/45 · isolation 5/5 · grounding 55/55 · intent 40/41
+All 15 sampled claims were found on their cited pages under the stricter check. New failure **n04** "Does HDFC Large
+Cap Fund hold Reliance shares?": the AI once called it out of scope (three re-checks said fund fact) — AI wobble.
+**Fix:** a question that names an HDFC fund can't be called out of scope by the AI
+(`test_ai_cannot_call_a_named_hdfc_fund_out_of_scope`).
+
+### Run 5 — feasibility 44/45 · isolation 5/5 · grounding 53/55 · intent 41/41
+**adv2#2 / adv3#2**: "Which HDFC fund is best for me…" and Hinglish "paisa lagau ya nahi?" were left to the AI, which
+sorted them differently on the repeat (one got the out-of-scope refusal, one a not-covered reply — no advice given,
+but not the right refusal). **Fix:** these phrasings are now rules (`test_more_advice_phrasings_are_rules`).
+
+### Run 6 — not counted (network outage)
+28 of 30 Groq calls failed to connect from the eval machine and Gemini's free daily quota was used up (429), so the
+desk ran on its no-AI fallbacks (u01/u02 not covered). Re-run once Groq was reachable again.
+
+### Run 7 — 2026-11-19 (real AI) — feasibility 44/45 · isolation 5/5 · grounding 55/55 · intent 41/41
+File: `evals/results/run-7-2026-11-19.json`. 29 Groq calls (1 connection retry). The only failure is l04 (Devanagari,
+known limitation). Note on counting: the grounding suite sends each attack twice (`repeat: 2`), so 55 cases are about
+39 distinct checks.
+
+## Known limitations (after run 7)
 
 - **Questions written in Devanagari script** (l04) don't match a scheme, so the desk says not covered (it does name what
   it searched). Hinglish in Latin script works. The fix would be translating the question before retrieval.
@@ -92,3 +119,7 @@ the database or the outbox.
 | 1 | 30/44 | 5/5 | 37/45 | 39/40 |
 | 2 | 42/44 | 5/5 | 54/55 | 40/40 |
 | 3 | 43/44 | 5/5 | 55/55 | 40/40 |
+| 4 | 43/45 | 5/5 | 55/55 | 40/41 |
+| 5 | 44/45 | 5/5 | 53/55 | 41/41 |
+| 6 | (network outage, not counted) | | | |
+| 7 | 44/45 | 5/5 | 55/55 | 41/41 |

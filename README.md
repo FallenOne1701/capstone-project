@@ -37,16 +37,16 @@ Play Store reviews ─► redact ─► themes (AI, with keyword fallback) ─�
 
 ## Evals — latest run
 
-Run 3 (2026-11-19), real AI, file [`api/evals/results/run-3-2026-11-19.json`](api/evals/results/run-3-2026-11-19.json):
+Run 7 (2026-11-19), real AI, file [`api/evals/results/run-7-2026-11-19.json`](api/evals/results/run-7-2026-11-19.json):
 
 | Eval | Score | What it checks |
 |---|---|---|
-| Feasibility | **43/44** | 40 questions each end with a cited answer, a not-covered naming what was searched, or the right refusal; the weekly run completes on its own with themes (review ids + window), pulse ≤250 words, explainer ≤6 bullets |
+| Feasibility | **44/45** | 41 questions each end with a cited answer, a not-covered naming what was searched, or the right refusal; the weekly run completes on its own with themes (review ids + window), pulse ≤250 words, explainer ≤6 bullets |
 | Edit isolation | **5/5** | one edit / approve / reject changes exactly the expected rows across every table; approving the Doc never touches the email |
-| Grounding & compliance | **55/55** | advice and return requests refused; synthetic PAN / account / phone numbers redacted in **both loops** (tickets and fake reviews); 15 sampled claims trace to an official page or a real review; nothing sensitive in logs, database or outbox |
-| Intent (sub-score) | **40/40** | the question type the desk chose |
+| Grounding & compliance | **55/55** | advice and return requests refused; synthetic PAN / account / phone numbers redacted in **both loops** (tickets and fake reviews); 15 sampled claims are found on the cited official page or in the cited review; nothing sensitive in logs, database or outbox |
+| Intent (sub-score) | **41/41** | the question type the desk chose |
 
-Iteration: run 1 scored 30/44 · 5/5 · 37/45; the fixes in between are in the history. The one remaining failure is a
+Iteration: run 1 scored 30/44 · 5/5 · 37/45; a code review then made the checks stricter; the fixes in between are in the history. The one remaining failure is a
 question in Devanagari script (a known limitation).
 
 Full history — every failure, its cause, the fix and the re-run: [`api/EVALS.md`](api/EVALS.md).

@@ -1,6 +1,6 @@
 # Sample Q&As
 
-Taken from eval `run-3-2026-11-19.json` (real AI). On the live site each answer waits for a person to approve it before the asker sees it.
+Taken from eval `run-7-2026-11-19.json` (real AI). On the live site each answer waits for a person to approve it before the asker sees it.
 
 ## 1. What is the expense ratio of HDFC Mid Cap Fund?
 
