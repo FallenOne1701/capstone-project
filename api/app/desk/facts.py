@@ -7,8 +7,8 @@ from app.desk.contracts import FactsResult
 
 
 def run_facts(redacted_text: str, retriever: Retriever, last_checked: Callable[[str], str | None],
-              scheme_id: str | None = None) -> FactsResult:
-    r = retriever.retrieve(redacted_text, scheme_id=scheme_id)
+              scheme_id: str | None = None, fact_key: str | None = None) -> FactsResult:
+    r = retriever.retrieve(redacted_text, scheme_id=scheme_id, fact_key=fact_key)
     # Covered only when the asked fact was detected and is exactly the retrieved one; a scheme-only
     # question ("AUM of mid cap") would otherwise get whichever chunk is nearest.
     if r.status == "ok" and r.winner is not None and r.hints.fact_key and r.winner.fact_key == r.hints.fact_key:

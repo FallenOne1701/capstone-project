@@ -8,6 +8,7 @@ from typing import Literal
 from pydantic import BaseModel
 
 from app.corpus.query_parser import parse_query
+from app.corpus.parser import CORE_FACT_KEYS
 from app.llm.client import complete_json
 
 Intent = Literal["fee_question", "fund_fact", "how_to_process", "advice_request",
@@ -66,12 +67,15 @@ def detect_language(text: str) -> str:
 
 
 _LLM_SYSTEM = (
-    "Classify a mutual-fund support question into exactly one intent. Return JSON {\"intent\": ...}. "
+    "Classify a mutual-fund support question into exactly one intent. Return JSON "
+    "{\"intent\": ..., \"fact_key\": ...}. "
     f"Allowed: {list(INTENTS)}. advice_request = asks whether to buy/sell/hold/switch or if a fund is good. "
     "performance_request = asks for returns, CAGR, NAV forecasts. account_issue = a problem with the user's own "
     "order, money, SIP or KYC. fee_question = exit load, expense ratio, charges. fund_fact = minimum SIP, benchmark, "
     "riskometer, objective, fund manager. how_to_process = how to do something on the platform. Otherwise out_of_scope. "
-    "The text may be Hindi or Hinglish. Tokens like [PAN] are redacted PII."
+    "The text may be Hindi or Hinglish. Tokens like [PAN] are redacted PII. "
+    f"fact_key = the single fund fact asked about, one of {list(CORE_FACT_KEYS)} (exit load = charge for taking "
+    "money out early; expense ratio = yearly fund charge), or null."
 )
 
 
@@ -102,6 +106,8 @@ async def classify_intent(redacted_text: str) -> IntentResult:
         return mk("fund_fact")
     data = await complete_json(_LLM_SYSTEM, text, fast=True)
     if data and data.get("intent") in INTENTS:
+        if base["fact_key"] is None and data.get("fact_key") in CORE_FACT_KEYS:
+            base["fact_key"] = data["fact_key"]   # unclear wording: the AI names the fact (eval run 1, u01/u02)
         return mk(data["intent"], "llm")
     if hints.scheme_ids:   # names an HDFC fund: in scope even when the LLM is unavailable
         return mk("fund_fact", "default")
