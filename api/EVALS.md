@@ -50,3 +50,22 @@ What failed, and why (root causes found before changing anything):
 
 AI usage (counted from the run log): 35 Groq calls; run time 31 min. One Groq connection error fell back to
 Gemini, which timed out — the code continued with its template fallback, as designed.
+
+### Run 2 — 2026-11-19 (real AI) — feasibility 42/44 · isolation 5/5 · grounding 54/55 · intent 40/40
+
+File: `evals/results/run-2-2026-11-19.json`. 36 Groq calls, 2.3 min (run 1's 31 min was mostly the crashing tickets and
+a Gemini timeout).
+
+Fixes between run 1 and run 2 (each with a regression test in `api/tests/`):
+- eval set-up: isolation in its own database; source records copied in (`test_evals_runner.py`);
+- how-to questions about other products (crypto, shares) are out of scope (`test_intent.py`);
+- unclear wording: the AI names the fact and retrieval uses it (`test_llm_fact_key.py`);
+- dataset: how-to and Mid Cap lock-in expect not-covered (spec), see run 1 item 3.
+
+Still failing, and why:
+1. **u02** "what's the yearly charge on the hdfc small cap thing" — the word "charge" fires the fee keyword rule, so
+   the AI was never asked *which* fee; the desk said not covered. **Fix:** a fee question that names no fee asks the AI
+   for the fact (`test_rule_intent_without_a_fact_asks_the_ai_for_the_fact`).
+2. **l04** (Devanagari script) — known limitation, unchanged.
+3. **claims_available** — only 14 cited claims existed to sample from (all 14 traced correctly). **Fix:** 3 more
+   cited questions in the grounding set so 15 can be sampled.
