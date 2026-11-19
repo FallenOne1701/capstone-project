@@ -83,10 +83,11 @@ async def classify_intent(redacted_text: str) -> IntentResult:
     def mk(intent: str, conf: str = "rule") -> IntentResult:
         return IntentResult(intent=intent, confidence=conf, **base)
 
+    # other products first: "can I buy bitcoin on Groww?" is out of scope, not a how-to (eval run 1, n05)
+    if _OFF_TOPIC.search(text) and not hints.scheme_ids and not _MF_CONTEXT.search(text):
+        return mk("out_of_scope")   # banking, loans, cards, stocks, crypto…: not something this desk answers
     if _HOWTO_TXN.search(text) and not re.search(r"(?i)\bshould i\b", text):
         return mk("how_to_process")
-    if _OFF_TOPIC.search(text) and not hints.scheme_ids and not _MF_CONTEXT.search(text):
-        return mk("out_of_scope")   # banking, loans, cards…: not something this desk answers
     if _ADVICE.search(text) or _ADVICE_MORE.search(text):
         return mk("advice_request")
     if _PERF.search(text):

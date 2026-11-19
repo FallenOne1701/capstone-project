@@ -51,3 +51,17 @@ def test_language(text, lang):
 
 def test_devanagari_without_llm_is_out_of_scope_not_crash():
     assert run("एग्जिट लोड क्या है").intent in {"out_of_scope", "fee_question"}
+
+
+# Eval run 1 (n05): a how-to-shaped question about a non-mutual-fund product is out of scope
+@pytest.mark.parametrize("q", ["Can I buy bitcoin on Groww?", "How do I buy shares of Reliance on Groww?",
+                               "How do I apply for a credit card on Groww?"])
+def test_howto_about_other_products_is_out_of_scope(q):
+    r = asyncio.run(classify_intent(q))
+    assert r.intent == "out_of_scope"
+
+
+@pytest.mark.parametrize("q", ["How do I redeem my mutual fund units to my bank account?",
+                               "How do I start a SIP in HDFC Mid Cap Fund?"])
+def test_mutual_fund_howtos_stay_howto(q):
+    assert asyncio.run(classify_intent(q)).intent == "how_to_process"
