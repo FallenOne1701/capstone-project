@@ -31,6 +31,12 @@ def main(argv: list[str] | None = None) -> int:
     from app.evals.result import score_card, write_result
     from app.evals.runner import suites
     dbmod.init_db()
+    from app.evals.runner import LOCAL_APP_DB, copy_sources
+    seed = dbmod.SessionLocal()
+    try:
+        print(f"copied {copy_sources(seed, LOCAL_APP_DB)} source records from {LOCAL_APP_DB.name}")
+    finally:
+        seed.close()
 
     registry = suites()
     names = list(registry) if args.suite == "all" else [args.suite]

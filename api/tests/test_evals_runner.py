@@ -31,3 +31,33 @@ def test_score_card_lists_failures():
     card = score_card([s])
     assert "feasibility  1/2" in card
     assert "q2" in card and "no citation" in card
+
+
+# Run 1 findings: the eval environment must match production and keep suites apart
+def test_copy_sources_brings_real_fetch_dates(db_session, tmp_path):
+    from datetime import datetime, timezone
+
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import sessionmaker
+
+    from app.db import Base
+    from app.evals.runner import copy_sources
+    from app.models import Source
+    src = create_engine(f"sqlite:///{(tmp_path / 'app.db').as_posix()}")
+    Base.metadata.create_all(src)
+    s = sessionmaker(bind=src)()
+    s.add(Source(url="https://groww.in/x", title="X", kind="scheme", status="ok",
+                 fetched_at=datetime(2026, 11, 18, 9, tzinfo=timezone.utc)))
+    s.commit()
+    s.close()
+    assert copy_sources(db_session, tmp_path / "app.db") == 1
+    row = db_session.query(Source).one()
+    assert row.url == "https://groww.in/x" and row.fetched_at.date().isoformat() == "2026-11-18"
+
+
+def test_isolation_runs_in_its_own_database(db_session, tmp_path):
+    from app.evals.runner import run_isolation_apart
+    from app.models import Action, Explainer
+    r = run_isolation_apart(tmp_path)
+    assert r.passed == r.total == 5
+    assert db_session.query(Explainer).count() == 0 and db_session.query(Action).count() == 0
