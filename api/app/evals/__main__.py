@@ -19,7 +19,13 @@ def main(argv: list[str] | None = None) -> int:
     run = sub.add_parser("run")
     run.add_argument("suite", choices=["feasibility", "isolation", "grounding", "all"])
     run.add_argument("--results-dir", type=Path, default=None)
+    smp = sub.add_parser("samples", help="write the README samples (reviews CSV + Q&As) from a result file")
+    smp.add_argument("--result", type=Path, required=True)
+    smp.add_argument("--out", type=Path, required=True)
+    smp.add_argument("--reviews", type=int, default=20)
     args = p.parse_args(argv)
+    if args.cmd == "samples":
+        return _samples(args)
 
     tmp = Path(tempfile.mkdtemp(prefix="support-desk-eval-"))
     log_path = tmp / "eval.log"
@@ -65,6 +71,37 @@ def main(argv: list[str] | None = None) -> int:
         print(f"intent accuracy  {intent[0]}/{intent[1]}")
     print(f"saved {path}")
     return 0 if all(s.passed == s.total for s in results) else 1
+
+
+def _samples(args) -> int:
+    """Reviews: the newest public Play Store reviews, scrubbed exactly as the weekly loop stores them."""
+    import json
+
+    from app.config import get_settings
+    from app.evals.samples import pick_qas, reviews_csv
+    from app.weekly.reviews import play_store_fetcher, scrub
+    args.out.mkdir(parents=True, exist_ok=True)
+    s = get_settings()
+    try:
+        raws = play_store_fetcher(s.play_package, 1, args.reviews * 3)
+        source = "Google Play (public reviews, newest first)"
+    except Exception as exc:  # noqa: BLE001
+        print(f"live fetch failed ({type(exc).__name__}); using the test fixture")
+        raws = json.loads((Path(__file__).resolve().parents[2] / "tests" / "fixtures" / "reviews.json").read_text())
+        source = "test fixture"
+    scrubbed = [r for r in (scrub(x) for x in raws) if r]
+    wordy = [r for r in scrubbed if len(r["text_redacted"].split()) >= 6]   # "nice" says little in a sample
+    rows = (wordy + [r for r in scrubbed if r not in wordy])[: args.reviews]
+    (args.out / "reviews_sample.csv").write_text(reviews_csv(rows), encoding="utf-8")
+    result = json.loads(args.result.read_text(encoding="utf-8"))
+    qas = pick_qas(result, n=5)
+    lines = [f"# Sample Q&As", "", f"Taken from eval `{args.result.name}` (real AI). On the live site each answer waits "
+             "for a person to approve it before the asker sees it.", ""]
+    for i, q in enumerate(qas, 1):
+        lines += [f"## {i}. {q['question']}", "", q["answer"], ""]
+    (args.out / "sample_qa.md").write_text("\n".join(lines), encoding="utf-8")
+    print(f"wrote {len(rows)} reviews ({source}) and {len(qas)} Q&As to {args.out}")
+    return 0
 
 
 def _commit() -> str:
