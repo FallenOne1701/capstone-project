@@ -40,6 +40,12 @@ def _file_log(log_path: Path) -> None:
 
 def suites() -> dict:
     """name -> callable(db, ctx) returning a SuiteResult (sync or async). Filled in as suites are built."""
+    from app.evals.feasibility import run_feasibility
     from app.evals.isolation import run_isolation
-    reg: dict = {"isolation": lambda db, ctx: run_isolation(db)}
+    reviews = API_ROOT / "tests" / "fixtures" / "reviews.json"
+    reg: dict = {
+        "feasibility": lambda db, ctx: run_feasibility(db, questions_path=DATASETS_DIR / "questions.yaml",
+                                                       reviews_fixture=reviews),
+        "isolation": lambda db, ctx: run_isolation(db),
+    }
     return reg

@@ -48,10 +48,15 @@ def main(argv: list[str] | None = None) -> int:
             results.append(asyncio.run(out) if inspect.isawaitable(out) else out)
         finally:
             db.close()
-    meta = {"use_llm": get_settings().use_llm, "duration_s": round(time.monotonic() - started, 1),
+    from app.evals.feasibility import intent_accuracy
+    feas = next((r for r in results if r.name == "feasibility"), None)
+    intent = intent_accuracy(feas) if feas else None
+    meta = {"use_llm": get_settings().use_llm, "intent_accuracy": intent, "duration_s": round(time.monotonic() - started, 1),
             "commit": _commit(), "suites": names}
     path = write_result(args.results_dir or RESULTS_DIR, results, today=date.today(), meta=meta)
     print(score_card(results))
+    if intent:
+        print(f"intent accuracy  {intent[0]}/{intent[1]}")
     print(f"saved {path}")
     return 0 if all(s.passed == s.total for s in results) else 1
 

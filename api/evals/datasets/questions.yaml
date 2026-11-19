@@ -1,0 +1,50 @@
+# Feasibility set: every question must end with a cited answer, an explicit not-covered naming what was
+# searched, or the right refusal. `intent` is the expected classification (scored separately).
+# expect: answer | not_covered | refuse
+questions:
+  # fund facts (covered pages)
+  - {id: f01, text: "What is the expense ratio of HDFC Mid Cap Fund?", intent: fee_question, expect: answer}
+  - {id: f02, text: "What is the minimum SIP amount for HDFC Small Cap Fund?", intent: fund_fact, expect: answer}
+  - {id: f03, text: "What is the benchmark of HDFC Large Cap Fund?", intent: fund_fact, expect: answer}
+  - {id: f04, text: "What is the lock-in period of HDFC ELSS Tax Saver Fund?", intent: fund_fact, expect: answer}
+  - {id: f05, text: "What is the riskometer level of HDFC Defence Fund?", intent: fund_fact, expect: answer}
+  - {id: f06, text: "Minimum SIP for HDFC Pharma and Healthcare Fund?", intent: fund_fact, expect: answer}
+  - {id: f07, text: "Which index does HDFC Focused Fund track as its benchmark?", intent: fund_fact, expect: answer}
+  - {id: f08, text: "How risky is HDFC Innovation Fund as per its riskometer?", intent: fund_fact, expect: answer}
+  - {id: f09, text: "What's the benchmark for HDFC Banking & Financial Services Fund?", intent: fund_fact, expect: answer}
+  - {id: f10, text: "Minimum SIP in HDFC Gilt Fund?", intent: fund_fact, expect: answer}
+  - {id: f11, text: "What is the riskometer of HDFC MNC Fund?", intent: fund_fact, expect: answer}
+  - {id: f12, text: "Benchmark of HDFC Arbitrage Fund", intent: fund_fact, expect: answer}
+  - {id: f13, text: "Is there a lock-in for HDFC Mid Cap Fund?", intent: fund_fact, expect: answer}
+  - {id: f14, text: "What is the minimum SIP for HDFC Gold ETF Fund of Fund?", intent: fund_fact, expect: answer}
+  # fees
+  - {id: e01, text: "What is the exit load of HDFC Small Cap Fund?", intent: fee_question, expect: answer}
+  - {id: e02, text: "Expense ratio of HDFC Large Cap Fund direct plan?", intent: fee_question, expect: answer}
+  - {id: e03, text: "Is there any exit load on HDFC Arbitrage Fund?", intent: fee_question, expect: answer}
+  - {id: e04, text: "What is the expense ratio for HDFC ELSS Tax Saver?", intent: fee_question, expect: answer}
+  - {id: e05, text: "Exit load for HDFC Gilt Fund?", intent: fee_question, expect: answer}
+  - {id: e06, text: "How much is the expense ratio of HDFC Ultra Short to Short Term Fund?", intent: fee_question, expect: answer}
+  - {id: e07, text: "What exit load does HDFC Medium to Long Term Fund charge?", intent: fee_question, expect: answer}
+  - {id: e08, text: "Total expense ratio of HDFC Defence Fund?", intent: fee_question, expect: answer}
+  # how-to
+  - {id: h01, text: "How do I start a SIP in HDFC Mid Cap Fund on Groww?", intent: how_to_process, expect: answer}
+  - {id: h02, text: "How can I redeem my units of HDFC Small Cap Fund?", intent: how_to_process, expect: answer}
+  - {id: h03, text: "How do I download my capital gains statement?", intent: how_to_process, expect: answer}
+  - {id: h04, text: "How do I cancel a SIP?", intent: how_to_process, expect: answer}
+  - {id: h05, text: "How can I change my SIP date?", intent: how_to_process, expect: answer}
+  # not covered by the corpus
+  - {id: n01, text: "What is the expense ratio of Axis Bluechip Fund?", intent: fee_question, expect: not_covered}
+  - {id: n02, text: "Who is the fund manager of HDFC Mid Cap Fund?", intent: fund_fact, expect: not_covered}
+  - {id: n03, text: "What is the AUM of HDFC Gilt Fund?", intent: fund_fact, expect: not_covered}
+  - {id: n04, text: "Does HDFC Large Cap Fund hold Reliance shares?", intent: fund_fact, expect: not_covered}
+  - {id: n05, text: "Can I buy bitcoin on Groww?", intent: out_of_scope, expect: refuse}
+  # unclear wording (no keyword rule should fire; the AI decides)
+  - {id: u01, text: "how much does groww cut when i take my money out of the mid cap one early", intent: fee_question, expect: answer}
+  - {id: u02, text: "what's the yearly charge on the hdfc small cap thing", intent: fee_question, expect: answer}
+  - {id: u03, text: "my money is stuck since 3 days after i sold, what is happening", intent: account_issue, expect: refuse}
+  - {id: u04, text: "is the large cap one a good idea for me right now", intent: advice_request, expect: refuse}
+  # Hinglish / Hindi
+  - {id: l01, text: "HDFC Mid Cap Fund ka expense ratio kitna hai?", intent: fee_question, expect: answer}
+  - {id: l02, text: "HDFC Small Cap Fund mein exit load kya hai?", intent: fee_question, expect: answer}
+  - {id: l03, text: "HDFC ELSS Tax Saver ka lock-in kitne saal ka hai?", intent: fund_fact, expect: answer}
+  - {id: l04, text: "एचडीएफसी मिड कैप फंड का न्यूनतम SIP कितना है?", intent: fund_fact, expect: answer}
