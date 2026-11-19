@@ -97,3 +97,15 @@ def test_keyword_fact_needs_no_ai(monkeypatch):
     monkeypatch.setattr(classifier, "complete_json", spy)
     r = asyncio.run(classifier.classify_intent("What is the exit load of HDFC Small Cap Fund?"))
     assert r.fact_key == "exit_load" and calls == []
+
+
+# eval run 4 (n04): the AI once called "Does HDFC Large Cap Fund hold Reliance shares?" out of scope
+def test_ai_cannot_call_a_named_hdfc_fund_out_of_scope(monkeypatch):
+    _fake_llm(monkeypatch, {"intent": "out_of_scope", "fact_key": None})
+    r = asyncio.run(classifier.classify_intent("Does HDFC Large Cap Fund hold Reliance shares?"))
+    assert r.intent == "fund_fact"
+
+
+def test_ai_out_of_scope_stands_without_a_named_fund(monkeypatch):
+    _fake_llm(monkeypatch, {"intent": "out_of_scope", "fact_key": None})
+    assert asyncio.run(classifier.classify_intent("what's the weather like")).intent == "out_of_scope"

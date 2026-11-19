@@ -117,6 +117,8 @@ async def classify_intent(redacted_text: str) -> IntentResult:
     if data and data.get("intent") in INTENTS:
         if base["fact_key"] is None and data.get("fact_key") in CORE_FACT_KEYS:
             base["fact_key"] = data["fact_key"]   # unclear wording: the AI names the fact (eval run 1, u01/u02)
+        if data["intent"] == "out_of_scope" and hints.scheme_ids:
+            return mk("fund_fact", "llm")   # it names an HDFC fund, so it is in scope (eval run 4, n04)
         return mk(data["intent"], "llm")
     if hints.scheme_ids:   # names an HDFC fund: in scope even when the LLM is unavailable
         return mk("fund_fact", "default")
