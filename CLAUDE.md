@@ -47,6 +47,7 @@ The assignment brief was pasted into the 2026-11-18 session. Its key rules:
 - SQLite on the Railway volume `/data` (user chose this over Postgres). `CORS_ORIGINS` = the Vercel address + localhost. `/health` shows db / corpus / google readiness.
 - Live check 2026-11-19: GRW-9WYGL7 waited for a person, was approved via the page API and answered (0.73%, cited). No weekly run yet on Railway; no Google action touched.
 - Redeploy steps are in `web/README.md` → "Deployed".
+- User decision 2026-11-19: no password on the page. Approvals (including Google writes) stay open to anyone on the page; Google writes only append to the Doc or create a Gmail draft, never send.
 
 **What Plan 3c built** (still true): `AUTO_APPROVE` default 0; open page API `/api/desk/*` (actor `page`, rate-limited, approve must send the reply text seen, else 409); ticket `closed` on reject + "Ask again"; weekly approvals show exactly what is written where; Google errors in plain words. Deferred minors from 3c: no length cap on edit text; Retry after a Google timeout may double-write; a daily cap on open weekly runs; the `models.py` status comment.
 
