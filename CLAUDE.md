@@ -36,42 +36,29 @@ The assignment brief was pasted into the 2026-11-18 session. Its key rules:
   Both hold every Ruling, the final-review results and the deferred minors.
 - **GitHub:** private `FallenOne1701/capstone-project`. Each plan = its own branch + PR.
 
-## Status (end of 2026-11-18 session, Plan 3c done)
+## Status (2026-11-19, Plan 4a deployed)
 
-**Branch:** `plan-3-console-voice` (Plans 3, 3b, 3c), not pushed, no PR. Head `c83e55d`.
+**Merged:** Plans 3, 3b, 3c are in `main` (PR #3, `8ff0ce7`).
+**Branch:** `plan-4a-deploy` (Plan 4a), spec `docs/superpowers/specs/2026-11-19-deploy-railway-vercel-design.md`, plan `docs/superpowers/plans/2026-11-19-plan-4a-deploy.md`.
 
-**Plan 3c — done (one page, a person approves):**
-- spec `docs/superpowers/specs/2026-11-18-one-page-human-approval-design.md`, plan `docs/superpowers/plans/2026-11-18-plan-3c-one-page-human-approval.md`.
-- `AUTO_APPROVE` defaults **0**. With it off, no reply or Google write happens without a click (the auto mode from Plan 3b still works when set to 1).
-- Open page API `app/api/desk.py` (`/api/desk/*`, actor `page`):
-  - limits: 30 clicks per 10 min per visitor; weekly run once an hour;
-  - Approve on a reply must send the reply text the person saw, otherwise 409 "This draft changed — review it again.";
-  - the weekly view shows the newest *ready* run plus `latest_attempt`;
-  - a new run supersedes older waiting/failed Google writes (audit verb `supersede`).
-- Page `/`: Ask → **Queue** (Approve / Edit / Reject / Re-run) → This week. "This week" adds an approval list stating exactly what is written where, explainers, sources and "Run weekly now".
-- Ticket status `closed` on reject: the asker sees "We couldn't answer this one." + **Ask again**.
-- Google failures show in plain words (`plain_error`); the raw error stays in the audit log.
-- Final review (opus): 0 Critical. All Important fixed (plus 2 re-graded minors). Deferred minors:
-  - no length cap on edit text;
-  - Retry after a Google timeout may double-write;
-  - a daily cap on open weekly runs (think about this for the deploy);
-  - the `models.py` status comment.
+**Live:**
+- Page: https://groww-support-desk.vercel.app (Vercel, user's Gmail/GitHub account `fallenone1701`, team `bomba8`).
+- API: https://api-production-c6d78bb8.up.railway.app (Railway project `groww-support-desk`, service `api`, the user's SECOND Railway account; the CLI is logged in to it).
+- SQLite on the Railway volume `/data` (user chose this over Postgres). `CORS_ORIGINS` = the Vercel address + localhost. `/health` shows db / corpus / google readiness.
+- Live check 2026-11-19: GRW-9WYGL7 waited for a person, was approved via the page API and answered (0.73%, cited). No weekly run yet on Railway; no Google action touched.
+- Redeploy steps are in `web/README.md` → "Deployed".
 
-**Tests at head:** API 425 passed (full run ~6–24 min depending on load), web vitest 48, Playwright 20 (`AUTO_APPROVE=0`, approval via `/api/desk`), build + lint ok.
+**What Plan 3c built** (still true): `AUTO_APPROVE` default 0; open page API `/api/desk/*` (actor `page`, rate-limited, approve must send the reply text seen, else 409); ticket `closed` on reject + "Ask again"; weekly approvals show exactly what is written where; Google errors in plain words. Deferred minors from 3c: no length cap on edit text; Retry after a Google timeout may double-write; a daily cap on open weekly runs; the `models.py` status comment.
 
-**Live (2026-11-18):**
-- Plan 3b: run 5's Doc append + Gmail draft were approved by the user and executed.
-- Plan 3c: with the real API and LLM, GRW-GAA782 waited for a person, was approved and published; GRW-RDUM36 was rejected and closed.
-- No Google actions were touched during 3c.
+**Tests:** API 425+ passed (full run ~6–24 min), web vitest 48, Playwright 20.
 
-### Then Plan 4
+### Then Plan 4b (not started; wait for the user)
 - Evals: feasibility, edit isolation (diff state before/after), grounding/compliance with PAN / account number / phone, in both loops.
 - README items listed in the brief, including a reviews CSV sample (we fetch live; export a sample, maybe add CSV ingest).
-- Railway (API, one uvicorn worker, `TRUST_PROXY=1`, `SCHEDULER_ENABLED=1`) + Vercel (web). The user has a Railway account with ~30 days of credit.
 - Stretch: a Google service account for the Doc append.
 
 ### Open notes
-- Google OAuth app stays in Testing, so the refresh token expires every 7 days. Re-run `npm run auth` in `C:/Users/dhruv/MCP Server 1` and update `GOOGLE_REFRESH_TOKEN` before demos/Mondays.
+- Google OAuth app stays in Testing, so the refresh token expires every 7 days. Re-run `npm run auth` in `C:/Users/dhruv/MCP Server 1` and update `GOOGLE_REFRESH_TOKEN` in `api/.env` AND on Railway (`railway variable set GOOGLE_REFRESH_TOKEN --stdin --service api` from `api/`) before demos/Mondays — or switch the OAuth app to "In production".
 - Known limit: the MCP Doc append is plain text, so `#` headings show literally in the Doc.
 - Next 16.4.2 has a published security advisory. `next dev`/`next build` sometimes stop to show it, and rerunning works. Upgrading is the user's call (pinned to match M3); decide in Plan 4.
 - Deferred minors are listed in both ledgers.
