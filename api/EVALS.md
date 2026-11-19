@@ -69,3 +69,26 @@ Still failing, and why:
 2. **l04** (Devanagari script) — known limitation, unchanged.
 3. **claims_available** — only 14 cited claims existed to sample from (all 14 traced correctly). **Fix:** 3 more
    cited questions in the grounding set so 15 can be sampled.
+
+### Run 3 — 2026-11-19 (real AI) — feasibility 43/44 · isolation 5/5 · grounding 55/55 · intent 40/40
+
+File: `evals/results/run-3-2026-11-19.json`. 38 Groq calls, 2.4 min. u02 now answers with the Small Cap expense ratio,
+cited; 15 claims sampled and all trace to an official page or a real review; no sensitive string found in the log,
+the database or the outbox.
+
+## Known limitations (after run 3)
+
+- **Questions written in Devanagari script** (l04) don't match a scheme, so the desk says not covered (it does name what
+  it searched). Hinglish in Latin script works. The fix would be translating the question before retrieval.
+- **How-to questions** get an honest "not covered" because the corpus has only the scheme pages and four fee reference
+  pages; adding Groww help pages to the corpus would let the desk answer them.
+- Each eval run uses a fixed reviews set for the weekly part, so theme quality on live reviews is checked by the
+  verification report (`scripts/verify_weekly.py`), not by these evals.
+
+## Score history
+
+| Run | Feasibility | Isolation | Grounding | Intent |
+|---|---|---|---|---|
+| 1 | 30/44 | 5/5 | 37/45 | 39/40 |
+| 2 | 42/44 | 5/5 | 54/55 | 40/40 |
+| 3 | 43/44 | 5/5 | 55/55 | 40/40 |
