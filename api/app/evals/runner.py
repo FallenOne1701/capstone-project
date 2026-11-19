@@ -40,5 +40,6 @@ def _file_log(log_path: Path) -> None:
 
 def suites() -> dict:
     """name -> callable(db, ctx) returning a SuiteResult (sync or async). Filled in as suites are built."""
-    reg: dict = {}
+    from app.evals.isolation import run_isolation
+    reg: dict = {"isolation": lambda db, ctx: run_isolation(db)}
     return reg
