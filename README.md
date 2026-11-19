@@ -56,11 +56,11 @@ Run them: `cd api && .venv/Scripts/python -m app.evals run all`.
 
 - Reviews CSV (20 public Play Store reviews, redacted the way the weekly loop stores them): [`docs/samples/reviews_sample.csv`](docs/samples/reviews_sample.csv)
 - 5 sample Q&As from the latest eval run: [`docs/samples/sample_qa.md`](docs/samples/sample_qa.md)
-- Weekly delivery example (the appended Doc entry and the Gmail draft): see below.
+- Weekly delivery example (the appended Doc entry and the Gmail draft): [`docs/samples/weekly_delivery.md`](docs/samples/weekly_delivery.md)
 
 ### Weekly delivery example
 
-*To be filled from the first live weekly run approved on the page (the Doc entry and the Gmail draft exactly as written).*
+From the live site on 2026-11-19: 3,017 Play Store reviews (27 Oct – 19 Nov) → 3 themes, 3 verbatim quotes with review ids, 3 action ideas and a brokerage & charges explainer citing Groww's help pages. A person approved both writes on the page; the Doc append and the Gmail draft (to the product team, **not sent**) then ran through MCP. Full text, exactly as written: [`docs/samples/weekly_delivery.md`](docs/samples/weekly_delivery.md).
 
 ## Run it locally
 
