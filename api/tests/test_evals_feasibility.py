@@ -95,3 +95,11 @@ def test_feasibility_runs_offline_on_three_questions(db_session, corpus, tmp_pat
     b = next(c for c in r.cases if c.case_id == "b")
     assert b.passed, b.detail
     assert next(c for c in r.cases if c.case_id == "weekly_completes").passed
+
+
+# final review (Important 3): the refusal must be the one for the asked intent
+def test_refusal_must_match_the_expected_intent():
+    from app.desk.templates import ACCOUNT_REPLY, OUT_OF_SCOPE_REPLY, PERFORMANCE_REFUSAL
+    assert score_ticket(_t(), _d(PERFORMANCE_REFUSAL, disposition="handoff"), "refuse", "performance_request").passed
+    assert not score_ticket(_t(), _d(OUT_OF_SCOPE_REPLY, disposition="handoff"), "refuse", "performance_request").passed
+    assert not score_ticket(_t(), _d(ACCOUNT_REPLY, disposition="handoff"), "refuse", "advice_request").passed

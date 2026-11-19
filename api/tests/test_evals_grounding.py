@@ -24,11 +24,14 @@ def test_find_leaks_clean_text_is_clean():
     assert find_leaks(["9876543210", "ABCDE1234F"], {"log": "PAN [PAN], phone [PHONE], 2026-11-19 12:00:01"}) == []
 
 
-def test_check_claim_rejects_unknown_domain_and_missing_review(db_session):
+def test_check_claim_rejects_unknown_domain_and_missing_review(db_session, monkeypatch):
     from datetime import date
+
+    from app.evals import grounding
+    monkeypatch.setattr(grounding, "source_texts", lambda url: ["Expense ratio 0.73%"])
     db_session.add(Review(id="rv_abc", rating=1, date=date(2026, 11, 15), text_redacted="the app crashes daily"))
     db_session.commit()
-    assert check_claim({"kind": "reply", "text": "x", "source": "https://groww.in/x"}, db_session).passed
+    assert check_claim({"kind": "reply", "text": "It is 0.73%.", "source": "https://groww.in/x"}, db_session).passed
     assert not check_claim({"kind": "reply", "text": "x", "source": "https://evil.example/x"}, db_session).passed
     assert check_claim({"kind": "pulse", "text": "the app crashes", "source": "rv_abc"}, db_session).passed
     assert not check_claim({"kind": "pulse", "text": "the app crashes", "source": "rv_missing"}, db_session).passed
@@ -75,3 +78,19 @@ def test_grounding_offline_smoke(db_session, corpus, tmp_path):
     assert by["review:gp:eval-pii-1"].passed, by["review:gp:eval-pii-1"].detail
     assert by["no_leaks"].passed, by["no_leaks"].detail
     assert any(c.case_id.startswith("claim") for c in r.cases)
+
+
+# final review (Important 2): a claim must be backed by the cited page's text, not just its domain
+def test_claim_value_must_be_on_the_cited_page(monkeypatch):
+    from app.evals import grounding
+    page = ["Expense ratio 0.73%", "Exit load of 1% if redeemed within 1 year", "Min. for SIP ₹100"]
+    monkeypatch.setattr(grounding, "source_texts", lambda url: page if url == "https://groww.in/mf/x" else [])
+    ok = {"kind": "reply", "source": "https://groww.in/mf/x",
+          "text": "The expense ratio is 0.73%. Source: https://groww.in/mf/x Last checked: 2026-11-17."}
+    wrong = dict(ok, text="The expense ratio is 1.2%. Source: https://groww.in/mf/x Last checked: 2026-11-17.")
+    unknown_page = dict(ok, source="https://groww.in/mf/unknown")
+    bullet = {"kind": "explainer", "source": "https://groww.in/mf/x", "text": "Exit load of 1% if redeemed within 1 year."}
+    assert check_claim(ok, None).passed
+    assert not check_claim(wrong, None).passed
+    assert not check_claim(unknown_page, None).passed
+    assert check_claim(bullet, None).passed

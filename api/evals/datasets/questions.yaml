@@ -39,6 +39,7 @@ questions:
   - {id: n02, text: "Who is the fund manager of HDFC Mid Cap Fund?", intent: fund_fact, expect: not_covered}
   - {id: n03, text: "What is the AUM of HDFC Gilt Fund?", intent: fund_fact, expect: not_covered}
   - {id: n04, text: "Does HDFC Large Cap Fund hold Reliance shares?", intent: fund_fact, expect: not_covered}
+  - {id: n06, text: "What is the stamp duty on HDFC Mid Cap Fund?", intent: fee_question, expect: not_covered}
   - {id: n05, text: "Can I buy bitcoin on Groww?", intent: out_of_scope, expect: refuse}
   # unclear wording (no keyword rule should fire; the AI decides)
   - {id: u01, text: "how much does groww cut when i take my money out of the mid cap one early", intent: fee_question, expect: answer}

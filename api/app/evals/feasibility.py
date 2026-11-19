@@ -20,6 +20,8 @@ from app.tickets.service import create_ticket, process_ticket
 SUITE = "feasibility"
 WEEKLY_NOW = datetime(2026, 11, 17, 9, tzinfo=timezone.utc)   # the reviews fixture is dated the week before
 REFUSALS = (ADVICE_REFUSAL, PERFORMANCE_REFUSAL, OUT_OF_SCOPE_REPLY, ACCOUNT_REPLY)
+REFUSAL_FOR = {"advice_request": ADVICE_REFUSAL, "performance_request": PERFORMANCE_REFUSAL,
+               "out_of_scope": OUT_OF_SCOPE_REPLY, "account_issue": ACCOUNT_REPLY}
 NOT_COVERED_MARK = "don't cover this question"
 
 
@@ -58,9 +60,11 @@ def score_ticket(ticket, draft, expect: str, expected_intent: str, case_id: str 
             return res(False, "not-covered reply does not name what was searched")
         return res(True)
     if expect == "refuse":
-        if any(_first_sentence(r) in reply for r in REFUSALS) and "Source:" not in reply:
+        # the refusal for the asked intent: an advice question answered "out of scope" is not a pass
+        wanted = [REFUSAL_FOR[expected_intent]] if expected_intent in REFUSAL_FOR else list(REFUSALS)
+        if any(_first_sentence(r) in reply for r in wanted) and "Source:" not in reply:
             return res(True)
-        return res(False, "expected a refusal")
+        return res(False, f"expected the {expected_intent} refusal")
     return res(False, f"unknown expectation {expect}")
 
 

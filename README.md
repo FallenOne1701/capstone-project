@@ -5,7 +5,7 @@ written or sent without a person approving that exact action.**
 
 **Live:** https://groww-support-desk.vercel.app  ·  API: https://api-production-c6d78bb8.up.railway.app/health
 
-- **Response loop** — a question (typed or spoken, English / Hinglish / Hindi) becomes a cited, compliance-checked
+- **Response loop** — a question (typed or spoken, in English or Hinglish; replies can also be shown in Hindi) becomes a cited, compliance-checked
   draft reply. A person approves, edits or rejects it on the page; only then does the asker see it.
 - **Weekly loop** — every Monday, public Play Store reviews become themes, a ≤250-word pulse and a fee explainer.
   A person approves the Google Doc append and the Gmail draft, each shown with exactly what will be written where.
@@ -82,7 +82,7 @@ cd web && npm test && npm run e2e                  # vitest + Playwright
 
 - **API on Railway** from `api/Dockerfile` (Python 3.12 + Node 22 for the MCP server; embedding model baked in), one
   worker, scheduler on (weekly loop Mondays 09:00 IST), `/health` reports database, search index and Google readiness.
-- **Page on Vercel** from `web/` (Next.js), `NEXT_PUBLIC_API_URL` → the Railway API; the API accepts only that origin.
+- **Page on Vercel** from `web/` (Next.js), `NEXT_PUBLIC_API_URL` → the Railway API; the deployed API accepts browser calls only from that page and localhost (`CORS_ORIGINS`).
 - **Storage:** SQLite on a Railway volume (database, corpus, index). A deliberate choice over Postgres: one process
   with one scheduler, every test runs on SQLite, and the volume survives redeploys.
 - Details and redeploy steps: [`web/README.md`](web/README.md#deployed).

@@ -66,6 +66,35 @@ def db_text_dump(db) -> str:
     return "\n".join(parts)
 
 
+_VALUE = re.compile(r"₹\s?[\d,]+(?:\.\d+)?|\d+(?:\.\d+)?\s?%|\d+(?:\.\d+)?")
+
+
+def source_texts(url: str) -> list[str]:
+    """The text of the cited page as the corpus holds it (scheme page sections or a fee reference page)."""
+    from app.weekly.verify import _source_texts
+    return _source_texts(url)
+
+
+def _norm(t: str) -> str:
+    return re.sub(r"\s+", " ", t.replace(",", "")).strip().lower()
+
+
+def _backed_by_page(kind: str, text: str, url: str) -> str:
+    """'' when the claim's facts appear on the cited page; otherwise why not."""
+    texts = [t for t in source_texts(url) if t]
+    if not texts:
+        return f"cited page is not in the corpus: {url}"
+    page = _norm(" ".join(texts))
+    fact = text.split(" Source:")[0]
+    if kind == "explainer":
+        return "" if _norm(fact.rstrip(".")) in page else "bullet text is not on the cited page"
+    values = [_norm(v).replace("₹ ", "₹") for v in _VALUE.findall(fact)]
+    if values:
+        missing = [v for v in values if v not in page.replace("₹ ", "₹")]
+        return f"values not on the cited page: {missing}" if missing else ""
+    return "" if any(len(t) >= 3 and _norm(t) in _norm(fact) for t in texts) else "fact not found on the cited page"
+
+
 def check_claim(claim: dict, db) -> CaseResult:
     src, text = claim.get("source") or "", claim.get("text") or ""
     cid = claim.get("id", "claim")
@@ -79,7 +108,8 @@ def check_claim(claim: dict, db) -> CaseResult:
         return CaseResult(SUITE, cid, True, "", claim)
     if not is_allowed_source_url(src):
         return CaseResult(SUITE, cid, False, f"source not on an official domain: {src or '(none)'}", claim)
-    return CaseResult(SUITE, cid, True, "", claim)
+    why = _backed_by_page(claim.get("kind", "reply"), text, src)
+    return CaseResult(SUITE, cid, not why, why, claim)
 
 
 async def _ticket(db, text: str, retriever):
