@@ -30,6 +30,7 @@ class Settings(BaseSettings):
     # Storage
     database_url: str = f"sqlite:///{(API_ROOT / 'data' / 'app.db').as_posix()}"
     console_password: str = "change-me"
+    cors_origins: str = "*"  # comma list; on Railway: the Vercel address + http://localhost:3000
 
     # Corpus (field names kept identical to M1 so ported modules work unchanged)
     data_raw_dir: Path = API_ROOT / "data" / "corpus" / "raw"
@@ -85,6 +86,11 @@ class Settings(BaseSettings):
     @property
     def allowed_source_domains(self) -> frozenset[str]:
         return ALLOWED_SOURCE_DOMAINS
+
+
+def cors_origin_list(raw: str) -> list[str]:
+    """`CORS_ORIGINS` as a list: commas split it; spaces and trailing slashes are ignored."""
+    return [o.strip().rstrip("/") for o in raw.split(",") if o.strip().rstrip("/")]
 
 
 def load_schemes(path: Path | None = None) -> dict[str, Any]:

@@ -78,7 +78,9 @@ def create_app(*, init_corpus: bool = True) -> FastAPI:
     from app.guard.logfilter import install_log_redaction
     install_log_redaction()
     app = FastAPI(title="Groww Support Desk API")
-    app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+    from app.config import cors_origin_list
+    app.add_middleware(CORSMiddleware, allow_origins=cors_origin_list(get_settings().cors_origins),
+                       allow_methods=["*"], allow_headers=["*"])
     init_db()
     _recover_runs()
     _recover_tickets()
@@ -95,7 +97,8 @@ def create_app(*, init_corpus: bool = True) -> FastAPI:
     def health(db: Session = Depends(get_db)):
         db.execute(text("select 1"))
         from app.corpus.status import corpus_status
-        return {"db": "ok", "corpus": corpus_status()}
+        from app.delivery.mcp_client import google_status
+        return {"db": "ok", "corpus": corpus_status(), "google": google_status()}
 
     if init_corpus:
         if get_settings().corpus_bootstrap:
