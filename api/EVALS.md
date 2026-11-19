@@ -48,5 +48,5 @@ What failed, and why (root causes found before changing anything):
 6. **Product: a question in Devanagari script** (l04) found no scheme. Known limitation for now (Hinglish in Latin
    script works).
 
-AI usage: ~110 Groq calls (classifier fallback, translations, weekly themes); one Groq connection error fell back to
+AI usage (counted from the run log): 35 Groq calls; run time 31 min. One Groq connection error fell back to
 Gemini, which timed out — the code continued with its template fallback, as designed.
