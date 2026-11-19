@@ -34,7 +34,11 @@ _ADVICE = _rx(r"should i", r"shall i", r"is (?:it|this|the \w+(?: \w+)?(?: fund)
               r"lena chahiye", r"le lu", r"lu kya", r"kharid\w*", r"bech\w*", r"accha hai", r"sahi hai",
               r"invest karu", r"stay invested", r"exit now")
 _ADVICE_MORE = _rx(r"good idea", r"is (?:it|this) worth", r"worth it", r"best (?:\w+ )?(?:funds?|schemes?|banks?|cards?|fds?|loans?|plans?|investments?|options?)", r"what should i (?:buy|invest|do)",
-                   r"where (?:should|can) i (?:invest|put)", r"suggest\w*")
+                   r"where (?:should|can) i (?:invest|put)", r"suggest\w*",
+                   # eval run 5 (adv2, adv3): "which … is best", "best for me", Hinglish "lagau / daalu"
+                   r"which (?:\w+ ){0,2}(?:funds?|schemes?) (?:is|are) (?:the )?best", r"best for me",
+                   r"lagau\w*", r"lagaun\w*", r"(?:paisa|paise) (?:dalu|daalu|daal\w*|lagau\w*)",
+                   r"(?:dalu|daalu) (?:kya|ya nahi)")
 _OFF_TOPIC = _rx(r"bank (?:account|rate)s?", r"savings? account", r"current account", r"fixed deposits?", r"fds?",
                  r"(?:personal|home|car|gold|education|business) loans?", r"loans?", r"emi", r"credit cards?",
                  r"debit cards?", r"insurance", r"income tax return", r"itr", r"tax filing", r"interest rates?",
