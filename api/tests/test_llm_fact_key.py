@@ -67,9 +67,25 @@ def test_rule_intent_without_a_fact_asks_the_ai_for_the_fact(monkeypatch):
 
 
 def test_rule_intent_keeps_its_own_intent_when_the_ai_disagrees(monkeypatch):
-    _fake_llm(monkeypatch, {"intent": "advice_request", "fact_key": "exit_load"})
+    _fake_llm(monkeypatch, {"intent": "advice_request", "fact_key": "expense_ratio"})
     r = asyncio.run(classifier.classify_intent("what's the yearly charge on the hdfc small cap thing"))
-    assert r.intent == "fee_question" and r.fact_key == "exit_load"
+    assert r.intent == "fee_question" and r.fact_key == "expense_ratio"
+
+
+# final review (Important 1): a NAMED fee we don't hold must never be swapped for a fact we do hold
+@pytest.mark.parametrize("q", ["What is the stamp duty on HDFC Mid Cap Fund?",
+                               "Does Groww charge brokerage on HDFC Small Cap Fund?",
+                               "What commission does Groww earn on HDFC Large Cap Fund?",
+                               "Is there GST on the charges of HDFC Gilt Fund?"])
+def test_named_other_fee_never_borrows_a_fact(monkeypatch, q):
+    calls = []
+
+    async def spy(system, text, **kw):
+        calls.append(text)
+        return {"intent": "fee_question", "fact_key": "expense_ratio"}
+    monkeypatch.setattr(classifier, "complete_json", spy)
+    r = asyncio.run(classifier.classify_intent(q))
+    assert r.intent == "fee_question" and r.fact_key is None and calls == []
 
 
 def test_keyword_fact_needs_no_ai(monkeypatch):

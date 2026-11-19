@@ -56,6 +56,10 @@ _HOWTO_TXN = _rx(r"how (?:do|to|can|should) (?:i |we |one )?(?:buy|sell|redeem|i
                  r"(?:process|procedure|steps?|way) (?:to|for) (?:buy|sell|redeem|invest|purchase|switch)\w*",
                  r"can i (?:buy|sell|redeem|switch|withdraw|purchase)")
 _FACT_KEYS_FEE = {"exit_load", "expense_ratio"}
+# Fees this desk has no scheme fact for: a question naming one stays not-covered; the AI is never asked to map it
+# onto a fact we do hold (final review of the evals: "stamp duty" must not be answered with the expense ratio).
+_OTHER_FEE = _rx(r"stamp duty", r"brokerage", r"commission", r"gst", r"tds", r"stt", r"dp charges?",
+                 r"transaction charges?", r"taxe?s?")
 _HINGLISH = _rx(r"kya", r"hai", r"kaise", r"kitna", r"mera", r"mujhe", r"nahi", r"nhi", r"karu", r"kare", r"paisa", r"ka", r"ki", r"ke", r"chahiye")
 _DEVANAGARI = re.compile(r"[ऀ-ॿ]")
 
@@ -99,7 +103,7 @@ async def classify_intent(redacted_text: str) -> IntentResult:
     if _ACCOUNT.search(text):
         return mk("account_issue")
     if _FEE.search(text) or hints.fact_key in _FACT_KEYS_FEE:
-        if base["fact_key"] is None:
+        if base["fact_key"] is None and not _OTHER_FEE.search(text):
             # "yearly charge" fires the fee rule but names no fee: ask the AI which one (eval run 2, u02)
             data = await complete_json(_LLM_SYSTEM, text, fast=True)
             if data and data.get("fact_key") in CORE_FACT_KEYS:
