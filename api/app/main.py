@@ -78,7 +78,9 @@ def create_app(*, init_corpus: bool = True) -> FastAPI:
     from app.guard.logfilter import install_log_redaction
     install_log_redaction()
     app = FastAPI(title="Groww Support Desk API")
-    app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+    from app.config import cors_origin_list
+    app.add_middleware(CORSMiddleware, allow_origins=cors_origin_list(get_settings().cors_origins),
+                       allow_methods=["*"], allow_headers=["*"])
     init_db()
     _recover_runs()
     _recover_tickets()
