@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+import shutil
 from pathlib import Path
 
 from app.config import get_settings
@@ -28,6 +29,21 @@ def _server_env() -> dict[str, str]:
     if os.name == "nt":
         env["SYSTEMROOT"] = os.environ.get("SYSTEMROOT", r"C:\Windows")
     return env
+
+
+def google_status() -> dict:
+    """Cheap readiness for /health (no Google call, since Railway polls it): names of what is missing, never values."""
+    s = get_settings()
+    missing = []
+    if shutil.which(s.node_command) is None:
+        missing.append("node")
+    if not (Path(s.mcp_server_dir) / "dist" / "server.js").exists():
+        missing.append("mcp_build")
+    for name, value in (("GOOGLE_CLIENT_ID", s.google_client_id), ("GOOGLE_CLIENT_SECRET", s.google_client_secret),
+                        ("GOOGLE_REFRESH_TOKEN", s.google_refresh_token), ("PULSE_DOC_ID", s.pulse_doc_id)):
+        if not value:
+            missing.append(name)
+    return {"ready": not missing, "missing": missing}
 
 
 async def _call(name: str, args: dict) -> dict:

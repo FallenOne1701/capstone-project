@@ -97,7 +97,8 @@ def create_app(*, init_corpus: bool = True) -> FastAPI:
     def health(db: Session = Depends(get_db)):
         db.execute(text("select 1"))
         from app.corpus.status import corpus_status
-        return {"db": "ok", "corpus": corpus_status()}
+        from app.delivery.mcp_client import google_status
+        return {"db": "ok", "corpus": corpus_status(), "google": google_status()}
 
     if init_corpus:
         if get_settings().corpus_bootstrap:
