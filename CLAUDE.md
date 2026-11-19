@@ -36,29 +36,36 @@ The assignment brief was pasted into the 2026-11-18 session. Its key rules:
   Both hold every Ruling, the final-review results and the deferred minors.
 - **GitHub:** private `FallenOne1701/capstone-project`. Each plan = its own branch + PR.
 
-## Status (2026-11-19, Plan 4a deployed)
+## Status (2026-11-19 evening, Plan 4b done: RESUME HERE)
 
-**Merged:** Plans 3, 3b, 3c are in `main` (PR #3, `8ff0ce7`).
-**Branch:** `plan-4a-deploy` (Plan 4a), spec `docs/superpowers/specs/2026-11-19-deploy-railway-vercel-design.md`, plan `docs/superpowers/plans/2026-11-19-plan-4a-deploy.md`.
+**Merged to `main`:** Plans 1-4a (PR #4 `4f9a216` = the deploy).
+**Branch `plan-4b-evals`** (Plan 4b, pushed, NOT merged yet): spec `docs/superpowers/specs/2026-11-19-evals-and-readme-design.md`, plan `docs/superpowers/plans/2026-11-19-plan-4b-evals-readme.md`. All work committed; final review done and its findings fixed.
+
+**Next steps, in order (the user already said yes to 1-3):**
+1. After the user's PC restart: confirm Groq connects (5 real calls; see Open notes, port exhaustion).
+2. Open a PR for `plan-4b-evals` and merge it (same as PR #4).
+3. Redeploy the API so the classifier fixes go live: `railway up --detach --service api` from `api/` (the CLI is logged in to the user's second Railway account). The page needs no redeploy.
+4. Then **Plan 5: tab layout from the user's Google Stitch design** (brainstorm, spec, plan as usual). Design files: `C:/Users/dhruv/Downloads/stitch_hdfc_mutual_funds_support_desk/` (`code.html` + `screen.png`). Header "Support Desk" + "HDFC Mutual Funds" tag + chip "A person approves every answer"; tabs Ask / Queue (count badge) / This week; Ask tab = inquiry card + privacy-guard confirm card (left), ticket card with a 4-step pipeline + answer card, and "We couldn't answer this one" + Ask again (right). Same colours and fonts as now. Keep content truthful to our data (the mock invents facts like "Section 4.2"; don't copy those).
+5. Optional before the 24th: Google OAuth app to "In production" (refresh token stops expiring); a demo run-through.
+
+**Plan 4b results** (`api/EVALS.md` has runs 1-7): run 7 = feasibility 44/45, isolation 5/5, grounding 55/55, intent 41/41; the only miss is a Devanagari-script question (known limitation). Run: `cd api && .venv/Scripts/python -m app.evals run all` (~2.5 min, ~30 Groq calls; results in `api/evals/results/`). Root `README.md` has the eval table; `docs/samples/` has the reviews CSV, 5 Q&As, and the real weekly Doc entry + Gmail draft (live run 3, approved by the user 2026-11-19 15:47 UTC).
+Product fixes found by evals: off-topic checked before how-to (bitcoin); the AI names the fact for unclear wording and retrieval uses it; a fee question with no named fee asks the AI which fee, but named other fees (stamp duty, brokerage, GST...) never borrow a fact; the AI can't call a named HDFC fund out of scope; more advice phrasings are rules.
+Deferred minors (4b): repeat:2 double-counts grounding cases (noted in EVALS.md); the generic "Searched: all 15..." reply passes the names-what-was-searched check; a suite crash loses earlier suites' results; extra AI call on unnamed-fee questions; "how do I sell and get money in my bank account" is now out_of_scope; leak scan matches whole tokens only; a weekly run never moves to status `done` after both writes execute (display unaffected).
+
+**Tests at head:** API 479 passed, 5 skipped (~8 min); web vitest 48; Playwright 20 (not re-run in 4b: no web changes).
 
 **Live:**
 - Page: https://groww-support-desk.vercel.app (Vercel, user's Gmail/GitHub account `fallenone1701`, team `bomba8`).
 - API: https://api-production-c6d78bb8.up.railway.app (Railway project `groww-support-desk`, service `api`, the user's SECOND Railway account; the CLI is logged in to it).
 - SQLite on the Railway volume `/data` (user chose this over Postgres). `CORS_ORIGINS` = the Vercel address + localhost. `/health` shows db / corpus / google readiness.
-- Live check 2026-11-19: GRW-9WYGL7 waited for a person, was approved via the page API and answered (0.73%, cited). No weekly run yet on Railway; no Google action touched.
+- Live checks 2026-11-19: GRW-9WYGL7 approved and answered (0.73%, cited); weekly run 3 on Railway, Doc append + Gmail draft approved by the user and executed.
 - Redeploy steps are in `web/README.md` → "Deployed".
 - User decision 2026-11-19: no password on the page. Approvals (including Google writes) stay open to anyone on the page; Google writes only append to the Doc or create a Gmail draft, never send.
 
 **What Plan 3c built** (still true): `AUTO_APPROVE` default 0; open page API `/api/desk/*` (actor `page`, rate-limited, approve must send the reply text seen, else 409); ticket `closed` on reject + "Ask again"; weekly approvals show exactly what is written where; Google errors in plain words. Deferred minors from 3c: no length cap on edit text; Retry after a Google timeout may double-write; a daily cap on open weekly runs; the `models.py` status comment.
 
-**Tests:** API 425+ passed (full run ~6–24 min), web vitest 48, Playwright 20.
-
-### Then Plan 4b (not started; wait for the user)
-- Evals: feasibility, edit isolation (diff state before/after), grounding/compliance with PAN / account number / phone, in both loops.
-- README items listed in the brief, including a reviews CSV sample (we fetch live; export a sample, maybe add CSV ingest).
-- Stretch: a Google service account for the Doc append.
-
 ### Open notes
+- **2026-11-19: this PC ran out of network ports** (~18.5k stuck TIME_WAIT connections after 30 days without a real restart; Windows fast startup is on, so only Start > Restart clears it). Symptom: `APIConnectionError` / curl "Address already in use" to Groq while other sites work. Fix = Restart. Gemini's free daily quota (429) was also used up that day.
 - Google OAuth app stays in Testing, so the refresh token expires every 7 days. Re-run `npm run auth` in `C:/Users/dhruv/MCP Server 1` and update `GOOGLE_REFRESH_TOKEN` in `api/.env` AND on Railway (`railway variable set GOOGLE_REFRESH_TOKEN --stdin --service api` from `api/`) before demos/Mondays — or switch the OAuth app to "In production".
 - Known limit: the MCP Doc append is plain text, so `#` headings show literally in the Doc.
 - Next 16.4.2 has a published security advisory. `next dev`/`next build` sometimes stop to show it, and rerunning works. Upgrading is the user's call (pinned to match M3); decide in Plan 4.

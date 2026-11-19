@@ -8,6 +8,7 @@ from typing import Literal
 from pydantic import BaseModel
 
 from app.corpus.query_parser import parse_query
+from app.corpus.parser import CORE_FACT_KEYS
 from app.llm.client import complete_json
 
 Intent = Literal["fee_question", "fund_fact", "how_to_process", "advice_request",
@@ -33,7 +34,11 @@ _ADVICE = _rx(r"should i", r"shall i", r"is (?:it|this|the \w+(?: \w+)?(?: fund)
               r"lena chahiye", r"le lu", r"lu kya", r"kharid\w*", r"bech\w*", r"accha hai", r"sahi hai",
               r"invest karu", r"stay invested", r"exit now")
 _ADVICE_MORE = _rx(r"good idea", r"is (?:it|this) worth", r"worth it", r"best (?:\w+ )?(?:funds?|schemes?|banks?|cards?|fds?|loans?|plans?|investments?|options?)", r"what should i (?:buy|invest|do)",
-                   r"where (?:should|can) i (?:invest|put)", r"suggest\w*")
+                   r"where (?:should|can) i (?:invest|put)", r"suggest\w*",
+                   # eval run 5 (adv2, adv3): "which … is best", "best for me", Hinglish "lagau / daalu"
+                   r"which (?:\w+ ){0,2}(?:funds?|schemes?) (?:is|are) (?:the )?best", r"best for me",
+                   r"lagau\w*", r"lagaun\w*", r"(?:paisa|paise) (?:dalu|daalu|daal\w*|lagau\w*)",
+                   r"(?:dalu|daalu) (?:kya|ya nahi)")
 _OFF_TOPIC = _rx(r"bank (?:account|rate)s?", r"savings? account", r"current account", r"fixed deposits?", r"fds?",
                  r"(?:personal|home|car|gold|education|business) loans?", r"loans?", r"emi", r"credit cards?",
                  r"debit cards?", r"insurance", r"income tax return", r"itr", r"tax filing", r"interest rates?",
@@ -55,6 +60,10 @@ _HOWTO_TXN = _rx(r"how (?:do|to|can|should) (?:i |we |one )?(?:buy|sell|redeem|i
                  r"(?:process|procedure|steps?|way) (?:to|for) (?:buy|sell|redeem|invest|purchase|switch)\w*",
                  r"can i (?:buy|sell|redeem|switch|withdraw|purchase)")
 _FACT_KEYS_FEE = {"exit_load", "expense_ratio"}
+# Fees this desk has no scheme fact for: a question naming one stays not-covered; the AI is never asked to map it
+# onto a fact we do hold (final review of the evals: "stamp duty" must not be answered with the expense ratio).
+_OTHER_FEE = _rx(r"stamp duty", r"brokerage", r"commission", r"gst", r"tds", r"stt", r"dp charges?",
+                 r"transaction charges?", r"taxe?s?")
 _HINGLISH = _rx(r"kya", r"hai", r"kaise", r"kitna", r"mera", r"mujhe", r"nahi", r"nhi", r"karu", r"kare", r"paisa", r"ka", r"ki", r"ke", r"chahiye")
 _DEVANAGARI = re.compile(r"[ऀ-ॿ]")
 
@@ -66,12 +75,15 @@ def detect_language(text: str) -> str:
 
 
 _LLM_SYSTEM = (
-    "Classify a mutual-fund support question into exactly one intent. Return JSON {\"intent\": ...}. "
+    "Classify a mutual-fund support question into exactly one intent. Return JSON "
+    "{\"intent\": ..., \"fact_key\": ...}. "
     f"Allowed: {list(INTENTS)}. advice_request = asks whether to buy/sell/hold/switch or if a fund is good. "
     "performance_request = asks for returns, CAGR, NAV forecasts. account_issue = a problem with the user's own "
     "order, money, SIP or KYC. fee_question = exit load, expense ratio, charges. fund_fact = minimum SIP, benchmark, "
     "riskometer, objective, fund manager. how_to_process = how to do something on the platform. Otherwise out_of_scope. "
-    "The text may be Hindi or Hinglish. Tokens like [PAN] are redacted PII."
+    "The text may be Hindi or Hinglish. Tokens like [PAN] are redacted PII. "
+    f"fact_key = the single fund fact asked about, one of {list(CORE_FACT_KEYS)} (exit load = charge for taking "
+    "money out early; expense ratio = yearly fund charge), or null."
 )
 
 
@@ -83,10 +95,11 @@ async def classify_intent(redacted_text: str) -> IntentResult:
     def mk(intent: str, conf: str = "rule") -> IntentResult:
         return IntentResult(intent=intent, confidence=conf, **base)
 
+    # other products first: "can I buy bitcoin on Groww?" is out of scope, not a how-to (eval run 1, n05)
+    if _OFF_TOPIC.search(text) and not hints.scheme_ids and not _MF_CONTEXT.search(text):
+        return mk("out_of_scope")   # banking, loans, cards, stocks, crypto…: not something this desk answers
     if _HOWTO_TXN.search(text) and not re.search(r"(?i)\bshould i\b", text):
         return mk("how_to_process")
-    if _OFF_TOPIC.search(text) and not hints.scheme_ids and not _MF_CONTEXT.search(text):
-        return mk("out_of_scope")   # banking, loans, cards…: not something this desk answers
     if _ADVICE.search(text) or _ADVICE_MORE.search(text):
         return mk("advice_request")
     if _PERF.search(text):
@@ -94,6 +107,11 @@ async def classify_intent(redacted_text: str) -> IntentResult:
     if _ACCOUNT.search(text):
         return mk("account_issue")
     if _FEE.search(text) or hints.fact_key in _FACT_KEYS_FEE:
+        if base["fact_key"] is None and not _OTHER_FEE.search(text):
+            # "yearly charge" fires the fee rule but names no fee: ask the AI which one (eval run 2, u02)
+            data = await complete_json(_LLM_SYSTEM, text, fast=True)
+            if data and data.get("fact_key") in CORE_FACT_KEYS:
+                base["fact_key"] = data["fact_key"]
         return mk("fee_question")
     if _HOWTO.search(text):
         return mk("how_to_process")
@@ -101,6 +119,10 @@ async def classify_intent(redacted_text: str) -> IntentResult:
         return mk("fund_fact")
     data = await complete_json(_LLM_SYSTEM, text, fast=True)
     if data and data.get("intent") in INTENTS:
+        if base["fact_key"] is None and data.get("fact_key") in CORE_FACT_KEYS:
+            base["fact_key"] = data["fact_key"]   # unclear wording: the AI names the fact (eval run 1, u01/u02)
+        if data["intent"] == "out_of_scope" and hints.scheme_ids:
+            return mk("fund_fact", "llm")   # it names an HDFC fund, so it is in scope (eval run 4, n04)
         return mk(data["intent"], "llm")
     if hints.scheme_ids:   # names an HDFC fund: in scope even when the LLM is unavailable
         return mk("fund_fact", "default")

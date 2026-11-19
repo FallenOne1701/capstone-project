@@ -262,6 +262,7 @@ class Retriever:
         *,
         top_k: int | None = None,
         scheme_id: str | None = None,
+        fact_key: str | None = None,
     ) -> RetrievalResult:
         """
         Find the best Groww snippet for a factual question.
@@ -273,6 +274,9 @@ class Retriever:
         if scheme_id and scheme_id in hints.scheme_ids:
             # the user answered "Mid Cap or Small Cap?": search only the fund they chose
             hints = dataclasses.replace(hints, scheme_ids=(scheme_id,))
+        if fact_key and not hints.fact_key:
+            # no keyword named the fact, but the classifier did ("money out early" -> exit_load)
+            hints = dataclasses.replace(hints, fact_key=fact_key)
         min_sim = float(self.settings.retrieval_min_similarity)
 
         if not q:

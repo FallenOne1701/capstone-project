@@ -44,7 +44,7 @@ async def _facts(s: _S):
     c = s["ctx"]
     ids = s["intent"].scheme_ids
     return {"facts": await asyncio.to_thread(run_facts, s["text"], c["retriever"], c["last_checked"],
-                                             ids[0] if len(ids) == 1 else None)}
+                                             ids[0] if len(ids) == 1 else None, s["intent"].fact_key)}
 
 
 async def _pattern(s: _S):
