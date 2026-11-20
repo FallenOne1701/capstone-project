@@ -72,6 +72,7 @@ export function actionTitle(a: { type: string; target_label: string }): string {
  * person in the queue, so it is watched slowly instead of given up on. */
 export function nextPollMs(status: string): number | null {
   if (status === "answered" || status === "closed") return null;
+  if (status === "received") return 1000;   // the desk is working: the draft is seconds away
   return status === "failed" ? 15000 : 3000;
 }
 

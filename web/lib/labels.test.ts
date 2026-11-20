@@ -91,6 +91,7 @@ describe("nextPollMs", () => {
     expect(nextPollMs("answered")).toBeNull();
     expect(nextPollMs("closed")).toBeNull();
     expect(nextPollMs("in_review")).toBe(3000);
+    expect(nextPollMs("received")).toBe(1000);   // the draft is moments away: check every second
   });
   it("keeps watching a failed ticket slowly while a person can re-run it", () => {
     expect(nextPollMs("failed")).toBe(15000);
