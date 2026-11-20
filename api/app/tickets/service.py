@@ -88,6 +88,11 @@ async def create_ticket(db: Session, text: str, *, channel: str = "text",
 async def _add_translation(db: Session, d: Draft) -> None:
     out = await translate_reply(d.reply)
     probs = validate_translation(d.reply, out) if out else ["no translation"]
+    a = db.query(Action).filter_by(draft_id=d.id, type="reply_publish").order_by(Action.id.desc()).first()
+    if not probs and a is not None and a.status != "pending":
+        # a person already decided without seeing it: a late translation is never stored or published
+        audit(db, "desk", "translate", "draft", d.id, "late")
+        return
     if not probs:
         db.add(DraftTranslation(draft_id=d.id, language="hi", text=out))
     audit(db, "desk", "translate", "draft", d.id, "ok" if not probs else f"discarded:{probs[0]}")
@@ -126,8 +131,10 @@ async def process_ticket(db: Session, ticket_id: int, *, retriever, themes_provi
                   reused_explainer_id=reused_id)
         db.add(d)
         db.flush()
-        if t.language in ("hi", "hinglish") and d.review_status == "pass":
-            await _add_translation(db, d)
+        wants_hindi = t.language in ("hi", "hinglish") and d.review_status == "pass"
+        auto = get_settings().auto_approve
+        if wants_hindi and auto:
+            await _add_translation(db, d)   # nobody looks first: translate, then decide (today's order)
         a = Action(type="reply_publish", target_label=f"Reply to ticket {t.code}", target_ref=t.code, draft_id=d.id,
                    source_ref=f"ticket:{t.id}")
         db.add(a)
@@ -136,7 +143,15 @@ async def process_ticket(db: Session, ticket_id: int, *, retriever, themes_provi
         audit(db, "desk", "create", "draft", d.id, f"disposition={d.disposition} review={d.review_status}")
         audit(db, "desk", "create", "action", a.id, "reply_publish")
         db.commit()
-        if get_settings().auto_approve:
+        if wants_hindi and not auto:
+            # the draft is already in the Queue; the Hindi version follows (the card says it's coming)
+            try:
+                await _add_translation(db, d)
+            except Exception as exc:  # noqa: BLE001  (a failed translation never fails the ticket)
+                db.rollback()
+                audit(db, "desk", "translate", "draft", d.id, f"discarded:{type(exc).__name__}")
+            db.commit()
+        if auto:
             from app.approvals.auto import auto_decide
             auto_decide(db, t.id)
         return d

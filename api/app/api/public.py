@@ -84,7 +84,8 @@ def _published_translation(db: Session, t: Ticket) -> dict | None:
     if t.status != "answered":
         return None
     row = (db.query(DraftTranslation).join(Action, Action.draft_id == DraftTranslation.draft_id)
-           .filter(Action.type == "reply_publish", Action.status == "executed", Action.target_ref == t.code)
+           .filter(Action.type == "reply_publish", Action.status == "executed", Action.target_ref == t.code,
+                   Action.decided_at.isnot(None), DraftTranslation.created_at <= Action.decided_at)   # existed at approval
            .order_by(Action.id.desc()).first())
     return {"language": row.language, "text": row.text} if row else None
 

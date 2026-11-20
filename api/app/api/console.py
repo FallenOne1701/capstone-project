@@ -8,7 +8,7 @@ from app.approvals import service as ap
 from app.corpus.refresh import refresh_corpus
 from app.db import get_db
 from app.deps import require_console
-from app.models import Action, Draft, DraftTranslation, Source, Ticket
+from app.models import Action, AuditLog, Draft, DraftTranslation, Source, Ticket
 from app.tickets import worker
 
 router = APIRouter(prefix="/api/console", dependencies=[Depends(require_console)])
@@ -18,11 +18,23 @@ class EditIn(BaseModel):
     reply: str
 
 
+def _translation_pending(db: Session, d: Draft) -> bool:
+    """A Hindi/Hinglish draft whose translation is still being made: the Queue says it's coming."""
+    t = db.get(Ticket, d.ticket_id)
+    if t is None or t.language not in ("hi", "hinglish") or d.review_status != "pass":
+        return False
+    if db.query(AuditLog).filter_by(verb="translate", entity="draft", entity_id=d.id).count():
+        return False   # done: stored, discarded or late
+    a = db.query(Action).filter_by(draft_id=d.id, type="reply_publish").order_by(Action.id.desc()).first()
+    return a is not None and a.status == "pending"
+
+
 def _draft_out(d: Draft | None, db: Session | None = None):
     if d is None:
         return None
     tr = db.query(DraftTranslation).filter_by(draft_id=d.id).one_or_none() if db is not None else None
-    return {"translation": {"language": tr.language, "text": tr.text} if tr else None,"id": d.id, "reply": d.reply, "citation": d.citation, "last_checked": d.last_checked,
+    return {"translation": {"language": tr.language, "text": tr.text} if tr else None,
+            "translation_pending": _translation_pending(db, d) if db is not None and tr is None else False, "id": d.id, "reply": d.reply, "citation": d.citation, "last_checked": d.last_checked,
             "disposition": d.disposition, "routing": {"team": d.routing_team, "priority": d.routing_priority,
                                                       "why": d.routing_why},
             "review_status": d.review_status, "review_failures": d.review_failures, "searched": d.searched,
