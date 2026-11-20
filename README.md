@@ -60,7 +60,39 @@ Run them: `cd api && .venv/Scripts/python -m app.evals run all`.
 
 ### Weekly delivery example
 
-From the live site on 2026-11-19: 3,017 Play Store reviews (27 Oct – 19 Nov) → 3 themes, 3 verbatim quotes with review ids, 3 action ideas and a brokerage & charges explainer citing Groww's help pages. A person approved both writes on the page; the Doc append and the Gmail draft (to the product team, **not sent**) then ran through MCP. Full text, exactly as written: [`docs/samples/weekly_delivery.md`](docs/samples/weekly_delivery.md).
+From the live site on 2026-11-20 (weekly run 5): 3,042 Play Store reviews (28 Oct – 20 Nov) → 3 themes, 3 verbatim quotes with review ids, the questions asked repeatedly on the desk, 3 action ideas and a brokerage & charges explainer citing Groww's help pages. A person approved both writes on the page; the Doc append and the Gmail draft (to the product team, **not sent**) then ran through MCP. Full text, exactly as written: [`docs/samples/weekly_delivery.md`](docs/samples/weekly_delivery.md).
+
+### The link in action
+
+Shown on the live site on 2026-11-20. Both directions of the link between the two loops:
+
+**Weekly loop → response loop: the explainer becomes the canonical answer.** The weekly run found brokerage & charges to be the fee users were most confused about, drafted a facts-only explainer from Groww's help pages, and a person approved it (with the Doc append), which made it canonical. Five differently worded questions then came in:
+
+| Ticket | Question |
+|---|---|
+| GRW-F8CC2W | What brokerage does Groww charge? |
+| GRW-TJNBTW | How much brokerage does Groww take on a trade? |
+| GRW-T7Q98D | Is there a brokerage fee on Groww? |
+| GRW-7PUZJH | what are groww brokerage charges |
+| GRW-YJ62U4 | Brokerage on Groww for equity delivery? |
+
+Each draft was built from the approved explainer instead of being written fresh. Its routing note reads *"Reused canonical explainer #4 (brokerage)."*; each passed the reviewer and a person approved it. The page's **Fee explainers** section shows that explainer reused in 5 replies.
+
+**Response loop → weekly loop: a question asked 5 times shows up in the pulse.** The five questions share one key (*Fee question · Brokerage & charges*), so the next weekly run (run 5) carried them into the pulse that was appended to the Doc and drafted to the product team:
+
+```
+## Asked repeatedly (2026-11-13 to 2026-11-20)
+- Fee question · Brokerage & charges: 5 questions
+
+## Fee confusion
+- Brokerage & charges: 71 reviews and 5 questions → explainer below.
+```
+
+The run before it (no repeated questions yet) said "0 questions". Product now sees *which* fee is confusing, how often support is asked about it, and the exact answer support gives.
+
+**Iteration found by the demo.** The first reused answers gave only the explainer's opening line, *"Groww charges a brokerage fee for executing your trades."*: true, but it doesn't say how much. A reused answer now adds the line from the same official page that carries the figure, unless the question only asks what the fee is. The same question afterwards (GRW-567CN9, from the new canonical explainer #5):
+
+> Groww charges a brokerage fee for executing your trades. Here's a breakdown: Equity Trading: The fee is either ₹20 or 0.1% of your trade value, whichever is lower. Source: https://groww.in/help/payments-&-withdrawals/payments-charges/what-fees-does-groww-charge--58 Last checked: 2026-11-19.
 
 ## Run it locally
 
