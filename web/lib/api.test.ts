@@ -63,6 +63,16 @@ describe("approve sends what the person saw (Plan 3c review)", () => {
   it("includes the reviewed reply", async () => {
     const f = mockFetch(200, { id: 7, status: "executed" });
     await approve(7, "The expense ratio is 0.77%.");
-    expect(JSON.parse(f.mock.calls[0][1]!.body as string)).toEqual({ reply: "The expense ratio is 0.77%." });
+    expect(JSON.parse(f.mock.calls[0][1]!.body as string)).toEqual({ reply: "The expense ratio is 0.77%.", translation: null });
+  });
+  it("includes the Hindi the card showed (Plan 6): Hindi is published only if it was seen", async () => {
+    const f = mockFetch(200, { id: 7, status: "executed" });
+    await approve(7, "The expense ratio is 0.77%.", "व्यय अनुपात 0.77% है।");
+    expect(JSON.parse(f.mock.calls[0][1]!.body as string)).toEqual({ reply: "The expense ratio is 0.77%.", translation: "व्यय अनुपात 0.77% है।" });
+  });
+  it("sends no body for a weekly Google write", async () => {
+    const f = mockFetch(200, { id: 8, status: "executed" });
+    await approve(8);
+    expect(f.mock.calls[0][1]!.body).toBeUndefined();
   });
 });
