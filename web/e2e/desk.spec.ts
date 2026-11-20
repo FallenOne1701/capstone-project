@@ -1,5 +1,5 @@
 import { expect, type Page, test } from "@playwright/test";
-import { API, createTicket } from "./fixtures";
+import { API, approveTicket, createTicket, openTab, rejectTicket, waitForStatus } from "./fixtures";
 
 async function askOnPage(page: Page, text: string): Promise<string> {
   await page.goto("/");
@@ -10,24 +10,29 @@ async function askOnPage(page: Page, text: string): Promise<string> {
   return new URL(page.url()).searchParams.get("t")!;
 }
 
-test("ask, then a person approves it in the queue on the same page", async ({ page }) => {
+test("ask, approve in the Queue tab, and the Ask tab shows the answer", async ({ page }) => {
   const code = await askOnPage(page, "What is the expense ratio of HDFC Mid Cap Fund?");
   await expect(page.getByText("Waiting for a person to approve this answer.")).toBeVisible({ timeout: 45_000 });
-  const card = page.getByRole("region", { name: "Queue" }).getByRole("article", { name: code });
+  await openTab(page, "Queue");
+  const card = page.getByRole("tabpanel", { name: "Queue" }).getByRole("article", { name: code });
   await expect(card.getByText("review: pass")).toBeVisible({ timeout: 15_000 });
   await card.getByRole("button", { name: "Approve" }).click();
+  await openTab(page, "Ask");
   await expect(page.getByRole("region", { name: "Answer" })).toContainText("Last checked", { timeout: 15_000 });
 });
 
 test("reject closes the ticket and Ask again brings the question back", async ({ page }) => {
   const text = "What is the exit load of HDFC Small Cap Fund?";
   const code = await askOnPage(page, text);
-  const card = page.getByRole("region", { name: "Queue" }).getByRole("article", { name: code });
+  await openTab(page, "Queue");
+  const card = page.getByRole("tabpanel", { name: "Queue" }).getByRole("article", { name: code });
   await card.getByRole("button", { name: "Reject" }).click({ timeout: 45_000 });
+  await openTab(page, "Ask");
   await expect(page.getByText("We couldn't answer this one.")).toBeVisible({ timeout: 15_000 });
   await page.getByRole("button", { name: "Ask again" }).click();
   await expect(page.getByLabel("Your question", { exact: true })).toHaveValue(text);
   await expect(page).toHaveURL(/\/$/);
+  await expect(page.getByRole("region", { name: "How it works" })).toBeVisible();
 });
 
 test("a draft the reviewer blocks cannot be approved", async ({ page, request }) => {
@@ -44,7 +49,8 @@ test("a draft the reviewer blocks cannot be approved", async ({ page, request })
   expect(r.ok()).toBeTruthy();
   expect((await r.json()).review_status).toBe("blocked");
   await page.goto("/");
-  const card = page.getByRole("region", { name: "Queue" }).getByRole("article", { name: code });
+  await openTab(page, "Queue");
+  const card = page.getByRole("tabpanel", { name: "Queue" }).getByRole("article", { name: code });
   await expect(card.getByText("review: blocked")).toBeVisible();
   await expect(card.getByRole("button", { name: "Approve" })).toBeDisabled();
   await expect(card.getByText("Edit it first — the reviewer blocked this draft")).toBeVisible();
@@ -52,7 +58,8 @@ test("a draft the reviewer blocks cannot be approved", async ({ page, request })
 
 test("weekly approvals say exactly where they write, and fail safely without Google", async ({ page }) => {
   await page.goto("/");
-  const week = page.getByRole("region", { name: "Weekly pulse" });
+  await openTab(page, "This week");
+  const week = page.getByRole("tabpanel", { name: "This week" });
   const doc = week.getByRole("article").filter({ hasText: "Append to the weekly pulse Google Doc" });
   await expect(doc).toBeVisible();
   await expect(week.getByText(/Gmail draft to the product team \(.*\), not sent/)).toBeVisible();
@@ -79,11 +86,33 @@ test("Edit opens with the draft that arrived after the card first showed", async
   });
   const code = await askOnPage(page, "What is the minimum SIP of HDFC Flexi Cap Fund?");
   target = code;
-  const card = page.getByRole("region", { name: "Queue" }).getByRole("article", { name: code });
+  await openTab(page, "Queue");
+  const card = page.getByRole("tabpanel", { name: "Queue" }).getByRole("article", { name: code });
   await expect(card.getByText("Waiting for the desk…")).toBeVisible({ timeout: 15_000 });
   await expect(card.getByText(/review: /)).toBeVisible({ timeout: 45_000 });
   const shown = (await card.locator("p.whitespace-pre-line").first().textContent())!.trim();
   await card.getByRole("button", { name: "Edit" }).click();
   await expect(card.getByLabel("Edit reply")).toHaveValue(shown);
   expect(shown.length).toBeGreaterThan(10);
+});
+
+test("filters split the queue into Waiting, Answered and Closed", async ({ page, request }) => {
+  const yes = await createTicket(request, "What is the benchmark of HDFC Large Cap Fund?");
+  const no = await createTicket(request, "What is the riskometer level of HDFC Defence Fund?");
+  await approveTicket(request, yes);
+  await rejectTicket(request, no);
+  await waitForStatus(request, yes, "answered");
+  await waitForStatus(request, no, "closed");
+  await page.goto("/?tab=queue");
+  const queue = page.getByRole("tabpanel", { name: "Queue" });
+  const show = queue.getByRole("radiogroup", { name: "Show" });
+  await expect(show.getByRole("radio", { name: /^Waiting/ })).toBeChecked();
+  await expect(queue.getByRole("article", { name: yes })).toHaveCount(0);
+  await expect(queue.getByRole("article", { name: no })).toHaveCount(0);
+  await show.getByRole("radio", { name: /^Answered/ }).click();
+  await expect(queue.getByRole("article", { name: yes })).toBeVisible();
+  await expect(queue.getByRole("article", { name: no })).toHaveCount(0);
+  await show.getByRole("radio", { name: /^Closed/ }).click();
+  await expect(queue.getByRole("article", { name: no })).toBeVisible();
+  await expect(queue.getByRole("article", { name: yes })).toHaveCount(0);
 });

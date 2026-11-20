@@ -50,7 +50,7 @@ export function QueueItem({ item, onChange }: { item: Item; onChange: () => void
 
   const blocked = d && d.review_status !== "pass";
   return (
-    <article aria-label={item.code} className="rounded-xl border border-border-subtle bg-surface-panel p-4 shadow-sm">
+    <article aria-label={item.code} className="min-w-0 rounded-xl border border-border-subtle bg-surface-panel p-5 shadow-sm">
       <header className="flex flex-wrap items-center gap-2 text-sm">
         <span className="font-mono-token font-semibold">{item.code}</span>
         <StatusBadge status={statusLabel(item.status)} />

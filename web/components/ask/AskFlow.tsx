@@ -1,13 +1,13 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ApiError, ask, preview as fetchPreview, transcribe } from "@/lib/api";
 import { STT_FAIL } from "@/lib/labels";
 import type { Recording } from "@/lib/recorder";
 import type { Preview } from "@/lib/types";
 import { TicketStatus } from "@/components/ticket/TicketStatus";
 import { ConfirmCard } from "./ConfirmCard";
+import { HowItWorks } from "./HowItWorks";
 import { MicButton } from "./MicButton";
 
 const MAX_CHARS = 500;
@@ -17,8 +17,7 @@ function message(err: unknown): string {
   return err instanceof ApiError ? err.detail : "Something went wrong — please try again.";
 }
 
-export function AskFlow({ initialCode = null }: { initialCode?: string | null }) {
-  const router = useRouter();
+export function AskFlow({ initialCode = null, onCode }: { initialCode?: string | null; onCode?: (code: string | null) => void }) {
   const [code, setCode] = useState<string | null>(initialCode);
   const [phase, setPhase] = useState<Phase>("compose");
   const [text, setText] = useState("");
@@ -27,12 +26,10 @@ export function AskFlow({ initialCode = null }: { initialCode?: string | null })
   const [chosen, setChosen] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  // follow the address (?t=CODE) without remounting, so "Ask again" keeps the question in the box
-  const [seenCode, setSeenCode] = useState<string | null>(initialCode);
-  if (initialCode !== seenCode) {
-    setSeenCode(initialCode);
-    setCode(initialCode);
-  }
+  // the desk keeps the open ticket in the address (?t=CODE), so a reload or shared link shows it
+  useEffect(() => {
+    onCode?.(code);
+  }, [code, onCode]);
 
   async function onContinue(e: React.FormEvent) {
     e.preventDefault();
@@ -74,110 +71,112 @@ export function AskFlow({ initialCode = null }: { initialCode?: string | null })
     setError(null);
     try {
       const r = await ask({ text, scheme_id: chosen, channel });
+      // the ticket opens on the right; the box clears for the next question
       setCode(r.code);
-      router.replace(`/?t=${r.code}`, { scroll: false }); // a reload or shared link keeps the answer
+      setText("");
+      setPreview(null);
+      setChosen(null);
+      setPhase("compose");
     } catch (err) {
       setError(message(err));
       setPhase("confirm");
     }
   }
 
-  if (code) {
-    return (
-      <div className="space-y-4">
-        <p className="text-xs text-text-tertiary">
-          Ticket <span className="font-mono-token">{code}</span>
-        </p>
-        <TicketStatus
-          code={code}
-          onAskAgain={() => {
-            // keep the box as it was submitted (empty when the visitor arrived by ticket link) so they can reword it
-            setCode(null);
-            setPreview(null);
-            setChosen(null);
-            setPhase("compose");
-            router.replace("/", { scroll: false });
-          }}
-        />
-        <button
-          type="button"
-          onClick={() => {
-            setCode(null);
-            setPreview(null);
-            setText("");
-            setChosen(null);
-            setPhase("compose");
-            router.replace("/", { scroll: false });
-          }}
-          className="rounded-md border border-border-strong px-4 py-2 text-sm"
-        >
-          Ask another question
-        </button>
-      </div>
-    );
+  function edit(next: string) {
+    setText(next);
+    setPreview(null); // changed text is understood again on Continue
+    setPhase("compose");
   }
 
-  if (preview && (phase === "confirm" || phase === "submitting")) {
-    return (
-      <div className="space-y-3">
-        <ConfirmCard
-          preview={preview}
-          chosen={chosen}
-          onChoose={setChosen}
-          onEdit={() => setPhase("compose")}
-          onSend={onSend}
-          sending={phase === "submitting"}
-          extraAction={
-            channel === "voice" ? (
-              <button
-                type="button"
-                onClick={() => { setPreview(null); setText(""); setPhase("compose"); }}
-                className="rounded-md border border-border-strong px-4 py-2 text-sm"
-              >
-                Re-record
-              </button>
-            ) : null
-          }
-        />
-        {error && <p role="alert" className="text-sm text-state-danger-text">{error}</p>}
-      </div>
-    );
-  }
+  const confirming = !!preview && (phase === "confirm" || phase === "submitting");
 
   return (
-    <div className="space-y-5">
-      <MicButton
-        disabled={phase === "transcribing" || busy}
-        onRecorded={onRecorded}
-        onError={(m) => setError(m)}
-      />
-      {phase === "transcribing" && <p className="text-sm text-text-secondary" aria-live="polite">Listening to your question…</p>}
-      <form onSubmit={onContinue} className="space-y-3">
-        <label htmlFor="question" className="block text-sm font-medium">Your question</label>
-        <textarea
-          id="question"
-          value={text}
-          maxLength={MAX_CHARS}
-          rows={4}
-          onChange={(e) => {
-            setText(e.target.value);
-            setPreview(null); // edited after confirm → understand it again
-          }}
-          placeholder="e.g. What is the exit load of HDFC Mid Cap Fund?"
-          className="w-full resize-y rounded-lg border border-border-strong bg-surface-panel p-3 text-base"
-        />
-        <div className="flex items-center justify-between gap-3">
-          <span className="text-xs text-text-tertiary" aria-live="polite">{text.length}/{MAX_CHARS}</span>
-          <button
-            type="submit"
-            disabled={!text.trim() || busy || phase === "transcribing"}
-            className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-on-primary disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {busy ? "Checking…" : "Continue"}
-          </button>
-        </div>
-      </form>
-      {error && <p role="alert" className="text-sm text-state-danger-text">{error}</p>}
+    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+      <div className="min-w-0 space-y-6">
+        <form onSubmit={onContinue} className="rounded-xl border border-border-subtle bg-surface-panel p-6 shadow-sm">
+          <label htmlFor="question" className="block text-xs font-semibold uppercase tracking-wide text-text-tertiary">
+            Your question
+          </label>
+          <textarea
+            id="question"
+            value={text}
+            maxLength={MAX_CHARS}
+            rows={4}
+            onChange={(e) => edit(e.target.value)}
+            placeholder="e.g. What is the exit load of HDFC Mid Cap Fund?"
+            className="mt-2 w-full resize-y rounded-lg border border-border-subtle bg-surface-panel p-3 text-base leading-relaxed"
+          />
+          <div className="mt-3 border-t border-border-subtle pt-4">
+            <MicButton
+              disabled={phase === "transcribing" || busy}
+              onRecorded={onRecorded}
+              onError={(m) => setError(m)}
+            />
+            {phase === "transcribing" && (
+              <p className="mt-2 text-sm text-text-secondary" aria-live="polite">Listening to your question…</p>
+            )}
+            <div className="mt-4 flex items-center justify-between gap-3">
+              <span className="font-mono-token text-xs text-text-tertiary" aria-live="polite">{text.length} / {MAX_CHARS}</span>
+              <button
+                type="submit"
+                disabled={!text.trim() || busy || phase === "transcribing"}
+                className="rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {busy ? "Checking…" : "Continue"}
+              </button>
+            </div>
+          </div>
+        </form>
+
+        {confirming && preview && (
+          <div className="rounded-xl border border-border-subtle bg-surface-panel p-6 shadow-sm">
+            <ConfirmCard
+              preview={preview}
+              chosen={chosen}
+              onChoose={setChosen}
+              onEdit={() => edit(text)}
+              onSend={onSend}
+              sending={phase === "submitting"}
+              extraAction={
+                channel === "voice" ? (
+                  <button
+                    type="button"
+                    onClick={() => edit("")}
+                    className="rounded-md border border-border-strong px-4 py-2 text-sm"
+                  >
+                    Re-record
+                  </button>
+                ) : null
+              }
+            />
+          </div>
+        )}
+        {error && <p role="alert" className="text-sm text-state-danger-text">{error}</p>}
+      </div>
+
+      <div className="min-w-0">
+        {code ? (
+          <div className="rounded-xl border border-border-subtle bg-surface-panel p-6 shadow-sm">
+            <p className="text-xs text-text-tertiary">Ticket</p>
+            <p className="mt-1 inline-block rounded-md bg-surface-bg px-2 py-1 font-mono-token text-sm font-semibold ring-1 ring-border-subtle">
+              {code}
+            </p>
+            <div className="mt-5 border-t border-border-subtle pt-5">
+              <TicketStatus
+                code={code}
+                onAskAgain={(question) => {
+                  // the closed ticket's question goes back in the box to reword
+                  setCode(null);
+                  edit(question);
+                }}
+              />
+            </div>
+          </div>
+        ) : (
+          <HowItWorks onPick={edit} />
+        )}
+      </div>
     </div>
   );
 }

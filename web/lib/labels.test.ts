@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { actionTitle, ASK_AGAIN, nextPollMs, CLOSED_TEXT, clarifyQuestion, intentLabel, scopeNotice, statusLabel, waitingText, weekHeading } from "./labels";
+import { actionTitle, EXAMPLE_QUESTIONS, progressSteps, ASK_AGAIN, nextPollMs, CLOSED_TEXT, clarifyQuestion, intentLabel, scopeNotice, statusLabel, waitingText, weekHeading } from "./labels";
 import type { Preview } from "./types";
 
 const base: Preview = {
@@ -94,5 +94,32 @@ describe("nextPollMs", () => {
   });
   it("keeps watching a failed ticket slowly while a person can re-run it", () => {
     expect(nextPollMs("failed")).toBe(15000);
+  });
+});
+
+describe("progressSteps", () => {
+  it("received is the first step", () => {
+    expect(progressSteps("received", "person")!.map((s) => s.state)).toEqual(["current", "todo", "todo", "todo"]);
+  });
+  it("in review waits for a person after the checks", () => {
+    expect(progressSteps("in_review", "person")).toEqual([
+      { label: "Received", state: "done" }, { label: "Checked", state: "done" },
+      { label: "Waiting for a person", state: "current" }, { label: "Answered", state: "todo" }]);
+  });
+  it("auto mode says Approving", () => {
+    expect(progressSteps("in_review", "auto")![2].label).toBe("Approving");
+  });
+  it("answered is all done", () => {
+    expect(progressSteps("answered", "person")!.every((s) => s.state === "done")).toBe(true);
+  });
+  it("closed and failed show no progress", () => {
+    expect(progressSteps("closed", "person")).toBeNull();
+    expect(progressSteps("failed", "person")).toBeNull();
+  });
+});
+
+describe("EXAMPLE_QUESTIONS", () => {
+  it("has three", () => {
+    expect(EXAMPLE_QUESTIONS).toHaveLength(3);
   });
 });

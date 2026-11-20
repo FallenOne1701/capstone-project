@@ -43,6 +43,7 @@ export default defineConfig({
         E2E_SEED: "1",
         TICKET_WORKER_INLINE: "0",
         AUTO_APPROVE: "0",   // Plan 3c: a person approves on the page
+        TRUST_PROXY: "1",    // fixtures set X-Forwarded-For so API-made tickets don't use up the browser's ask limit
         SCHEDULER_ENABLED: "0",
         CORPUS_BOOTSTRAP: "0",
         // never reach Google from tests, whatever api/.env holds

@@ -4,13 +4,12 @@ import { useEffect, useRef, useState } from "react";
 import { ScopeNotice } from "@/components/ask/ScopeNotice";
 import { ChecksPanel } from "./ChecksPanel";
 import { ApiError, ticket as fetchTicket } from "@/lib/api";
-import { ASK_AGAIN, CLOSED_TEXT, nextPollMs, scopeNotice, statusLabel, waitingText } from "@/lib/labels";
+import { ASK_AGAIN, CLOSED_TEXT, nextPollMs, progressSteps, scopeNotice, waitingText } from "@/lib/labels";
 import { loadVoices, planSpeech, speechLang } from "@/lib/speech";
 import { useClientValue } from "@/lib/useClient";
 import type { TicketView } from "@/lib/types";
 
 const POLL_MS = 3000;
-const STEPS = ["received", "in review", "answered"] as const;
 const URL_RE = /(https?:\/\/[^\s)]+)/g;
 
 function Linkified({ text }: { text: string }) {
@@ -27,22 +26,40 @@ function Linkified({ text }: { text: string }) {
   );
 }
 
-function Progress({ status }: { status: string }) {
-  const word = statusLabel(status);
-  const at = STEPS.indexOf(word as (typeof STEPS)[number]);
+function Progress({ status, approval }: { status: string; approval: "auto" | "person" }) {
+  const steps = progressSteps(status, approval);
+  if (!steps) return null;
   return (
-    <ol aria-label="Ticket progress" className="flex items-center gap-2 text-sm">
-      {STEPS.map((s, i) => {
-        const done = at >= i;
-        return (
-          <li key={s} className="flex items-center gap-2" aria-current={at === i ? "step" : undefined}>
-            <span className={`h-2.5 w-2.5 rounded-full ${done ? "bg-state-pass-dot" : "bg-border-strong"}`} aria-hidden />
-            <span className={done ? "font-medium text-text-primary" : "text-text-tertiary"}>{s}</span>
-            {i < STEPS.length - 1 && <span className={`h-px w-8 ${at > i ? "bg-state-pass-dot" : "bg-border-strong"}`} aria-hidden />}
+    <div>
+      <p className="text-xs font-semibold uppercase tracking-wide text-text-tertiary">Progress</p>
+      <ol aria-label="Ticket progress" className="mt-3 grid grid-cols-4 gap-1">
+        {steps.map((s, i) => (
+          <li key={s.label} className="relative flex flex-col items-center text-center" aria-current={s.state === "current" ? "step" : undefined}>
+            {i > 0 && (
+              <span
+                aria-hidden
+                className={`absolute top-3 right-1/2 h-0.5 w-full ${s.state === "todo" ? "bg-border-subtle" : "bg-primary"}`}
+              />
+            )}
+            <span
+              aria-hidden
+              className={`relative flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${
+                s.state === "done"
+                  ? "bg-primary text-on-primary"
+                  : s.state === "current"
+                    ? "bg-surface-panel text-primary ring-2 ring-primary"
+                    : "bg-surface-bg text-text-tertiary ring-1 ring-border-strong"
+              }`}
+            >
+              {s.state === "done" ? "✓" : i + 1}
+            </span>
+            <span className={`mt-1.5 text-xs ${s.state === "todo" ? "text-text-tertiary" : "font-medium text-text-primary"}`}>
+              {s.label}
+            </span>
           </li>
-        );
-      })}
-    </ol>
+        ))}
+      </ol>
+    </div>
   );
 }
 
@@ -91,7 +108,7 @@ function Listen({ text, englishText, lang, onFallback }: ListenProps) {
   );
 }
 
-export function TicketStatus({ code, onAskAgain }: { code: string; onAskAgain?: () => void }) {
+export function TicketStatus({ code, onAskAgain }: { code: string; onAskAgain?: (question: string) => void }) {
   const [t, setT] = useState<TicketView | null>(null);
   const [missing, setMissing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -137,7 +154,7 @@ export function TicketStatus({ code, onAskAgain }: { code: string; onAskAgain?: 
 
   return (
     <div className="space-y-5">
-      {t.status !== "closed" && <Progress status={t.status} />}
+      <Progress status={t.status} approval={t.approval ?? "person"} />
       <div>
         <p className="text-xs font-medium uppercase tracking-wide text-text-tertiary">Your question</p>
         <p className="mt-1 text-text-primary">{t.question}</p>
@@ -149,13 +166,20 @@ export function TicketStatus({ code, onAskAgain }: { code: string; onAskAgain?: 
         <p className="text-sm text-text-secondary" aria-live="polite">{waitingText(t.status, t.approval ?? "person")}</p>
       )}
       {t.status === "closed" && (
-        <section aria-label="Not answered" className="space-y-3 rounded-lg border border-border-strong bg-surface-bg p-4">
-          <p className="text-text-primary">{CLOSED_TEXT}</p>
-          {onAskAgain && (
-            <button type="button" onClick={onAskAgain} className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-on-primary">
-              {ASK_AGAIN}
-            </button>
-          )}
+        <section aria-label="Not answered" className="flex gap-3 rounded-xl border border-state-danger-border bg-surface-panel p-4">
+          <span aria-hidden className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-state-danger-bg font-bold text-state-danger-text ring-1 ring-state-danger-border">!</span>
+          <div className="space-y-3">
+            <p className="font-semibold text-text-primary">{CLOSED_TEXT}</p>
+            {onAskAgain && (
+              <button
+                type="button"
+                onClick={() => onAskAgain(t.question)}
+                className="rounded-lg border border-state-pass-border bg-state-pass-bg px-4 py-2 text-sm font-semibold text-primary"
+              >
+                {ASK_AGAIN}
+              </button>
+            )}
+          </div>
         </section>
       )}
       {t.status === "failed" && (
@@ -163,7 +187,7 @@ export function TicketStatus({ code, onAskAgain }: { code: string; onAskAgain?: 
       )}
 
       {t.status === "answered" && shown && (
-        <section aria-label="Answer" className="rounded-lg border border-state-pass-border bg-state-pass-bg p-4">
+        <section aria-label="Answer" className="rounded-xl border border-state-pass-border bg-state-pass-bg p-5">
           <p lang={local ? "hi" : "en"} className="whitespace-pre-line leading-relaxed text-text-primary">
             <Linkified text={shown} />
           </p>

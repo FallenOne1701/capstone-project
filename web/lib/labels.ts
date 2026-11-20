@@ -74,3 +74,20 @@ export function nextPollMs(status: string): number | null {
   if (status === "answered" || status === "closed") return null;
   return status === "failed" ? 15000 : 3000;
 }
+
+export type StepState = "done" | "current" | "todo";
+
+/** The ticket's 4 steps; none for a closed or failed ticket. */
+export function progressSteps(status: string, approval: "auto" | "person"): { label: string; state: StepState }[] | null {
+  if (status === "closed" || status === "failed") return null;
+  const labels = ["Received", "Checked", approval === "auto" ? "Approving" : "Waiting for a person", "Answered"];
+  const at = status === "answered" ? 4 : status === "in_review" ? 2 : 0;
+  return labels.map((label, i) => ({ label, state: i < at ? "done" : i === at ? "current" : "todo" }));
+}
+
+/** Clicking one fills the question box; the person still presses Continue. */
+export const EXAMPLE_QUESTIONS: readonly string[] = [
+  "What is the expense ratio of HDFC Mid Cap Fund?",
+  "What is the minimum SIP amount for HDFC Small Cap Fund?",
+  "What is the lock-in period of HDFC ELSS Tax Saver Fund?",
+];
