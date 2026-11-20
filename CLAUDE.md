@@ -44,14 +44,14 @@ Done 2026-11-19 night: after the PC restart Groq connects (5/5); PR #5 merged; A
 **Plan 5 (tab layout, 2026-11-20) built on branch `plan-5-tabs`, NOT merged/deployed yet.** Spec `docs/superpowers/specs/2026-11-20-tab-layout-design.md`, plan `docs/superpowers/plans/2026-11-20-plan-5-tab-layout.md`, ledger `.superpowers/sdd/2026-11-20-plan-5-tab-layout/progress.md` (Rulings). Tabs Ask | This week | Queue (user's order); `?tab=week|queue`, `?t=CODE`; all tabs stay mounted (`components/desk/DeskTabs.tsx`); rules in `web/lib/desk.ts`. Stitch design: `C:/Users/dhruv/Downloads/stitch_hdfc_mutual_funds_support_desk/`.
 
 **Next steps, in order:**
-1. Final whole-branch review of `plan-5-tabs`, fixes, then ask the user before push / PR / merge / Vercel redeploy (steps in `web/README.md` → "Deployed"). No API redeploy needed.
+1. Final review done + 3 Important fixed (ledger). Ask the user before push / PR / merge / Vercel redeploy (steps in `web/README.md` → "Deployed"). No API redeploy needed.
 2. Optional before the 24th: Google OAuth app to "In production" (refresh token stops expiring); a demo run-through.
 
 **Plan 4b results** (`api/EVALS.md` has runs 1-7): run 7 = feasibility 44/45, isolation 5/5, grounding 55/55, intent 41/41; the only miss is a Devanagari-script question (known limitation). Run: `cd api && .venv/Scripts/python -m app.evals run all` (~2.5 min, ~30 Groq calls; results in `api/evals/results/`). Root `README.md` has the eval table; `docs/samples/` has the reviews CSV, 5 Q&As, and the real weekly Doc entry + Gmail draft (live run 3, approved by the user 2026-11-19 15:47 UTC).
 Product fixes found by evals: off-topic checked before how-to (bitcoin); the AI names the fact for unclear wording and retrieval uses it; a fee question with no named fee asks the AI which fee, but named other fees (stamp duty, brokerage, GST...) never borrow a fact; the AI can't call a named HDFC fund out of scope; more advice phrasings are rules.
 Deferred minors (4b): repeat:2 double-counts grounding cases (noted in EVALS.md); the generic "Searched: all 15..." reply passes the names-what-was-searched check; a suite crash loses earlier suites' results; extra AI call on unnamed-fee questions; "how do I sell and get money in my bank account" is now out_of_scope; leak scan matches whole tokens only; a weekly run never moves to status `done` after both writes execute (display unaffected).
 
-**Tests at head:** API 479 passed, 5 skipped (~8 min); web vitest 65, Playwright 34 (on `plan-5-tabs`). The two voice e2e tests are flaky on this PC (fake mic sometimes judged silent; also on the pre-Plan-5 commit).
+**Tests at head:** API 479 passed, 5 skipped (~8 min); web vitest 65, Playwright 37 (on `plan-5-tabs`). The two voice e2e tests are flaky on this PC (fake mic sometimes judged silent; also on the pre-Plan-5 commit).
 
 **Live:**
 - Page: https://groww-support-desk.vercel.app (Vercel, user's Gmail/GitHub account `fallenone1701`, team `bomba8`).
