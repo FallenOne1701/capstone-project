@@ -1,7 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ApiError, ask, preview as fetchPreview, transcribe } from "@/lib/api";
 import { STT_FAIL } from "@/lib/labels";
 import type { Recording } from "@/lib/recorder";
@@ -17,8 +16,7 @@ function message(err: unknown): string {
   return err instanceof ApiError ? err.detail : "Something went wrong — please try again.";
 }
 
-export function AskFlow({ initialCode = null }: { initialCode?: string | null }) {
-  const router = useRouter();
+export function AskFlow({ initialCode = null, onCode }: { initialCode?: string | null; onCode?: (code: string | null) => void }) {
   const [code, setCode] = useState<string | null>(initialCode);
   const [phase, setPhase] = useState<Phase>("compose");
   const [text, setText] = useState("");
@@ -33,6 +31,10 @@ export function AskFlow({ initialCode = null }: { initialCode?: string | null })
     setSeenCode(initialCode);
     setCode(initialCode);
   }
+  // the desk keeps the open ticket in the address (?t=CODE), so a reload or shared link shows it
+  useEffect(() => {
+    onCode?.(code);
+  }, [code, onCode]);
 
   async function onContinue(e: React.FormEvent) {
     e.preventDefault();
@@ -75,7 +77,6 @@ export function AskFlow({ initialCode = null }: { initialCode?: string | null })
     try {
       const r = await ask({ text, scheme_id: chosen, channel });
       setCode(r.code);
-      router.replace(`/?t=${r.code}`, { scroll: false }); // a reload or shared link keeps the answer
     } catch (err) {
       setError(message(err));
       setPhase("confirm");
@@ -96,7 +97,6 @@ export function AskFlow({ initialCode = null }: { initialCode?: string | null })
             setPreview(null);
             setChosen(null);
             setPhase("compose");
-            router.replace("/", { scroll: false });
           }}
         />
         <button
@@ -107,7 +107,6 @@ export function AskFlow({ initialCode = null }: { initialCode?: string | null })
             setText("");
             setChosen(null);
             setPhase("compose");
-            router.replace("/", { scroll: false });
           }}
           className="rounded-md border border-border-strong px-4 py-2 text-sm"
         >

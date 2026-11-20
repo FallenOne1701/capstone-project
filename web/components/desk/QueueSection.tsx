@@ -1,16 +1,14 @@
 "use client";
 
-import { deskQueue } from "@/lib/api";
-import { usePoll } from "@/lib/usePoll";
+import type { QueueItem as Item } from "@/lib/types";
 import { QueueItem } from "./QueueItem";
 
-const POLL_MS = 5000;
+interface Props { data: Item[] | null; error: string | null; reload: () => void }
 
 /** Every reply draft waits here for a person: Approve (only once the reviewer passed), Edit, or Reject. */
-export function QueueSection() {
-  const { data, error, reload } = usePoll(deskQueue, POLL_MS);
+export function QueueSection({ data, error, reload }: Props) {
   return (
-    <section aria-label="Queue" className="mt-8 space-y-4">
+    <div className="space-y-4">
       <div>
         <h2 className="font-headline text-lg font-semibold">Queue — drafts waiting for a person</h2>
         <p className="text-sm text-text-secondary">
@@ -22,6 +20,6 @@ export function QueueSection() {
       {data === null && !error && <p className="text-sm text-text-secondary">Loading the queue…</p>}
       {data !== null && data.length === 0 && <p className="text-sm text-text-secondary">Nothing waiting right now.</p>}
       {data?.map((item) => <QueueItem key={item.code} item={item} onChange={reload} />)}
-    </section>
+    </div>
   );
 }

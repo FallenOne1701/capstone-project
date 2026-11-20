@@ -27,7 +27,7 @@ export function WeeklySection() {
   }, [version]); // a finished "Run weekly now" reloads the pulse
 
   return (
-    <section aria-label="Weekly pulse" className="mt-8 rounded-xl border border-border-subtle bg-surface-panel p-5 shadow-sm">
+    <section aria-label="Weekly pulse" className="rounded-xl border border-border-subtle bg-surface-panel p-5 shadow-sm">
       {state.kind === "loading" && <p className="text-sm text-text-secondary">Loading this week&apos;s pulse…</p>}
       {state.kind === "none" && <p className="text-sm text-text-secondary">The first weekly pulse hasn&apos;t run yet.</p>}
       {state.kind === "error" && <p className="text-sm text-text-secondary">The weekly pulse can&apos;t be loaded right now.</p>}

@@ -1,4 +1,4 @@
-import { expect, type APIRequestContext } from "@playwright/test";
+import { expect, type APIRequestContext, type Page } from "@playwright/test";
 
 export const API = "http://localhost:8001";
 
@@ -32,4 +32,11 @@ export async function approveTicket(request: APIRequestContext, code: string): P
     .toBe(true);
   const r = await request.post(`${API}/api/desk/actions/${actionId}/approve`, { data: { reply } });
   expect(r.ok()).toBeTruthy();
+}
+
+/** Opens one of the desk's tabs and waits until it is the selected one. */
+export async function openTab(page: Page, name: "Ask" | "This week" | "Queue"): Promise<void> {
+  const tab = page.getByRole("tab", { name: new RegExp(`^${name}`) });
+  await tab.click();
+  await expect(tab).toHaveAttribute("aria-selected", "true");
 }

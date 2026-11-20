@@ -72,7 +72,7 @@ test("voice question reaches confirm", async ({ page }) => {
   await expect(page.getByText(/0:0\d \/ 1:00/)).toBeVisible();
   await page.waitForTimeout(1500);
   await page.getByRole("button", { name: "Stop recording" }).click();
-  await expect(page.getByText("what is the exit load of HDFC mid cap")).toBeVisible();
+  await expect(page.getByRole("tabpanel", { name: "Ask" }).getByText("what is the exit load of HDFC mid cap")).toBeVisible();
   await expect(page.getByText("Fee question · HDFC Mid Cap")).toBeVisible();
   await expect(page.getByRole("button", { name: "Re-record" })).toBeVisible();
   expect(uploads).toBe(1);
