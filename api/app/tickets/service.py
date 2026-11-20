@@ -99,7 +99,7 @@ async def process_ticket(db: Session, ticket_id: int, *, retriever, themes_provi
         if t.scheme_id and t.scheme_id in intent.scheme_ids:
             intent = intent.model_copy(update={"scheme_ids": [t.scheme_id]})
         ex = find_canonical(db, intent, t.question_redacted)
-        reuse = reuse_reply(ex, intent) if ex is not None else None
+        reuse = reuse_reply(ex, intent, t.question_redacted) if ex is not None else None
         if reuse is not None:
             reply, bullet = reuse
             draft_out = OrchestratorOutput(

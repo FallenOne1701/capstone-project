@@ -56,3 +56,50 @@ def test_superseded_not_reused(db_session, canonical, retriever):
 
 def test_non_fee_intent_never_reuses(db_session, canonical, retriever):
     assert ask(db_session, "Should I redeem because of exit load?", retriever).reused_explainer_id is None
+
+
+CHARGES = "https://groww.in/help/payments-&-withdrawals/payments-charges/what-fees-does-groww-charge--58"
+REDEEM = "https://groww.in/help/mutual-funds/order/what-are-the-charges-applicable-for-redeeming--53"
+
+
+@pytest.fixture()
+def brokerage(db_session):
+    ex = Explainer(topic="brokerage", title="Brokerage & charges", status="canonical", last_checked="2026-11-20", evidence={},
+                   bullets=[{"text": "Groww charges a brokerage fee for executing your trades.", "url": CHARGES},
+                            {"text": "Here's a breakdown: Equity Trading: The fee is either ₹20 or 0.1% of your trade value, whichever is lower.", "url": CHARGES},
+                            {"text": "The minimum charge is ₹5.", "url": CHARGES},
+                            {"text": "Groww charges ZERO fees for redeeming.", "url": REDEEM}])
+    db_session.add(ex); db_session.commit()
+    return ex
+
+
+def test_amount_question_gets_the_figure_line(db_session, brokerage, retriever):
+    from app.guard.scope import sentence_count
+    d = ask(db_session, "What brokerage does Groww charge?", retriever)
+    assert d.reused_explainer_id == brokerage.id and d.citation == CHARGES and d.review_status == "pass"
+    assert "₹20 or 0.1%" in d.reply and "brokerage fee for executing" in d.reply
+    assert sentence_count(d.reply) <= 3
+
+
+def test_any_wording_without_a_definition_gets_the_figure(db_session, brokerage, retriever):
+    d = ask(db_session, "Brokerage on Groww for equity delivery?", retriever)
+    assert d.reused_explainer_id == brokerage.id and "₹20 or 0.1%" in d.reply
+
+
+def test_definition_question_keeps_the_concept_line_only(db_session, brokerage, retriever):
+    d = ask(db_session, "What is brokerage?", retriever)
+    assert d.reused_explainer_id == brokerage.id and "₹" not in d.reply
+
+
+def test_figure_line_never_borrowed_from_another_page(db_session, retriever):
+    ex = Explainer(topic="brokerage", title="Brokerage", status="canonical", last_checked="2026-11-20", evidence={},
+                   bullets=[{"text": "Groww charges a brokerage fee for executing your trades.", "url": CHARGES},
+                            {"text": "Stamp duty of 0.015% applies on purchases.", "url": REDEEM}])
+    db_session.add(ex); db_session.commit()
+    d = ask(db_session, "What brokerage does Groww charge?", retriever)
+    assert d.reused_explainer_id == ex.id and "0.015%" not in d.reply
+
+
+def test_meaning_question_keeps_the_concept_line_only(db_session, brokerage, retriever):
+    d = ask(db_session, "what does brokerage mean", retriever)
+    assert d.reused_explainer_id == brokerage.id and "₹" not in d.reply
