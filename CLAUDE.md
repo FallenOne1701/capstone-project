@@ -36,22 +36,23 @@ The assignment brief was pasted into the 2026-11-18 session. Its key rules:
   Both hold every Ruling, the final-review results and the deferred minors.
 - **GitHub:** private `FallenOne1701/capstone-project`. Each plan = its own branch + PR.
 
-## Status (2026-11-19 night, Plan 4b merged + live: RESUME HERE)
+## Status (2026-11-20, Plan 5 merged + live: RESUME HERE)
 
-**Merged to `main`:** Plans 1-4b (PR #4 `4f9a216` = the deploy; PR #5 `da11a9d` = evals + README). Spec/plan for 4b: `docs/superpowers/specs/2026-11-19-evals-and-readme-design.md`, `docs/superpowers/plans/2026-11-19-plan-4b-evals-readme.md`.
+**Merged to `main`:** Plans 1-5 (PR #4 `4f9a216` = the deploy; PR #5 `da11a9d` = evals + README; PR #6 `f1a155a` = tab layout). Spec/plan for 4b: `docs/superpowers/specs/2026-11-19-evals-and-readme-design.md`, `docs/superpowers/plans/2026-11-19-plan-4b-evals-readme.md`.
 Done 2026-11-19 night: after the PC restart Groq connects (5/5); PR #5 merged; API redeployed on Railway (deployment `8c9ae937`, SUCCESS, `/health` all ready). The page needed no redeploy.
 
-**Plan 5 (tab layout, 2026-11-20) built on branch `plan-5-tabs`, NOT merged/deployed yet.** Spec `docs/superpowers/specs/2026-11-20-tab-layout-design.md`, plan `docs/superpowers/plans/2026-11-20-plan-5-tab-layout.md`, ledger `.superpowers/sdd/2026-11-20-plan-5-tab-layout/progress.md` (Rulings). Tabs Ask | This week | Queue (user's order); `?tab=week|queue`, `?t=CODE`; all tabs stay mounted (`components/desk/DeskTabs.tsx`); rules in `web/lib/desk.ts`. Stitch design: `C:/Users/dhruv/Downloads/stitch_hdfc_mutual_funds_support_desk/`.
+**Plan 5 (tab layout, 2026-11-20) merged (PR #6) and live on Vercel (checked: tabs, `?tab=queue`, old ticket link).** Spec `docs/superpowers/specs/2026-11-20-tab-layout-design.md`, plan `docs/superpowers/plans/2026-11-20-plan-5-tab-layout.md`, ledger `.superpowers/sdd/2026-11-20-plan-5-tab-layout/progress.md` (Rulings). Tabs Ask | This week | Queue (user's order); `?tab=week|queue`, `?t=CODE`; all tabs stay mounted (`components/desk/DeskTabs.tsx`); rules in `web/lib/desk.ts`. Stitch design: `C:/Users/dhruv/Downloads/stitch_hdfc_mutual_funds_support_desk/`.
 
 **Next steps, in order:**
-1. Final review done + 3 Important fixed (ledger). Ask the user before push / PR / merge / Vercel redeploy (steps in `web/README.md` → "Deployed"). No API redeploy needed.
-2. Optional before the 24th: Google OAuth app to "In production" (refresh token stops expiring); a demo run-through.
+1. Optional before the 24th: Google OAuth app to "In production" (refresh token stops expiring); a demo run-through.
+2. Plan 5 deferred minors (in its ledger): Queue filter chips need arrow keys; tab aria-label names the panel incl. the count; header chip always says a person approves (even if AUTO_APPROVE=1); RunWeeklyButton interval depends on onRunDone identity.
+3. The user's call: Next 16.4.2 security upgrade.
 
 **Plan 4b results** (`api/EVALS.md` has runs 1-7): run 7 = feasibility 44/45, isolation 5/5, grounding 55/55, intent 41/41; the only miss is a Devanagari-script question (known limitation). Run: `cd api && .venv/Scripts/python -m app.evals run all` (~2.5 min, ~30 Groq calls; results in `api/evals/results/`). Root `README.md` has the eval table; `docs/samples/` has the reviews CSV, 5 Q&As, and the real weekly Doc entry + Gmail draft (live run 3, approved by the user 2026-11-19 15:47 UTC).
 Product fixes found by evals: off-topic checked before how-to (bitcoin); the AI names the fact for unclear wording and retrieval uses it; a fee question with no named fee asks the AI which fee, but named other fees (stamp duty, brokerage, GST...) never borrow a fact; the AI can't call a named HDFC fund out of scope; more advice phrasings are rules.
 Deferred minors (4b): repeat:2 double-counts grounding cases (noted in EVALS.md); the generic "Searched: all 15..." reply passes the names-what-was-searched check; a suite crash loses earlier suites' results; extra AI call on unnamed-fee questions; "how do I sell and get money in my bank account" is now out_of_scope; leak scan matches whole tokens only; a weekly run never moves to status `done` after both writes execute (display unaffected).
 
-**Tests at head:** API 479 passed, 5 skipped (~8 min); web vitest 65, Playwright 37 (on `plan-5-tabs`). The two voice e2e tests are flaky on this PC (fake mic sometimes judged silent; also on the pre-Plan-5 commit).
+**Tests at head:** API 479 passed, 5 skipped (~8 min); web vitest 65, Playwright 37. The two voice e2e tests are flaky on this PC (fake mic sometimes judged silent; also on the pre-Plan-5 commit).
 
 **Live:**
 - Page: https://groww-support-desk.vercel.app (Vercel, user's Gmail/GitHub account `fallenone1701`, team `bomba8`).
