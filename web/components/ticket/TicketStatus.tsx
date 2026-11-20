@@ -47,7 +47,7 @@ function Progress({ status, approval }: { status: string; approval: "auto" | "pe
                 s.state === "done"
                   ? "bg-primary text-on-primary"
                   : s.state === "current"
-                    ? "bg-surface-panel text-primary ring-2 ring-primary"
+                    ? "bg-surface-panel text-primary ring-2 ring-primary motion-safe:animate-pulse"
                     : "bg-surface-bg text-text-tertiary ring-1 ring-border-strong"
               }`}
             >

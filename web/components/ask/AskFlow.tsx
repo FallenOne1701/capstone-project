@@ -129,6 +129,15 @@ export function AskFlow({ initialCode = null, onCode }: { initialCode?: string |
           </div>
         </form>
 
+        {busy && !confirming && (
+          <div role="status" aria-live="polite" className="rounded-xl border border-dashed border-border-strong bg-surface-panel p-6">
+            <p className="text-sm font-medium text-text-secondary motion-safe:animate-pulse">Checking your question…</p>
+            <div className="mt-3 space-y-2" aria-hidden>
+              <div className="h-3 w-3/4 rounded bg-surface-bg motion-safe:animate-pulse" />
+              <div className="h-3 w-1/2 rounded bg-surface-bg motion-safe:animate-pulse" />
+            </div>
+          </div>
+        )}
         {confirming && preview && (
           <div className="rounded-xl border border-border-subtle bg-surface-panel p-6 shadow-sm">
             <ConfirmCard

@@ -116,3 +116,34 @@ test("filters split the queue into Waiting, Answered and Closed", async ({ page,
   await expect(queue.getByRole("article", { name: no })).toBeVisible();
   await expect(queue.getByRole("article", { name: yes })).toHaveCount(0);
 });
+
+test("Approve updates the card at once and reverts on a refusal", async ({ page, request }) => {
+  const code = await createTicket(request, "What is the minimum SIP amount for HDFC Gilt Fund?");
+  await waitForStatus(request, code, "in_review");
+  await page.route("**/api/desk/actions/*/approve", async (route) => {
+    await new Promise((r) => setTimeout(r, 1500));
+    await route.fulfill({ status: 409, json: { detail: "This reply changed after you opened it — check it again." } });
+  });
+  await page.goto("/?tab=queue");
+  const card = page.getByRole("tabpanel", { name: "Queue" }).getByRole("article", { name: code });
+  await expect(card.getByText("review: pass")).toBeVisible({ timeout: 15_000 });
+  await card.getByRole("button", { name: "Approve" }).click();
+  await expect(card.getByText("approved", { exact: true })).toBeVisible({ timeout: 500 });
+  await expect(card.getByRole("alert")).toHaveText("This reply changed after you opened it — check it again.");
+  await expect(card.getByText("pending", { exact: true })).toBeVisible();
+  await expect(card.getByRole("button", { name: "Approve" })).toBeVisible();
+});
+
+test("a Hindi draft says its translation is coming", async ({ page, request }) => {
+  const code = await createTicket(request, "What is the expense ratio of HDFC Defence Fund?");
+  await waitForStatus(request, code, "in_review");
+  await page.route("**/api/desk/queue", async (route) => {
+    const res = await route.fetch();
+    const items = (await res.json()) as { code: string; draft: Record<string, unknown> | null }[];
+    for (const i of items) if (i.code === code && i.draft) Object.assign(i.draft, { translation: null, translation_pending: true });
+    await route.fulfill({ response: res, json: items });
+  });
+  await page.goto("/?tab=queue");
+  const card = page.getByRole("tabpanel", { name: "Queue" }).getByRole("article", { name: code });
+  await expect(card.getByText("Hindi translation coming…")).toBeVisible({ timeout: 15_000 });
+});

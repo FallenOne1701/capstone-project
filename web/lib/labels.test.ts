@@ -99,8 +99,8 @@ describe("nextPollMs", () => {
 });
 
 describe("progressSteps", () => {
-  it("received is the first step", () => {
-    expect(progressSteps("received", "person")!.map((s) => s.state)).toEqual(["current", "todo", "todo", "todo"]);
+  it("received: the question is in and the checks are running", () => {
+    expect(progressSteps("received", "person")!.map((s) => s.state)).toEqual(["done", "current", "todo", "todo"]);
   });
   it("in review waits for a person after the checks", () => {
     expect(progressSteps("in_review", "person")).toEqual([

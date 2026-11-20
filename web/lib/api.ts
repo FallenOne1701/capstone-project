@@ -49,8 +49,9 @@ type Status = { id: number; status: string; error?: string | null };
 const enc = encodeURIComponent;
 export const deskQueue = () => api<QueueItem[]>("/api/desk/queue");
 /** `reply` is the draft text the person saw; the server refuses if it changed meanwhile. */
-export const approve = (id: number, reply?: string) =>
-  api<Status>(`/api/desk/actions/${id}/approve`, post(reply === undefined ? undefined : { reply }));
+/** For a reply, send the English and the Hindi (or null) the person was shown: Hindi is published only if it was seen. */
+export const approve = (id: number, reply?: string, translation?: string | null) =>
+  api<Status>(`/api/desk/actions/${id}/approve`, post(reply === undefined ? undefined : { reply, translation: translation ?? null }));
 export const reject = (id: number) => api<Status>(`/api/desk/actions/${id}/reject`, post());
 export const retry = (id: number) => api<Status>(`/api/desk/actions/${id}/retry`, post());
 export const editDraft = (id: number, reply: string) => api<DraftView>(`/api/desk/drafts/${id}/edit`, post({ reply }));

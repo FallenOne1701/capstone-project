@@ -82,7 +82,7 @@ export type StepState = "done" | "current" | "todo";
 export function progressSteps(status: string, approval: "auto" | "person"): { label: string; state: StepState }[] | null {
   if (status === "closed" || status === "failed") return null;
   const labels = ["Received", "Checked", approval === "auto" ? "Approving" : "Waiting for a person", "Answered"];
-  const at = status === "answered" ? 4 : status === "in_review" ? 2 : 0;
+  const at = status === "answered" ? 4 : status === "in_review" ? 2 : 1;   // received: in, now being checked
   return labels.map((label, i) => ({ label, state: i < at ? "done" : i === at ? "current" : "todo" }));
 }
 
