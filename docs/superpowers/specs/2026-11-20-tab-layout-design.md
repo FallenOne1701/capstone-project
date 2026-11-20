@@ -8,7 +8,7 @@ The live page (https://groww-support-desk.vercel.app) is one narrow column (`max
 The look comes from the user's Google Stitch design: `C:/Users/dhruv/Downloads/stitch_hdfc_mutual_funds_support_desk/` (`screen.png` = Ask tab; `code.html` = all three tabs, Tailwind + Lucide). It is a **re-layout**: almost every card in the design already exists as a component.
 
 ## Goals
-- Header: "Support Desk" + "HDFC Mutual Funds" tag (left); green chip "● A person approves every answer" (right). Below it a tab bar: **Ask** | **Queue** (count badge) | **This week** (dot when a weekly approval is waiting).
+- Header: "Support Desk" + "HDFC Mutual Funds" tag (left); green chip "● A person approves every answer" (right). Below it a tab bar, in this order (user, 2026-11-20): **Ask** | **This week** (dot when a weekly approval is waiting) | **Queue** (count badge). Build in the same order: Ask, then This week, then Queue.
 - Wide layout (max width ~1280px, as in the design) with the design's spacing, card style, borders and rounded corners.
 - **Ask tab**: page title "Ask about HDFC mutual funds" + subtitle. Two columns on desktop:
   - Left: the question box (textarea, mic inside it, char counter, Continue) and, after Continue, the confirm card ("Review & Privacy Guard": masked question, Edit question / Send question).
