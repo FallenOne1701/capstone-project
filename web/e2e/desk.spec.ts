@@ -1,5 +1,5 @@
 import { expect, type Page, test } from "@playwright/test";
-import { API, createTicket, openTab } from "./fixtures";
+import { API, approveTicket, createTicket, openTab, rejectTicket, waitForStatus } from "./fixtures";
 
 async function askOnPage(page: Page, text: string): Promise<string> {
   await page.goto("/");
@@ -94,4 +94,25 @@ test("Edit opens with the draft that arrived after the card first showed", async
   await card.getByRole("button", { name: "Edit" }).click();
   await expect(card.getByLabel("Edit reply")).toHaveValue(shown);
   expect(shown.length).toBeGreaterThan(10);
+});
+
+test("filters split the queue into Waiting, Answered and Closed", async ({ page, request }) => {
+  const yes = await createTicket(request, "What is the benchmark of HDFC Large Cap Fund?");
+  const no = await createTicket(request, "What is the riskometer level of HDFC Defence Fund?");
+  await approveTicket(request, yes);
+  await rejectTicket(request, no);
+  await waitForStatus(request, yes, "answered");
+  await waitForStatus(request, no, "closed");
+  await page.goto("/?tab=queue");
+  const queue = page.getByRole("tabpanel", { name: "Queue" });
+  const show = queue.getByRole("radiogroup", { name: "Show" });
+  await expect(show.getByRole("radio", { name: /^Waiting/ })).toBeChecked();
+  await expect(queue.getByRole("article", { name: yes })).toHaveCount(0);
+  await expect(queue.getByRole("article", { name: no })).toHaveCount(0);
+  await show.getByRole("radio", { name: /^Answered/ }).click();
+  await expect(queue.getByRole("article", { name: yes })).toBeVisible();
+  await expect(queue.getByRole("article", { name: no })).toHaveCount(0);
+  await show.getByRole("radio", { name: /^Closed/ }).click();
+  await expect(queue.getByRole("article", { name: no })).toBeVisible();
+  await expect(queue.getByRole("article", { name: yes })).toHaveCount(0);
 });

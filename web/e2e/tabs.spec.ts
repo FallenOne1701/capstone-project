@@ -60,3 +60,16 @@ test("badge counts waiting tickets", async ({ page, request }) => {
   await page.goto("/");
   await expect(page.getByRole("tab", { name: /^Queue/ })).toHaveText(/Queue\s*[1-9]\d*/, { timeout: 15_000 });
 });
+
+test("phone width has no sideways scroll on any tab", async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 800 });
+  await page.goto("/");
+  for (const name of ["Ask", "This week", "Queue"] as const) {
+    await openTab(page, name);
+    await page.waitForLoadState("networkidle");
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(375);
+  }
+  for (const name of ["Ask", "This week", "Queue"]) {
+    await expect(page.getByRole("tab", { name: new RegExp(`^${name}`) })).toBeInViewport();
+  }
+});
