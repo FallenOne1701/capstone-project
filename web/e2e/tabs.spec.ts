@@ -7,7 +7,7 @@ test("tabs are Ask, This week, Queue in that order and Ask is open", async ({ pa
   expect(names.map((n) => n.replace(/[\d\s•]+$/, "").trim())).toEqual(["Ask", "This week", "Queue"]);
   await expect(page.getByRole("tab", { name: /^Ask/ })).toHaveAttribute("aria-selected", "true");
   await expect(page.getByText("Support Desk", { exact: true })).toBeVisible();
-  await expect(page.getByText("A person approves every answer")).toBeVisible();
+  await expect(page.getByRole("banner").getByText("A person approves every answer")).toBeVisible();
 });
 
 test("a tab survives a reload", async ({ page }) => {

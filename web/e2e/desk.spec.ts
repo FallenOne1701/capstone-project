@@ -32,6 +32,7 @@ test("reject closes the ticket and Ask again brings the question back", async ({
   await page.getByRole("button", { name: "Ask again" }).click();
   await expect(page.getByLabel("Your question", { exact: true })).toHaveValue(text);
   await expect(page).toHaveURL(/\/$/);
+  await expect(page.getByRole("region", { name: "How it works" })).toBeVisible();
 });
 
 test("a draft the reviewer blocks cannot be approved", async ({ page, request }) => {
