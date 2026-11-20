@@ -48,7 +48,6 @@ Done 2026-11-19 night: after the PC restart Groq connects (5/5); PR #5 merged; A
 **Next steps, in order:**
 1. Optional before the 24th: Google OAuth app to "In production" (refresh token stops expiring); a demo run-through.
 2. Plan 5 deferred minors (in its ledger): Queue filter chips need arrow keys; tab aria-label names the panel incl. the count; header chip always says a person approves (even if AUTO_APPROVE=1); RunWeeklyButton interval depends on onRunDone identity.
-3. The user's call: Next 16.4.2 security upgrade.
 
 **Plan 4b results** (`api/EVALS.md` has runs 1-7): run 7 = feasibility 44/45, isolation 5/5, grounding 55/55, intent 41/41; the only miss is a Devanagari-script question (known limitation). Run: `cd api && .venv/Scripts/python -m app.evals run all` (~2.5 min, ~30 Groq calls; results in `api/evals/results/`). Root `README.md` has the eval table; `docs/samples/` has the reviews CSV, 5 Q&As, and the real weekly Doc entry + Gmail draft (live run 3, approved by the user 2026-11-19 15:47 UTC).
 Product fixes found by evals: off-topic checked before how-to (bitcoin); the AI names the fact for unclear wording and retrieval uses it; a fee question with no named fee asks the AI which fee, but named other fees (stamp duty, brokerage, GST...) never borrow a fact; the AI can't call a named HDFC fund out of scope; more advice phrasings are rules.
@@ -70,7 +69,7 @@ Deferred minors (4b): repeat:2 double-counts grounding cases (noted in EVALS.md)
 - **2026-11-19: this PC ran out of network ports** (~18.5k stuck TIME_WAIT connections after 30 days without a real restart; Windows fast startup is on, so only Start > Restart clears it). Symptom: `APIConnectionError` / curl "Address already in use" to Groq while other sites work. Fix = Restart. Gemini's free daily quota (429) was also used up that day.
 - Google OAuth app stays in Testing, so the refresh token expires every 7 days. Re-run `npm run auth` in `C:/Users/dhruv/MCP Server 1` and update `GOOGLE_REFRESH_TOKEN` in `api/.env` AND on Railway (`railway variable set GOOGLE_REFRESH_TOKEN --stdin --service api` from `api/`) before demos/Mondays — or switch the OAuth app to "In production".
 - Known limit: the MCP Doc append is plain text, so `#` headings show literally in the Doc.
-- Next 16.4.2 has a published security advisory. `next dev`/`next build` sometimes stop to show it, and rerunning works. Upgrading is the user's call (pinned to match M3); decide in Plan 4.
+- Next upgraded 16.4.2 → 16.4.6 on 2026-11-20 (npm audit: 0 vulnerabilities; the security notice that stopped `next dev`/`build` is gone).
 - Deferred minors are listed in both ledgers.
 
 ## Run it
