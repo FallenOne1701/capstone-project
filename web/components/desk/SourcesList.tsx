@@ -13,7 +13,7 @@ const BADGE: Record<string, string> = {
 export function SourcesList() {
   const { data, error } = usePoll(sources, 0);
   return (
-    <details className="rounded-lg border border-border-subtle p-3">
+    <details open className="rounded-xl border border-border-subtle bg-surface-panel p-5 shadow-sm">
       <summary className="cursor-pointer font-headline text-base font-semibold">
         Sources{data ? ` (${data.length})` : ""}
       </summary>

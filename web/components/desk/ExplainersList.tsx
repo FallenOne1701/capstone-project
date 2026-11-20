@@ -11,9 +11,9 @@ export function ExplainersList() {
   const { data, error } = usePoll(explainers, 0);
   const sorted = data ? [...data].sort((a, b) => (ORDER[a.status] ?? 9) - (ORDER[b.status] ?? 9) || b.id - a.id) : null;
   return (
-    <details className="rounded-lg border border-border-subtle p-3">
+    <details open className="rounded-xl border border-border-subtle bg-surface-panel p-5 shadow-sm">
       <summary className="cursor-pointer font-headline text-base font-semibold">
-        Canonical explainers{data ? ` (${data.filter((e) => e.status === "canonical").length} in use)` : ""}
+        Fee explainers{data ? ` — ${data.filter((e) => e.status === "canonical").length} canonical, in use` : ""}
       </summary>
       {error && <p role="alert" className="mt-2 text-sm text-state-danger-text">{error}</p>}
       {sorted && sorted.length === 0 && <p className="mt-2 text-sm text-text-secondary">No explainers yet.</p>}
