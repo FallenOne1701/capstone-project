@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import secrets
+import time
 from datetime import date
 from typing import Callable
 
@@ -17,6 +18,7 @@ from app.desk.reviewer import review_draft
 from app.desk.translate import translate_reply, validate_translation
 from app.link.canonical import find_canonical, reuse_reply
 from app.guard.pii import redact
+from app.desk.timing import log as timing_log, step
 from app.intent.cache import classify_cached
 from app.intent.classifier import IntentResult
 from app.link.question_keys import question_key
@@ -100,12 +102,15 @@ async def _add_translation(db: Session, d: Draft) -> None:
 
 async def process_ticket(db: Session, ticket_id: int, *, retriever, themes_provider: Callable = lambda db: []) -> Draft | None:
     t = db.get(Ticket, ticket_id)
+    started = time.perf_counter()
     try:
-        intent = await classify_cached(t.question_redacted)
+        with step("classify", t.id):
+            intent = await classify_cached(t.question_redacted)
         if t.scheme_id and t.scheme_id in intent.scheme_ids:
             intent = intent.model_copy(update={"scheme_ids": [t.scheme_id]})
-        ex = find_canonical(db, intent, t.question_redacted)
-        reuse = reuse_reply(ex, intent, t.question_redacted) if ex is not None else None
+        with step("canonical", t.id):
+            ex = find_canonical(db, intent, t.question_redacted)
+            reuse = reuse_reply(ex, intent, t.question_redacted) if ex is not None else None
         if reuse is not None:
             reply, bullet = reuse
             draft_out = OrchestratorOutput(
@@ -116,12 +121,16 @@ async def process_ticket(db: Session, ticket_id: int, *, retriever, themes_provi
                                 scheme_id=intent.scheme_ids[0] if len(intent.scheme_ids) == 1 else "reference",
                                 fact=bullet["text"], citation=bullet["url"], last_checked=ex.last_checked,
                                 searched=[f"explainer:{ex.id}"])
-            review = review_draft(draft_out, facts=facts, round=1)
+            with step("desk", t.id):   # reused explainer: the reviewer only
+                review = review_draft(draft_out, facts=facts, round=1)
             searched, reused_id = facts.searched, ex.id
         else:
-            res = await run_desk(t.question_redacted, list(t.pii_types), intent, retriever=retriever,
-                                 themes=themes_provider(db), last_checked=lambda u: last_checked_for(db, u),
-                                 today=date.today())
+            with step("themes", t.id):
+                themes = themes_provider(db)
+            with step("desk", t.id):   # retrieval + the three agents + orchestrator + reviewer
+                res = await run_desk(t.question_redacted, list(t.pii_types), intent, retriever=retriever,
+                                     themes=themes, last_checked=lambda u: last_checked_for(db, u),
+                                     today=date.today())
             draft_out, review, searched, reused_id = res.draft, res.review, res.facts.searched, None
         d = Draft(ticket_id=t.id, reply=draft_out.reply, citation=draft_out.citation,
                   last_checked=draft_out.last_checked, disposition=draft_out.disposition,
@@ -134,7 +143,8 @@ async def process_ticket(db: Session, ticket_id: int, *, retriever, themes_provi
         wants_hindi = t.language in ("hi", "hinglish") and d.review_status == "pass"
         auto = get_settings().auto_approve
         if wants_hindi and auto:
-            await _add_translation(db, d)   # nobody looks first: translate, then decide (today's order)
+            with step("translate", t.id):
+                await _add_translation(db, d)   # nobody looks first: translate, then decide (today's order)
         a = Action(type="reply_publish", target_label=f"Reply to ticket {t.code}", target_ref=t.code, draft_id=d.id,
                    source_ref=f"ticket:{t.id}")
         db.add(a)
@@ -143,10 +153,13 @@ async def process_ticket(db: Session, ticket_id: int, *, retriever, themes_provi
         audit(db, "desk", "create", "draft", d.id, f"disposition={d.disposition} review={d.review_status}")
         audit(db, "desk", "create", "action", a.id, "reply_publish")
         db.commit()
+        log_ready = round((time.perf_counter() - started) * 1000)
+        timing_log.info("desk ticket=%d step=total ms=%d", t.id, log_ready)   # until the draft is in the Queue
         if wants_hindi and not auto:
             # the draft is already in the Queue; the Hindi version follows (the card says it's coming)
             try:
-                await _add_translation(db, d)
+                with step("translate", t.id):
+                    await _add_translation(db, d)
             except Exception as exc:  # noqa: BLE001  (a failed translation never fails the ticket)
                 db.rollback()
                 audit(db, "desk", "translate", "draft", d.id, f"discarded:{type(exc).__name__}")
