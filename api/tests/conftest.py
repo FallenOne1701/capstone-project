@@ -15,7 +15,9 @@ from app import db as dbmod
 @pytest.fixture(autouse=True)
 def _fresh_rate_limits():
     from app.guard.ratelimit import reset_limits
+    from app.intent.cache import intent_cache
     reset_limits()
+    intent_cache.clear()   # a classification cached by one test must never answer another test's faked AI
     yield
 
 

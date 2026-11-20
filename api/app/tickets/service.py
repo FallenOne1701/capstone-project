@@ -17,7 +17,8 @@ from app.desk.reviewer import review_draft
 from app.desk.translate import translate_reply, validate_translation
 from app.link.canonical import find_canonical, reuse_reply
 from app.guard.pii import redact
-from app.intent.classifier import IntentResult, classify_intent
+from app.intent.cache import classify_cached
+from app.intent.classifier import IntentResult
 from app.link.question_keys import question_key
 from app.models import Action, Draft, DraftTranslation, Ticket
 
@@ -58,7 +59,7 @@ def short_name(name: str) -> str:
 
 async def preview(text: str, *, language: str | None = None) -> PreviewOut:
     red = redact(_validate(text))
-    intent = await classify_intent(red.text)
+    intent = await classify_cached(red.text)
     names = _scheme_names()
     multi = len(intent.scheme_ids) > 1
     return PreviewOut(redacted_text=red.text, pii_types=red.pii_types, intent=intent.intent,
@@ -70,7 +71,7 @@ async def preview(text: str, *, language: str | None = None) -> PreviewOut:
 async def create_ticket(db: Session, text: str, *, channel: str = "text",
                         scheme_id: str | None = None) -> tuple[Ticket, IntentResult]:
     red = redact(_validate(text))
-    intent = await classify_intent(red.text)
+    intent = await classify_cached(red.text)
     if scheme_id and scheme_id in intent.scheme_ids:  # the answer to "Mid Cap or Small Cap?"; anything else is ignored
         intent = intent.model_copy(update={"scheme_ids": [scheme_id]})
     t = Ticket(code="GRW-" + "".join(secrets.choice(_ALPH) for _ in range(6)), channel=channel,
@@ -95,7 +96,7 @@ async def _add_translation(db: Session, d: Draft) -> None:
 async def process_ticket(db: Session, ticket_id: int, *, retriever, themes_provider: Callable = lambda db: []) -> Draft | None:
     t = db.get(Ticket, ticket_id)
     try:
-        intent = await classify_intent(t.question_redacted)
+        intent = await classify_cached(t.question_redacted)
         if t.scheme_id and t.scheme_id in intent.scheme_ids:
             intent = intent.model_copy(update={"scheme_ids": [t.scheme_id]})
         ex = find_canonical(db, intent, t.question_redacted)
