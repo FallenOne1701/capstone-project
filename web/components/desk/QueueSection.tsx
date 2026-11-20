@@ -16,8 +16,9 @@ const FILTERS: { id: QueueFilter; label: string; empty: string }[] = [
 /** Every reply draft waits here for a person: Approve (only once the reviewer passed), Edit, or Reject. */
 export function QueueSection({ data, error, reload }: Props) {
   const [filter, setFilter] = useState<QueueFilter>("waiting");
-  const shown = data?.filter((i) => queueBucket(i) === filter) ?? null;
-  const count = (f: QueueFilter) => data?.filter((i) => queueBucket(i) === f).length;
+  // after a failed load the old list is hidden: its buttons would fail and its counts are stale
+  const shown = error ? null : (data?.filter((i) => queueBucket(i) === filter) ?? null);
+  const count = (f: QueueFilter) => (error ? undefined : data?.filter((i) => queueBucket(i) === f).length);
 
   return (
     <div className="space-y-6">

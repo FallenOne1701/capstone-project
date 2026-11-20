@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { ExplainersList } from "@/components/desk/ExplainersList";
 import { SourcesList } from "@/components/desk/SourcesList";
-import { WeeklyApprovals } from "@/components/desk/WeeklyApprovals";
+import { WeeklyApprovals, type WeeklyData } from "@/components/desk/WeeklyApprovals";
 import { ApiError, weeklySummary } from "@/lib/api";
 import { weekHeading } from "@/lib/labels";
 import type { WeeklySummary } from "@/lib/types";
@@ -14,10 +14,14 @@ type State = { kind: "loading" } | { kind: "none" } | { kind: "error" } | { kind
 const CARD = "rounded-xl border border-border-subtle bg-surface-panel p-6 shadow-sm";
 
 /** This week's review pulse, rebuilt automatically every Monday from Play Store reviews. */
-export function WeeklySection() {
+export function WeeklySection({ week, opened }: { week: WeeklyData; opened: number }) {
   const [state, setState] = useState<State>({ kind: "loading" });
   const [version, setVersion] = useState(0);
-  const refresh = useCallback(() => setVersion((v) => v + 1), []);
+  const { reload } = week;
+  const refresh = useCallback(() => {
+    setVersion((v) => v + 1);
+    reload();
+  }, [reload]);
 
   useEffect(() => {
     let alive = true;
@@ -27,7 +31,7 @@ export function WeeklySection() {
     return () => {
       alive = false;
     };
-  }, [version]); // a finished "Run weekly now" reloads the pulse
+  }, [version, opened]); // a finished "Run weekly now", or opening the tab, reloads the pulse
 
   return (
     <section aria-label="Weekly pulse" className="space-y-8">
@@ -48,7 +52,7 @@ export function WeeklySection() {
         {state.kind === "ok" && <Pulse data={state.data} />}
       </div>
 
-      <WeeklyApprovals version={version} />
+      <WeeklyApprovals data={week.data} error={week.error} reload={week.reload} />
 
       <div className="space-y-4">
         <ExplainersList />

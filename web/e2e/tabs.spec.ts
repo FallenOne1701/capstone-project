@@ -73,3 +73,30 @@ test("phone width has no sideways scroll on any tab", async ({ page }) => {
     await expect(page.getByRole("tab", { name: new RegExp(`^${name}`) })).toBeInViewport();
   }
 });
+
+test("a tab switch never reloads the page, even when the server can't be reached", async ({ page }) => {
+  await page.goto("/");
+  await page.getByLabel("Your question", { exact: true }).fill("exit load?");
+  await page.evaluate(() => { (window as unknown as { stayed: number }).stayed = 1; });
+  // a server round trip on a tab click would fail here and fall back to a full reload
+  await page.route("**/*", (r) => (r.request().headers()["rsc"] ? r.abort() : r.continue()));
+  await openTab(page, "Queue");
+  await expect(page).toHaveURL(/\/\?tab=queue$/);
+  await openTab(page, "Ask");
+  expect(await page.evaluate(() => (window as unknown as { stayed?: number }).stayed)).toBe(1);
+  await expect(page.getByLabel("Your question", { exact: true })).toHaveValue("exit load?");
+});
+
+test("the badge goes away when the queue stops loading", async ({ page, request }) => {
+  const code = await createTicket(request, "What is the expense ratio of HDFC Large Cap Fund?");
+  await waitForStatus(request, code, "in_review");
+  await page.goto("/");
+  await expect(page.getByRole("tab", { name: /^Queue/ })).toHaveText(/Queue\s*[1-9]/, { timeout: 15_000 });
+  await page.route("**/api/desk/queue", (r) => r.fulfill({ status: 500, json: { detail: "The queue is down." } }));
+  await expect(page.getByRole("tab", { name: /^Queue/ })).toHaveText(/^Queue$/, { timeout: 15_000 });
+  await openTab(page, "Queue");
+  const queue = page.getByRole("tabpanel", { name: "Queue" });
+  await expect(queue.getByRole("alert")).toBeVisible();
+  await expect(queue.getByRole("article")).toHaveCount(0);
+  await expect(queue.getByText("Nothing waiting right now.")).toHaveCount(0);
+});

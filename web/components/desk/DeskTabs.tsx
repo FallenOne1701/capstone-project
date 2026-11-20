@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AskFlow } from "@/components/ask/AskFlow";
 import { DeskHeader } from "@/components/DeskHeader";
@@ -23,20 +22,31 @@ function Panel({ id, tab, children }: { id: Tab; tab: Tab; children: React.React
 
 /** The desk: all three tabs stay mounted (nothing typed or opened is lost); the address keeps the tab and ticket. */
 export function DeskTabs({ initialTab, initialCode }: { initialTab: Tab; initialCode: string | null }) {
-  const router = useRouter();
   const [tab, setTab] = useState<Tab>(initialTab);
   const [code, setCode] = useState<string | null>(initialCode);
   const queue = usePoll(deskQueue, QUEUE_POLL_MS);
   const week = usePoll(weeklyLatest, WEEK_POLL_MS);
+  const [weekOpened, setWeekOpened] = useState(0);
 
+  // opening This week loads it again, so a run that finished while the page was open shows and matches the dot
+  function selectTab(next: Tab) {
+    if (next === "week" && tab !== "week") {
+      setWeekOpened((n) => n + 1);
+      void week.reload();
+    }
+    setTab(next);
+  }
+
+  // the address changes without a server round trip: a failed request or a new deploy can never reload the page
+  // (and wipe a half-typed question) on a tab click
   useEffect(() => {
     const href = deskHref(tab, code);
-    if (`${window.location.pathname}${window.location.search}` !== href) router.replace(href, { scroll: false });
-  }, [tab, code, router]);
+    if (`${window.location.pathname}${window.location.search}` !== href) window.history.replaceState(null, "", href);
+  }, [tab, code]);
 
   return (
     <>
-      <DeskHeader tab={tab} onTab={setTab} waiting={waitingCount(queue.data)} weekDot={weeklyNeedsYou(week.data)} />
+      <DeskHeader tab={tab} onTab={selectTab} waiting={queue.error ? null : waitingCount(queue.data)} weekDot={weeklyNeedsYou(week.data)} />
       <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:px-8">
         <Panel id="ask" tab={tab}>
           <h1 className="font-headline text-3xl font-bold tracking-tight">Ask about HDFC mutual funds</h1>
@@ -49,7 +59,7 @@ export function DeskTabs({ initialTab, initialCode }: { initialTab: Tab; initial
           </div>
         </Panel>
         <Panel id="week" tab={tab}>
-          <WeeklySection />
+          <WeeklySection week={week} opened={weekOpened} />
         </Panel>
         <Panel id="queue" tab={tab}>
           <QueueSection data={queue.data} error={queue.error} reload={queue.reload} />

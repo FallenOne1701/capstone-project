@@ -1,22 +1,13 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { weeklyLatest } from "@/lib/api";
-import { usePoll } from "@/lib/usePoll";
+import type { WeeklyLatest } from "@/lib/types";
 import { ActionCard } from "./ActionCard";
 
-/** The weekly Google writes wait here: each says exactly what is written where, and runs only on a person's click. */
-export function WeeklyApprovals({ version }: { version: number }) {
-  const { data, error, reload } = usePoll(weeklyLatest, 0);
-  const first = useRef(true);
-  useEffect(() => {
-    if (first.current) {
-      first.current = false;
-      return;
-    }
-    void reload(); // a finished "Run weekly now" brings new items
-  }, [version, reload]);
+export interface WeeklyData { data: WeeklyLatest | null; error: string | null; reload: () => void }
 
+/** The weekly Google writes wait here: each says exactly what is written where, and runs only on a person's click.
+ * Its data is the same poll that drives the This week dot, so the two always agree. */
+export function WeeklyApprovals({ data, error, reload }: WeeklyData) {
   const missing = error && /no weekly runs/i.test(error);
   return (
     <div className="space-y-4">

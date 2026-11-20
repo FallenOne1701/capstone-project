@@ -38,3 +38,19 @@ test("no pulse yet", async ({ page }) => {
   await page.goto("/?tab=week");
   await expect(page.getByText("The first weekly pulse hasn't run yet.")).toBeVisible();
 });
+
+test("opening This week loads it again, so it matches the dot", async ({ page }) => {
+  let summary = 0;
+  let latest = 0;
+  page.on("request", (r) => {
+    if (r.url().includes("/api/weekly/summary")) summary += 1;
+    if (r.url().includes("/api/desk/weekly/latest")) latest += 1;
+  });
+  await page.goto("/");
+  await expect(page.getByRole("tab", { name: /^This week/ })).toBeVisible();
+  await page.waitForLoadState("networkidle");
+  const [s0, l0] = [summary, latest];
+  await openTab(page, "This week");
+  await expect.poll(() => summary).toBeGreaterThan(s0);
+  await expect.poll(() => latest).toBeGreaterThan(l0);
+});

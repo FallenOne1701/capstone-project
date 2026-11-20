@@ -26,12 +26,6 @@ export function AskFlow({ initialCode = null, onCode }: { initialCode?: string |
   const [chosen, setChosen] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  // follow the address (?t=CODE) without remounting, so "Ask again" keeps the question in the box
-  const [seenCode, setSeenCode] = useState<string | null>(initialCode);
-  if (initialCode !== seenCode) {
-    setSeenCode(initialCode);
-    setCode(initialCode);
-  }
   // the desk keeps the open ticket in the address (?t=CODE), so a reload or shared link shows it
   useEffect(() => {
     onCode?.(code);
