@@ -36,17 +36,14 @@ The assignment brief was pasted into the 2026-11-18 session. Its key rules:
   Both hold every Ruling, the final-review results and the deferred minors.
 - **GitHub:** private `FallenOne1701/capstone-project`. Each plan = its own branch + PR.
 
-## Status (2026-11-19 evening, Plan 4b done: RESUME HERE)
+## Status (2026-11-19 night, Plan 4b merged + live: RESUME HERE)
 
-**Merged to `main`:** Plans 1-4a (PR #4 `4f9a216` = the deploy).
-**Branch `plan-4b-evals`** (Plan 4b, pushed, NOT merged yet): spec `docs/superpowers/specs/2026-11-19-evals-and-readme-design.md`, plan `docs/superpowers/plans/2026-11-19-plan-4b-evals-readme.md`. All work committed; final review done and its findings fixed.
+**Merged to `main`:** Plans 1-4b (PR #4 `4f9a216` = the deploy; PR #5 `da11a9d` = evals + README). Spec/plan for 4b: `docs/superpowers/specs/2026-11-19-evals-and-readme-design.md`, `docs/superpowers/plans/2026-11-19-plan-4b-evals-readme.md`.
+Done 2026-11-19 night: after the PC restart Groq connects (5/5); PR #5 merged; API redeployed on Railway (deployment `8c9ae937`, SUCCESS, `/health` all ready). The page needed no redeploy.
 
-**Next steps, in order (the user already said yes to 1-3):**
-1. After the user's PC restart: confirm Groq connects (5 real calls; see Open notes, port exhaustion).
-2. Open a PR for `plan-4b-evals` and merge it (same as PR #4).
-3. Redeploy the API so the classifier fixes go live: `railway up --detach --service api` from `api/` (the CLI is logged in to the user's second Railway account). The page needs no redeploy.
-4. Then **Plan 5: tab layout from the user's Google Stitch design** (brainstorm, spec, plan as usual). Design files: `C:/Users/dhruv/Downloads/stitch_hdfc_mutual_funds_support_desk/` (`code.html` + `screen.png`). Header "Support Desk" + "HDFC Mutual Funds" tag + chip "A person approves every answer"; tabs Ask / Queue (count badge) / This week; Ask tab = inquiry card + privacy-guard confirm card (left), ticket card with a 4-step pipeline + answer card, and "We couldn't answer this one" + Ask again (right). Same colours and fonts as now. Keep content truthful to our data (the mock invents facts like "Section 4.2"; don't copy those).
-5. Optional before the 24th: Google OAuth app to "In production" (refresh token stops expiring); a demo run-through.
+**Next steps, in order:**
+1. **Plan 5: tab layout from the user's Google Stitch design** (brainstorm, spec, plan as usual). Design files: `C:/Users/dhruv/Downloads/stitch_hdfc_mutual_funds_support_desk/` (`code.html` + `screen.png`). Header "Support Desk" + "HDFC Mutual Funds" tag + chip "A person approves every answer"; tabs Ask / Queue (count badge) / This week; Ask tab = inquiry card + privacy-guard confirm card (left), ticket card with a 4-step pipeline + answer card, and "We couldn't answer this one" + Ask again (right). Same colours and fonts as now. Keep content truthful to our data (the mock invents facts like "Section 4.2"; don't copy those).
+2. Optional before the 24th: Google OAuth app to "In production" (refresh token stops expiring); a demo run-through.
 
 **Plan 4b results** (`api/EVALS.md` has runs 1-7): run 7 = feasibility 44/45, isolation 5/5, grounding 55/55, intent 41/41; the only miss is a Devanagari-script question (known limitation). Run: `cd api && .venv/Scripts/python -m app.evals run all` (~2.5 min, ~30 Groq calls; results in `api/evals/results/`). Root `README.md` has the eval table; `docs/samples/` has the reviews CSV, 5 Q&As, and the real weekly Doc entry + Gmail draft (live run 3, approved by the user 2026-11-19 15:47 UTC).
 Product fixes found by evals: off-topic checked before how-to (bitcoin); the AI names the fact for unclear wording and retrieval uses it; a fee question with no named fee asks the AI which fee, but named other fees (stamp duty, brokerage, GST...) never borrow a fact; the AI can't call a named HDFC fund out of scope; more advice phrasings are rules.
