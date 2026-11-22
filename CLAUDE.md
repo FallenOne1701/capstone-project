@@ -45,6 +45,8 @@ Done 2026-11-19 night: after the PC restart Groq connects (5/5); PR #5 merged; A
 
 **2026-11-20 later:** the loop link was shown live (5 brokerage questions → "Reused canonical explainer #4", reuse 5; weekly run 5 pulse "Asked repeatedly: Brokerage & charges 5" + "71 reviews and 5 questions"; user approved run 5's Doc append + Gmail draft). Fix PR #7 (merged, API redeployed): a reused explainer adds the same page's figure line unless the question is a pure definition. GRW-567CN9 (the fixed answer) left pending in the Queue for the user's demo. README "The link in action" + `docs/samples/weekly_delivery.md` = run 5 (branch `docs-link-demo`).
 
+**2026-11-22:** Plan 6 (snappier) merged (PR #10) + warm-up fix (PR #11), API on Railway + page on Vercel live. Spec `docs/superpowers/specs/2026-11-20-snappier-design.md`, plan `docs/superpowers/plans/2026-11-20-plan-6-snappier.md`, ledger `.superpowers/sdd/2026-11-20-plan-6-snappier/progress.md` (rulings, 5 deferred minors). Live latency in `api/EVALS.md` → Latency. Open: first question after a deploy ~8 s (6 s saving the draft, cause unknown). Next.js now 16.4.6.
+
 **Next steps, in order:**
 1. Optional before the 24th: Google OAuth app to "In production" (refresh token stops expiring); a demo run-through.
 2. Plan 5 deferred minors (in its ledger): Queue filter chips need arrow keys; tab aria-label names the panel incl. the count; header chip always says a person approves (even if AUTO_APPROVE=1); RunWeeklyButton interval depends on onRunDone identity.
