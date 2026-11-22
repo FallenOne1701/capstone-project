@@ -49,7 +49,7 @@ Run 7 (2026-11-19), real AI, file [`api/evals/results/run-7-2026-11-19.json`](ap
 Iteration: run 1 scored 30/44 · 5/5 · 37/45; a code review then made the checks stricter; the fixes in between are in the history. The one remaining failure is a
 question in Devanagari script (a known limitation).
 
-Full history — every failure, its cause, the fix and the re-run: [`api/EVALS.md`](api/EVALS.md).
+Full history — every failure, its cause, the fix and the re-run: [`api/EVALS.md`](api/EVALS.md). Live latency before/after Plan 6 (e.g. Hinglish draft 10.3 s → 2.4 s): [`api/EVALS.md` → Latency](api/EVALS.md#latency-plan-6-live-site).
 Run them: `cd api && .venv/Scripts/python -m app.evals run all`.
 
 ## Samples

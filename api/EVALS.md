@@ -123,3 +123,25 @@ known limitation). Note on counting: the grounding suite sends each attack twice
 | 5 | 44/45 | 5/5 | 53/55 | 41/41 |
 | 6 | (network outage, not counted) | | | |
 | 7 | 44/45 | 5/5 | 55/55 | 41/41 |
+
+## Latency (Plan 6, live site)
+
+Measured from a laptop in India against the live Railway API with [`scripts/latency.py`](scripts/latency.py) (one run each; it rejects its own tickets and never asks a brokerage question, so the demo's counts are untouched). Times include the network to Railway (~0.5–1 s per call). "Draft ready" = Send until the draft is in the Queue for a person.
+
+| Question | Continue — before | after | Send — before | after | Draft ready — before | after |
+|---|---|---|---|---|---|---|
+| Clear ("expense ratio of HDFC Mid Cap", no AI call) | 0.93 s | 0.89 s | 0.76 s | 1.26 s | 3.63 s | **3.14 s** |
+| Unclear ("how much yearly charge for hdfc small cap", 1 AI call) | 6.18 s | 4.90 s | 4.26 s | **0.56 s** | 9.24 s | **1.11 s** |
+| Hinglish ("… exit load kitna hai?", Hindi translation) | 1.25 s | 2.47 s | 1.45 s | 1.23 s | 10.34 s | **2.42 s** |
+
+Before: 2026-11-20. After: 2026-11-22, after the warm-up fix (PR #11); the clear row is a separate warm run with a different fund (HDFC Focused Fund) so no question key is asked more than twice.
+
+What changed (and why the numbers moved):
+- **Classify once** — the unclear question used to make the same AI call at Continue, Send and in the background; now only at Continue (Send 4.26 → 0.56 s, draft 9.24 → 1.11 s).
+- **Hindi after the draft** — the English draft reaches the Queue first; the Hindi version follows ~2.8 s later (server log) and the card says "Hindi translation coming…". Hinglish draft 10.34 → 2.42 s.
+- **Startup warm-up** — per-step server timing showed the first question after a start spent ~5 s (locally) / ~18 s (Railway) loading the embedding model. The first deploy's warm-up failed on Railway (`ImportError` at startup; fixed in PR #11, log now says `warm-up done`).
+- **On the page** — ticket polled every 1 s while being checked (was 3 s), Queue every 2 s (was 5 s), and instant feedback ("Checking your question…", a pulsing "Checked" step, Approve/Reject that change at once).
+
+Server-side, the desk step (search + agents + reviewer) takes ~0.7–1.9 s on Railway vs ~0.1 s on a laptop: Railway's CPU is slower. Continue on unclear wording still makes one AI call (~4–5 s).
+
+Open: the **first** question after a deploy still took 8.3 s — 1.9 s in the desk step and ~6 s saving the draft; later questions saved in under 0.5 s. Cause not found yet (no corpus refresh was running).
