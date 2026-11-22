@@ -63,3 +63,65 @@ def test_warm_up_never_raises(monkeypatch):
 
     monkeypatch.setattr("app.corpus.embedder.get_embedding_service", boom)
     main._warm_up()   # logs and returns; the app keeps starting
+
+
+def test_warm_up_retries_once_after_an_import_race(monkeypatch):
+    """On Railway the first try hit an ImportError at startup; a second try must still warm the model."""
+    from app import main
+    seen, tries = [], []
+
+    class FakeEmbedder:
+        def embed_query(self, text):
+            seen.append(text)
+            return [0.0]
+
+    def flaky():
+        tries.append(1)
+        if len(tries) == 1:
+            raise ImportError("cannot import name 'x' from partially initialized module")
+        return FakeEmbedder()
+
+    monkeypatch.setattr("app.corpus.embedder.get_embedding_service", flaky)
+    monkeypatch.setattr(main.time, "sleep", lambda s: None)
+    main._warm_up()
+    assert seen == ["warm up"] and len(tries) == 2
+
+
+def test_warm_up_failure_logs_the_reason(monkeypatch, caplog):
+    from app import main
+
+    def boom():
+        raise ImportError("cannot import name 'TextEmbedding'")
+
+    monkeypatch.setattr("app.corpus.embedder.get_embedding_service", boom)
+    monkeypatch.setattr(main.time, "sleep", lambda s: None)
+    main._warm_up()
+    assert any("cannot import name 'TextEmbedding'" in r.getMessage() for r in caplog.records)
+
+
+def test_model_loads_once_when_two_threads_ask_at_the_same_time(monkeypatch):
+    """Warm-up and the first question must not both load the ONNX model (double memory, slower first answer)."""
+    import sys
+    import threading
+    import time as _t
+    import types
+
+    from app.corpus.embedder import EmbeddingService
+    built = []
+
+    class SlowModel:
+        def __init__(self, model_name):
+            built.append(model_name)
+            _t.sleep(0.3)
+
+        def embed(self, texts, batch_size=None):
+            return [[0.0] for _ in texts]
+
+    monkeypatch.setitem(sys.modules, "fastembed", types.SimpleNamespace(TextEmbedding=SlowModel))
+    svc = EmbeddingService()
+    threads = [threading.Thread(target=lambda: svc.embed_query("q")) for _ in range(2)]
+    for th in threads:
+        th.start()
+    for th in threads:
+        th.join(5)
+    assert len(built) == 1
