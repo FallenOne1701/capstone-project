@@ -91,6 +91,7 @@ describe("nextPollMs", () => {
     expect(nextPollMs("answered")).toBeNull();
     expect(nextPollMs("closed")).toBeNull();
     expect(nextPollMs("in_review")).toBe(3000);
+    expect(nextPollMs("received")).toBe(1000);   // the draft is moments away: check every second
   });
   it("keeps watching a failed ticket slowly while a person can re-run it", () => {
     expect(nextPollMs("failed")).toBe(15000);
@@ -98,8 +99,8 @@ describe("nextPollMs", () => {
 });
 
 describe("progressSteps", () => {
-  it("received is the first step", () => {
-    expect(progressSteps("received", "person")!.map((s) => s.state)).toEqual(["current", "todo", "todo", "todo"]);
+  it("received: the question is in and the checks are running", () => {
+    expect(progressSteps("received", "person")!.map((s) => s.state)).toEqual(["done", "current", "todo", "todo"]);
   });
   it("in review waits for a person after the checks", () => {
     expect(progressSteps("in_review", "person")).toEqual([

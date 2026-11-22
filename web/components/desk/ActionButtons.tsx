@@ -13,6 +13,8 @@ interface Props {
   approveDisabledReason?: string;
   /** a reply draft's text as shown: approving sends it so a changed draft is never published unseen */
   seenReply?: string;
+  /** the Hindi text shown on the card (null when none was shown) */
+  seenTranslation?: string | null;
   onDone: () => void;
 }
 
@@ -32,16 +34,22 @@ export function StatusBadge({ status }: { status: string }) {
   );
 }
 
-export function ActionButtons({ id, status, error, confirmText, approveDisabledReason, seenReply, onDone }: Props) {
+export function ActionButtons({ id, status: serverStatus, error, confirmText, approveDisabledReason, seenReply, seenTranslation, onDone }: Props) {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+  // the click shows at once; the server answer (or a refusal) follows
+  // shown only while the server still reports the status it was clicked from; any newer server status wins
+  const [optimistic, setOptimistic] = useState<{ from: ActionStatus; to: ActionStatus } | null>(null);
+  const status = optimistic && optimistic.from === serverStatus ? optimistic.to : serverStatus;
 
-  async function act(fn: (id: number) => Promise<unknown>) {
+  async function act(fn: (id: number) => Promise<unknown>, shown?: ActionStatus) {
     setBusy(true);
     setMsg(null);
+    if (shown) setOptimistic({ from: serverStatus, to: shown });
     try {
       await fn(id);
     } catch (e) {
+      setOptimistic(null);   // refused: back to what the server says, with the reason
       setMsg(e instanceof ApiError ? e.detail : "Something went wrong.");
     } finally {
       setBusy(false);
@@ -60,12 +68,12 @@ export function ActionButtons({ id, status, error, confirmText, approveDisabledR
               type="button"
               disabled={busy || !!approveDisabledReason}
               title={approveDisabledReason}
-              onClick={() => (!confirmText || window.confirm(confirmText)) && act((i) => approve(i, seenReply))}
+              onClick={() => (!confirmText || window.confirm(confirmText)) && act((i) => approve(i, seenReply, seenTranslation), "approved")}
               className={`${btn} bg-primary text-on-primary`}
             >
               Approve
             </button>
-            <button type="button" disabled={busy} onClick={() => act(reject)} className={`${btn} border border-border-strong`}>
+            <button type="button" disabled={busy} onClick={() => act(reject, "rejected")} className={`${btn} border border-border-strong`}>
               Reject
             </button>
           </>

@@ -9,7 +9,7 @@ import { deskQueue, weeklyLatest } from "@/lib/api";
 import { deskHref, type Tab, waitingCount, weeklyNeedsYou } from "@/lib/desk";
 import { usePoll } from "@/lib/usePoll";
 
-const QUEUE_POLL_MS = 5000;
+const QUEUE_POLL_MS = 2000;
 const WEEK_POLL_MS = 30000;
 
 function Panel({ id, tab, children }: { id: Tab; tab: Tab; children: React.ReactNode }) {

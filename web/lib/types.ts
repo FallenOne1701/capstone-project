@@ -71,6 +71,8 @@ export interface DraftView {
   reused_explainer_id: number | null;
   edited: boolean;
   translation: LocalText | null;
+  /** a Hindi/Hinglish draft whose translation is still being made */
+  translation_pending?: boolean;
 }
 
 export type ActionStatus = "pending" | "approved" | "executed" | "failed" | "rejected";

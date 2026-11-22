@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import secrets
+import time
 from datetime import date
 from typing import Callable
 
@@ -17,7 +18,9 @@ from app.desk.reviewer import review_draft
 from app.desk.translate import translate_reply, validate_translation
 from app.link.canonical import find_canonical, reuse_reply
 from app.guard.pii import redact
-from app.intent.classifier import IntentResult, classify_intent
+from app.desk.timing import log as timing_log, step
+from app.intent.cache import classify_cached
+from app.intent.classifier import IntentResult
 from app.link.question_keys import question_key
 from app.models import Action, Draft, DraftTranslation, Ticket
 
@@ -58,7 +61,7 @@ def short_name(name: str) -> str:
 
 async def preview(text: str, *, language: str | None = None) -> PreviewOut:
     red = redact(_validate(text))
-    intent = await classify_intent(red.text)
+    intent = await classify_cached(red.text)
     names = _scheme_names()
     multi = len(intent.scheme_ids) > 1
     return PreviewOut(redacted_text=red.text, pii_types=red.pii_types, intent=intent.intent,
@@ -70,7 +73,7 @@ async def preview(text: str, *, language: str | None = None) -> PreviewOut:
 async def create_ticket(db: Session, text: str, *, channel: str = "text",
                         scheme_id: str | None = None) -> tuple[Ticket, IntentResult]:
     red = redact(_validate(text))
-    intent = await classify_intent(red.text)
+    intent = await classify_cached(red.text)
     if scheme_id and scheme_id in intent.scheme_ids:  # the answer to "Mid Cap or Small Cap?"; anything else is ignored
         intent = intent.model_copy(update={"scheme_ids": [scheme_id]})
     t = Ticket(code="GRW-" + "".join(secrets.choice(_ALPH) for _ in range(6)), channel=channel,
@@ -85,8 +88,21 @@ async def create_ticket(db: Session, text: str, *, channel: str = "text",
 
 
 async def _add_translation(db: Session, d: Draft) -> None:
-    out = await translate_reply(d.reply)
-    probs = validate_translation(d.reply, out) if out else ["no translation"]
+    source = d.reply
+    out = await translate_reply(source)
+    probs = validate_translation(source, out) if out else ["no translation"]
+    # people act on the page while the AI translates: read the draft and its action fresh, not this session's copies
+    db.refresh(d)
+    a = (db.query(Action).filter_by(draft_id=d.id, type="reply_publish").order_by(Action.id.desc())
+         .populate_existing().first())
+    if not probs and (d.reply != source or d.edited):
+        # edited meanwhile: this Hindi says what the old reply said
+        audit(db, "desk", "translate", "draft", d.id, "discarded:edited meanwhile")
+        return
+    if not probs and a is not None and a.status != "pending":
+        # a person already decided without seeing it: a late translation is never stored or published
+        audit(db, "desk", "translate", "draft", d.id, "late")
+        return
     if not probs:
         db.add(DraftTranslation(draft_id=d.id, language="hi", text=out))
     audit(db, "desk", "translate", "draft", d.id, "ok" if not probs else f"discarded:{probs[0]}")
@@ -94,12 +110,15 @@ async def _add_translation(db: Session, d: Draft) -> None:
 
 async def process_ticket(db: Session, ticket_id: int, *, retriever, themes_provider: Callable = lambda db: []) -> Draft | None:
     t = db.get(Ticket, ticket_id)
+    started = time.perf_counter()
     try:
-        intent = await classify_intent(t.question_redacted)
+        with step("classify", t.id):
+            intent = await classify_cached(t.question_redacted)
         if t.scheme_id and t.scheme_id in intent.scheme_ids:
             intent = intent.model_copy(update={"scheme_ids": [t.scheme_id]})
-        ex = find_canonical(db, intent, t.question_redacted)
-        reuse = reuse_reply(ex, intent, t.question_redacted) if ex is not None else None
+        with step("canonical", t.id):
+            ex = find_canonical(db, intent, t.question_redacted)
+            reuse = reuse_reply(ex, intent, t.question_redacted) if ex is not None else None
         if reuse is not None:
             reply, bullet = reuse
             draft_out = OrchestratorOutput(
@@ -110,12 +129,16 @@ async def process_ticket(db: Session, ticket_id: int, *, retriever, themes_provi
                                 scheme_id=intent.scheme_ids[0] if len(intent.scheme_ids) == 1 else "reference",
                                 fact=bullet["text"], citation=bullet["url"], last_checked=ex.last_checked,
                                 searched=[f"explainer:{ex.id}"])
-            review = review_draft(draft_out, facts=facts, round=1)
+            with step("desk", t.id):   # reused explainer: the reviewer only
+                review = review_draft(draft_out, facts=facts, round=1)
             searched, reused_id = facts.searched, ex.id
         else:
-            res = await run_desk(t.question_redacted, list(t.pii_types), intent, retriever=retriever,
-                                 themes=themes_provider(db), last_checked=lambda u: last_checked_for(db, u),
-                                 today=date.today())
+            with step("themes", t.id):
+                themes = themes_provider(db)
+            with step("desk", t.id):   # retrieval + the three agents + orchestrator + reviewer
+                res = await run_desk(t.question_redacted, list(t.pii_types), intent, retriever=retriever,
+                                     themes=themes, last_checked=lambda u: last_checked_for(db, u),
+                                     today=date.today())
             draft_out, review, searched, reused_id = res.draft, res.review, res.facts.searched, None
         d = Draft(ticket_id=t.id, reply=draft_out.reply, citation=draft_out.citation,
                   last_checked=draft_out.last_checked, disposition=draft_out.disposition,
@@ -125,8 +148,11 @@ async def process_ticket(db: Session, ticket_id: int, *, retriever, themes_provi
                   reused_explainer_id=reused_id)
         db.add(d)
         db.flush()
-        if t.language in ("hi", "hinglish") and d.review_status == "pass":
-            await _add_translation(db, d)
+        wants_hindi = t.language in ("hi", "hinglish") and d.review_status == "pass"
+        auto = get_settings().auto_approve
+        if wants_hindi and auto:
+            with step("translate", t.id):
+                await _add_translation(db, d)   # nobody looks first: translate, then decide (today's order)
         a = Action(type="reply_publish", target_label=f"Reply to ticket {t.code}", target_ref=t.code, draft_id=d.id,
                    source_ref=f"ticket:{t.id}")
         db.add(a)
@@ -135,7 +161,23 @@ async def process_ticket(db: Session, ticket_id: int, *, retriever, themes_provi
         audit(db, "desk", "create", "draft", d.id, f"disposition={d.disposition} review={d.review_status}")
         audit(db, "desk", "create", "action", a.id, "reply_publish")
         db.commit()
-        if get_settings().auto_approve:
+        log_ready = round((time.perf_counter() - started) * 1000)
+        timing_log.info("desk ticket=%d step=total ms=%d", t.id, log_ready)   # until the draft is in the Queue
+        if wants_hindi and not auto:
+            # the draft is already in the Queue; the Hindi version follows (the card says it's coming)
+            try:
+                with step("translate", t.id):
+                    await _add_translation(db, d)
+                db.commit()
+            except Exception as exc:  # noqa: BLE001  (the draft is already in the Queue: never fail the ticket)
+                db.rollback()
+                log.warning("translation not saved for ticket %s: %s", t.code, type(exc).__name__)
+                try:
+                    audit(db, "desk", "translate", "draft", d.id, f"discarded:{type(exc).__name__}")
+                    db.commit()
+                except Exception:  # noqa: BLE001
+                    db.rollback()
+        if auto:
             from app.approvals.auto import auto_decide
             auto_decide(db, t.id)
         return d

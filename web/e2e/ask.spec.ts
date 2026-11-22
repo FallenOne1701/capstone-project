@@ -132,3 +132,16 @@ test("voice service down falls back to typing", async ({ page }) => {
   await expect(page.getByText("Voice is unavailable right now — please type your question.")).toBeVisible();
   await expect(page.getByLabel("Your question", { exact: true })).toBeEditable();
 });
+
+test("Continue shows a checking placeholder at once", async ({ page }) => {
+  await page.route("**/api/ask/preview", async (route) => {
+    await new Promise((r) => setTimeout(r, 1500));
+    await route.continue();
+  });
+  await page.goto("/");
+  await page.getByLabel("Your question", { exact: true }).fill("What is the exit load of HDFC Mid Cap Fund?");
+  await page.getByRole("button", { name: /Continue|Checking/ }).click();
+  await expect(page.getByRole("status").filter({ hasText: "Checking your question…" })).toBeVisible({ timeout: 500 });
+  await expect(page.getByRole("button", { name: "Send question" })).toBeVisible();
+  await expect(page.getByRole("status").filter({ hasText: "Checking your question…" })).toHaveCount(0);
+});

@@ -72,6 +72,7 @@ export function actionTitle(a: { type: string; target_label: string }): string {
  * person in the queue, so it is watched slowly instead of given up on. */
 export function nextPollMs(status: string): number | null {
   if (status === "answered" || status === "closed") return null;
+  if (status === "received") return 1000;   // the desk is working: the draft is seconds away
   return status === "failed" ? 15000 : 3000;
 }
 
@@ -81,7 +82,7 @@ export type StepState = "done" | "current" | "todo";
 export function progressSteps(status: string, approval: "auto" | "person"): { label: string; state: StepState }[] | null {
   if (status === "closed" || status === "failed") return null;
   const labels = ["Received", "Checked", approval === "auto" ? "Approving" : "Waiting for a person", "Answered"];
-  const at = status === "answered" ? 4 : status === "in_review" ? 2 : 0;
+  const at = status === "answered" ? 4 : status === "in_review" ? 2 : 1;   // received: in, now being checked
   return labels.map((label, i) => ({ label, state: i < at ? "done" : i === at ? "current" : "todo" }));
 }
 

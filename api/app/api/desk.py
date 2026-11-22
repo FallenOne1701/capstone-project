@@ -26,6 +26,7 @@ CHANGED = "This draft changed — review it again."
 
 class ApproveIn(BaseModel):
     reply: str | None = None   # the reply text the person saw; required for replies
+    translation: str | None = None   # the Hindi text the person saw, if their card showed one
 
 
 router = APIRouter(prefix="/api/desk")
@@ -54,6 +55,9 @@ def approve(action_id: int, body: ApproveIn | None = Body(default=None), db: Ses
             raise HTTPException(422, "send the reply you reviewed")
         if db.get(Draft, pending.draft_id).reply != body.reply:
             raise HTTPException(409, CHANGED)
+        # the Hindi this person saw is checked inside approve, after the claim and only if it was still pending
+        a = c._guard(ap.approve, db, action_id, ACTOR, seen_translation=body.translation)
+        return {"id": a.id, "status": a.status, "error": a.error}
     a = c._guard(ap.approve, db, action_id, ACTOR)
     return {"id": a.id, "status": a.status, "error": a.error}
 
