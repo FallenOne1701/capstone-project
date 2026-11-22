@@ -17,8 +17,7 @@ from app.api import console as c
 from app.approvals import service as ap
 from app.db import get_db
 from app.guard.ratelimit import limit_desk, limit_weekly_run
-from app.approvals.service import audit
-from app.models import Action, Draft, DraftTranslation, Ticket, WeeklyRun
+from app.models import Action, Draft, Ticket, WeeklyRun
 
 ACTOR = "page"
 QUEUE_SIZE = 30
@@ -56,12 +55,9 @@ def approve(action_id: int, body: ApproveIn | None = Body(default=None), db: Ses
             raise HTTPException(422, "send the reply you reviewed")
         if db.get(Draft, pending.draft_id).reply != body.reply:
             raise HTTPException(409, CHANGED)
-        tr = db.query(DraftTranslation).filter_by(draft_id=pending.draft_id).one_or_none()
-        if tr is not None and tr.text != body.translation:
-            # Hindi reaches the asker only if this person was shown exactly it; the English approval still stands
-            db.delete(tr)
-            audit(db, ACTOR, "discard", "translation", pending.draft_id, "not shown at approval")
-            db.commit()
+        # the Hindi this person saw is checked inside approve, after the claim and only if it was still pending
+        a = c._guard(ap.approve, db, action_id, ACTOR, seen_translation=body.translation)
+        return {"id": a.id, "status": a.status, "error": a.error}
     a = c._guard(ap.approve, db, action_id, ACTOR)
     return {"id": a.id, "status": a.status, "error": a.error}
 

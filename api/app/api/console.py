@@ -55,9 +55,9 @@ def queue(db: Session = Depends(get_db)):
     return [queue_item(db, t) for t in db.query(Ticket).order_by(Ticket.created_at.desc(), Ticket.id.desc()).limit(200)]
 
 
-def _guard(fn, *args):
+def _guard(fn, *args, **kwargs):
     try:
-        return fn(*args)
+        return fn(*args, **kwargs)
     except LookupError as e:
         raise HTTPException(404, str(e))
     except ValueError as e:

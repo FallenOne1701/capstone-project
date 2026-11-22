@@ -88,9 +88,17 @@ async def create_ticket(db: Session, text: str, *, channel: str = "text",
 
 
 async def _add_translation(db: Session, d: Draft) -> None:
-    out = await translate_reply(d.reply)
-    probs = validate_translation(d.reply, out) if out else ["no translation"]
-    a = db.query(Action).filter_by(draft_id=d.id, type="reply_publish").order_by(Action.id.desc()).first()
+    source = d.reply
+    out = await translate_reply(source)
+    probs = validate_translation(source, out) if out else ["no translation"]
+    # people act on the page while the AI translates: read the draft and its action fresh, not this session's copies
+    db.refresh(d)
+    a = (db.query(Action).filter_by(draft_id=d.id, type="reply_publish").order_by(Action.id.desc())
+         .populate_existing().first())
+    if not probs and (d.reply != source or d.edited):
+        # edited meanwhile: this Hindi says what the old reply said
+        audit(db, "desk", "translate", "draft", d.id, "discarded:edited meanwhile")
+        return
     if not probs and a is not None and a.status != "pending":
         # a person already decided without seeing it: a late translation is never stored or published
         audit(db, "desk", "translate", "draft", d.id, "late")
@@ -160,10 +168,15 @@ async def process_ticket(db: Session, ticket_id: int, *, retriever, themes_provi
             try:
                 with step("translate", t.id):
                     await _add_translation(db, d)
-            except Exception as exc:  # noqa: BLE001  (a failed translation never fails the ticket)
+                db.commit()
+            except Exception as exc:  # noqa: BLE001  (the draft is already in the Queue: never fail the ticket)
                 db.rollback()
-                audit(db, "desk", "translate", "draft", d.id, f"discarded:{type(exc).__name__}")
-            db.commit()
+                log.warning("translation not saved for ticket %s: %s", t.code, type(exc).__name__)
+                try:
+                    audit(db, "desk", "translate", "draft", d.id, f"discarded:{type(exc).__name__}")
+                    db.commit()
+                except Exception:  # noqa: BLE001
+                    db.rollback()
         if auto:
             from app.approvals.auto import auto_decide
             auto_decide(db, t.id)

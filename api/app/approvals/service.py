@@ -63,7 +63,12 @@ def _run_explainer(db: Session, a: Action) -> Explainer | None:
     return db.query(Explainer).filter_by(run_id=run_id).order_by(Explainer.id.desc()).first()
 
 
-def approve(db: Session, action_id: int, actor: str) -> Action:
+_NOT_GIVEN = object()
+
+
+def approve(db: Session, action_id: int, actor: str, *, seen_translation=_NOT_GIVEN) -> Action:
+    """`seen_translation`: the Hindi text the person was shown (None = none). Checked AFTER the claim, so a
+    translation that lands while the request is in flight can't slip through; given only by the page's approve."""
     from app.approvals.executors import EXECUTORS
     a = _get(db, action_id)
     if a.type not in EXECUTORS:
@@ -73,6 +78,11 @@ def approve(db: Session, action_id: int, actor: str) -> Action:
     _claim(db, action_id, "approved")
     db.refresh(a)
     audit(db, actor, "approve", "action", a.id)
+    if a.type == "reply_publish" and seen_translation is not _NOT_GIVEN:
+        tr = (db.query(DraftTranslation).filter_by(draft_id=a.draft_id).populate_existing().one_or_none())
+        if tr is not None and tr.text != seen_translation:
+            db.delete(tr)   # Hindi reaches the asker only if this person was shown exactly it; English still goes
+            audit(db, actor, "discard", "translation", a.draft_id, "not shown at approval")
     return _execute(db, a, actor)
 
 
