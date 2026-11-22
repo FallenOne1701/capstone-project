@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import threading
 from functools import lru_cache
 from typing import Protocol, Sequence
 
@@ -28,6 +29,7 @@ class EmbeddingService:
         self._batch_size = cfg.embedding_batch_size
         self._model = model
         self._dimension: int | None = None
+        self._load_lock = threading.Lock()   # warm-up and the first question must not load the model twice
 
     @property
     def model_name(self) -> str:
@@ -41,9 +43,11 @@ class EmbeddingService:
 
     def _get_model(self):
         if self._model is None:
-            from fastembed import TextEmbedding
-            log.info("Loading embedding model: %s", self._model_name)
-            self._model = TextEmbedding(model_name=self._model_name)
+            with self._load_lock:
+                if self._model is None:
+                    from fastembed import TextEmbedding
+                    log.info("Loading embedding model: %s", self._model_name)
+                    self._model = TextEmbedding(model_name=self._model_name)
         return self._model
 
     def embed_documents(self, texts: Sequence[str]) -> list[list[float]]:

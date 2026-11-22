@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import threading
+import time
 
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -74,13 +75,20 @@ def _e2e_seed() -> None:
     t.join()
 
 
-def _warm_up() -> None:
-    """Load the embedding model once at startup (~5 s) so the first question after a deploy isn't the one that waits."""
-    try:
-        from app.corpus import embedder
-        embedder.get_embedding_service().embed_query("warm up")
-    except Exception as exc:  # noqa: BLE001  (a failed warm-up only means the first question loads it)
-        log.warning("warm-up skipped: %s", type(exc).__name__)
+def _warm_up(tries: int = 2) -> None:
+    """Load the embedding model once at startup (~5 s locally, ~18 s on Railway) so the first question after a deploy
+    isn't the one that waits. On Railway the first try once hit an ImportError while other startup threads were
+    importing: try again after a short pause."""
+    for attempt in range(1, tries + 1):
+        try:
+            from app.corpus import embedder
+            embedder.get_embedding_service().embed_query("warm up")
+            log.info("warm-up done (try %d)", attempt)
+            return
+        except Exception as exc:  # noqa: BLE001  (a failed warm-up only means the first question loads it)
+            log.warning("warm-up try %d failed: %s: %s", attempt, type(exc).__name__, exc)
+            if attempt < tries:
+                time.sleep(3)
 
 
 def create_app(*, init_corpus: bool = True) -> FastAPI:
@@ -110,6 +118,7 @@ def create_app(*, init_corpus: bool = True) -> FastAPI:
         return {"db": "ok", "corpus": corpus_status(), "google": google_status()}
 
     if init_corpus:
+        from app.corpus import embedder as _embedder  # noqa: F401  (import on the main thread, before startup threads)
         threading.Thread(target=lambda: _warm_up(), name="warm-up", daemon=True).start()
         if get_settings().corpus_bootstrap:
             threading.Thread(target=_bootstrap_corpus, daemon=True).start()
