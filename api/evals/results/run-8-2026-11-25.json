@@ -1,0 +1,1925 @@
+{
+  "meta": {
+    "use_llm": true,
+    "intent_accuracy": [
+      41,
+      41
+    ],
+    "duration_s": 56.2,
+    "commit": "e23c23d",
+    "suites": [
+      "feasibility",
+      "isolation",
+      "grounding"
+    ]
+  },
+  "suites": [
+    {
+      "name": "feasibility",
+      "passed": 44,
+      "total": 45,
+      "cases": [
+        {
+          "suite": "feasibility",
+          "case_id": "f01",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "question": "What is the expense ratio of HDFC Mid Cap Fund?",
+            "intent": "fee_question",
+            "expected_intent": "fee_question",
+            "expect": "answer",
+            "intent_ok": true,
+            "reply": "The expense ratio of HDFC Mid Cap Fund Direct Growth is 0.73% as shown on the Groww scheme page. Source: https://groww.in/mutual-funds/hdfc-mid-cap-fund-direct-growth Last checked: 2026-11-17.",
+            "citation": "https://groww.in/mutual-funds/hdfc-mid-cap-fund-direct-growth",
+            "last_checked": "2026-11-17",
+            "disposition": "reply",
+            "searched": [
+              "hdfc-mid-cap-fund-direct-growth:expense_ratio"
+            ],
+            "code": "GRW-D9DD3T"
+          }
+        },
+        {
+          "suite": "feasibility",
+          "case_id": "f02",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "question": "What is the minimum SIP amount for HDFC Small Cap Fund?",
+            "intent": "fund_fact",
+            "expected_intent": "fund_fact",
+            "expect": "answer",
+            "intent_ok": true,
+            "reply": "The minimum SIP amount for HDFC Small Cap Fund Direct Growth is ₹100. Source: https://groww.in/mutual-funds/hdfc-small-cap-fund-direct-growth Last checked: 2026-11-17.",
+            "citation": "https://groww.in/mutual-funds/hdfc-small-cap-fund-direct-growth",
+            "last_checked": "2026-11-17",
+            "disposition": "reply",
+            "searched": [
+              "hdfc-small-cap-fund-direct-growth:min_sip"
+            ],
+            "code": "GRW-72772E"
+          }
+        },
+        {
+          "suite": "feasibility",
+          "case_id": "f03",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "question": "What is the benchmark of HDFC Large Cap Fund?",
+            "intent": "fund_fact",
+            "expected_intent": "fund_fact",
+            "expect": "answer",
+            "intent_ok": true,
+            "reply": "The fund benchmark for HDFC Large Cap Fund Direct Growth is NIFTY 100 Total Return Index. Source: https://groww.in/mutual-funds/hdfc-large-cap-fund-direct-growth Last checked: 2026-11-17.",
+            "citation": "https://groww.in/mutual-funds/hdfc-large-cap-fund-direct-growth",
+            "last_checked": "2026-11-17",
+            "disposition": "reply",
+            "searched": [
+              "hdfc-large-cap-fund-direct-growth:benchmark"
+            ],
+            "code": "GRW-79RVYM"
+          }
+        },
+        {
+          "suite": "feasibility",
+          "case_id": "f04",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "question": "What is the lock-in period of HDFC ELSS Tax Saver Fund?",
+            "intent": "fund_fact",
+            "expected_intent": "fund_fact",
+            "expect": "answer",
+            "intent_ok": true,
+            "reply": "The lock-in period for HDFC ELSS Tax Saver Fund Direct Plan Growth is 3 years. Source: https://groww.in/mutual-funds/hdfc-elss-tax-saver-fund-direct-plan-growth Last checked: 2026-11-17.",
+            "citation": "https://groww.in/mutual-funds/hdfc-elss-tax-saver-fund-direct-plan-growth",
+            "last_checked": "2026-11-17",
+            "disposition": "reply",
+            "searched": [
+              "hdfc-elss-tax-saver-fund-direct-plan-growth:lock_in"
+            ],
+            "code": "GRW-NKVSLR"
+          }
+        },
+        {
+          "suite": "feasibility",
+          "case_id": "f05",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "question": "What is the riskometer level of HDFC Defence Fund?",
+            "intent": "fund_fact",
+            "expected_intent": "fund_fact",
+            "expect": "answer",
+            "intent_ok": true,
+            "reply": "The riskometer / risk level for HDFC Defence Fund Direct Growth is Very High. Source: https://groww.in/mutual-funds/hdfc-defence-fund-direct-growth Last checked: 2026-11-17.",
+            "citation": "https://groww.in/mutual-funds/hdfc-defence-fund-direct-growth",
+            "last_checked": "2026-11-17",
+            "disposition": "reply",
+            "searched": [
+              "hdfc-defence-fund-direct-growth:riskometer"
+            ],
+            "code": "GRW-79JDJG"
+          }
+        },
+        {
+          "suite": "feasibility",
+          "case_id": "f06",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "question": "Minimum SIP for HDFC Pharma and Healthcare Fund?",
+            "intent": "fund_fact",
+            "expected_intent": "fund_fact",
+            "expect": "answer",
+            "intent_ok": true,
+            "reply": "The minimum SIP amount for HDFC Pharma And Healthcare Fund Direct Growth is ₹100. Source: https://groww.in/mutual-funds/hdfc-pharma-and-healthcare-fund-direct-growth Last checked: 2026-11-17.",
+            "citation": "https://groww.in/mutual-funds/hdfc-pharma-and-healthcare-fund-direct-growth",
+            "last_checked": "2026-11-17",
+            "disposition": "reply",
+            "searched": [
+              "hdfc-pharma-and-healthcare-fund-direct-growth:min_sip"
+            ],
+            "code": "GRW-T6F9DK"
+          }
+        },
+        {
+          "suite": "feasibility",
+          "case_id": "f07",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "question": "Which index does HDFC Focused Fund track as its benchmark?",
+            "intent": "fund_fact",
+            "expected_intent": "fund_fact",
+            "expect": "answer",
+            "intent_ok": true,
+            "reply": "The fund benchmark for HDFC Focused Fund Direct Growth is NIFTY 500 Total Return Index. Source: https://groww.in/mutual-funds/hdfc-focused-fund-direct-growth Last checked: 2026-11-17.",
+            "citation": "https://groww.in/mutual-funds/hdfc-focused-fund-direct-growth",
+            "last_checked": "2026-11-17",
+            "disposition": "reply",
+            "searched": [
+              "hdfc-focused-fund-direct-growth:benchmark"
+            ],
+            "code": "GRW-2ZUM5F"
+          }
+        },
+        {
+          "suite": "feasibility",
+          "case_id": "f08",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "question": "How risky is HDFC Innovation Fund as per its riskometer?",
+            "intent": "fund_fact",
+            "expected_intent": "fund_fact",
+            "expect": "answer",
+            "intent_ok": true,
+            "reply": "The riskometer / risk level for HDFC Innovation Fund Direct Growth is Very High. Source: https://groww.in/mutual-funds/hdfc-innovation-fund-direct-growth Last checked: 2026-11-17.",
+            "citation": "https://groww.in/mutual-funds/hdfc-innovation-fund-direct-growth",
+            "last_checked": "2026-11-17",
+            "disposition": "reply",
+            "searched": [
+              "hdfc-innovation-fund-direct-growth:riskometer"
+            ],
+            "code": "GRW-VTSZWV"
+          }
+        },
+        {
+          "suite": "feasibility",
+          "case_id": "f09",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "question": "What's the benchmark for HDFC Banking & Financial Services Fund?",
+            "intent": "fund_fact",
+            "expected_intent": "fund_fact",
+            "expect": "answer",
+            "intent_ok": true,
+            "reply": "The fund benchmark for HDFC Banking & Financial Services Fund Direct Growth is NIFTY Financial Services Total Return Index. Source: https://groww.in/mutual-funds/hdfc-banking-financial-services-fund-direct-growth Last checked: 2026-11-17.",
+            "citation": "https://groww.in/mutual-funds/hdfc-banking-financial-services-fund-direct-growth",
+            "last_checked": "2026-11-17",
+            "disposition": "reply",
+            "searched": [
+              "hdfc-banking-financial-services-fund-direct-growth:benchmark"
+            ],
+            "code": "GRW-ZVN762"
+          }
+        },
+        {
+          "suite": "feasibility",
+          "case_id": "f10",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "question": "Minimum SIP in HDFC Gilt Fund?",
+            "intent": "fund_fact",
+            "expected_intent": "fund_fact",
+            "expect": "answer",
+            "intent_ok": true,
+            "reply": "The minimum SIP amount for HDFC Gilt Fund Direct Growth is ₹100. Source: https://groww.in/mutual-funds/hdfc-gilt-fund-direct-growth Last checked: 2026-11-17.",
+            "citation": "https://groww.in/mutual-funds/hdfc-gilt-fund-direct-growth",
+            "last_checked": "2026-11-17",
+            "disposition": "reply",
+            "searched": [
+              "hdfc-gilt-fund-direct-growth:min_sip"
+            ],
+            "code": "GRW-J5ULQ3"
+          }
+        },
+        {
+          "suite": "feasibility",
+          "case_id": "f11",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "question": "What is the riskometer of HDFC MNC Fund?",
+            "intent": "fund_fact",
+            "expected_intent": "fund_fact",
+            "expect": "answer",
+            "intent_ok": true,
+            "reply": "The riskometer / risk level for HDFC MNC Fund Direct Growth is Very High. Source: https://groww.in/mutual-funds/hdfc-mnc-fund-direct-growth Last checked: 2026-11-17.",
+            "citation": "https://groww.in/mutual-funds/hdfc-mnc-fund-direct-growth",
+            "last_checked": "2026-11-17",
+            "disposition": "reply",
+            "searched": [
+              "hdfc-mnc-fund-direct-growth:riskometer"
+            ],
+            "code": "GRW-ZFZVJ6"
+          }
+        },
+        {
+          "suite": "feasibility",
+          "case_id": "f12",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "question": "Benchmark of HDFC Arbitrage Fund",
+            "intent": "fund_fact",
+            "expected_intent": "fund_fact",
+            "expect": "answer",
+            "intent_ok": true,
+            "reply": "The fund benchmark for HDFC Arbitrage Fund Direct Growth is NIFTY 50 Arbitrage Total Return Index. Source: https://groww.in/mutual-funds/hdfc-arbitrage-fund-direct-growth Last checked: 2026-11-17.",
+            "citation": "https://groww.in/mutual-funds/hdfc-arbitrage-fund-direct-growth",
+            "last_checked": "2026-11-17",
+            "disposition": "reply",
+            "searched": [
+              "hdfc-arbitrage-fund-direct-growth:benchmark"
+            ],
+            "code": "GRW-QQY7G2"
+          }
+        },
+        {
+          "suite": "feasibility",
+          "case_id": "f13",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "question": "Is there a lock-in for HDFC Mid Cap Fund?",
+            "intent": "fund_fact",
+            "expected_intent": "fund_fact",
+            "expect": "not_covered",
+            "intent_ok": true,
+            "reply": "Our official sources don't cover this question. Searched: hdfc-mid-cap-fund-direct-growth:investment_objective, hdfc-mid-cap-fund-direct-growth:exit_load, hdfc-mid-cap-fund-direct-growth:min_sip.",
+            "citation": null,
+            "last_checked": null,
+            "disposition": "handoff",
+            "searched": [
+              "hdfc-mid-cap-fund-direct-growth:investment_objective",
+              "hdfc-mid-cap-fund-direct-growth:exit_load",
+              "hdfc-mid-cap-fund-direct-growth:min_sip"
+            ],
+            "code": "GRW-G472SX"
+          }
+        },
+        {
+          "suite": "feasibility",
+          "case_id": "f14",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "question": "What is the minimum SIP for HDFC Gold ETF Fund of Fund?",
+            "intent": "fund_fact",
+            "expected_intent": "fund_fact",
+            "expect": "answer",
+            "intent_ok": true,
+            "reply": "The minimum SIP amount for HDFC Gold ETF Fund of Fund Direct Plan Growth is ₹0. Source: https://groww.in/mutual-funds/hdfc-gold-etf-fund-of-fund-direct-plan-growth Last checked: 2026-11-17.",
+            "citation": "https://groww.in/mutual-funds/hdfc-gold-etf-fund-of-fund-direct-plan-growth",
+            "last_checked": "2026-11-17",
+            "disposition": "reply",
+            "searched": [
+              "hdfc-gold-etf-fund-of-fund-direct-plan-growth:min_sip"
+            ],
+            "code": "GRW-DN6B7E"
+          }
+        },
+        {
+          "suite": "feasibility",
+          "case_id": "e01",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "question": "What is the exit load of HDFC Small Cap Fund?",
+            "intent": "fee_question",
+            "expected_intent": "fee_question",
+            "expect": "answer",
+            "intent_ok": true,
+            "reply": "Exit load for HDFC Small Cap Fund Direct Growth: Exit load of 1% if redeemed within 1 year. Source: https://groww.in/mutual-funds/hdfc-small-cap-fund-direct-growth Last checked: 2026-11-17.",
+            "citation": "https://groww.in/mutual-funds/hdfc-small-cap-fund-direct-growth",
+            "last_checked": "2026-11-17",
+            "disposition": "reply",
+            "searched": [
+              "hdfc-small-cap-fund-direct-growth:exit_load"
+            ],
+            "code": "GRW-H9XX49"
+          }
+        },
+        {
+          "suite": "feasibility",
+          "case_id": "e02",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "question": "Expense ratio of HDFC Large Cap Fund direct plan?",
+            "intent": "fee_question",
+            "expected_intent": "fee_question",
+            "expect": "answer",
+            "intent_ok": true,
+            "reply": "The expense ratio of HDFC Large Cap Fund Direct Growth is 1% as shown on the Groww scheme page. Source: https://groww.in/mutual-funds/hdfc-large-cap-fund-direct-growth Last checked: 2026-11-17.",
+            "citation": "https://groww.in/mutual-funds/hdfc-large-cap-fund-direct-growth",
+            "last_checked": "2026-11-17",
+            "disposition": "reply",
+            "searched": [
+              "hdfc-large-cap-fund-direct-growth:expense_ratio"
+            ],
+            "code": "GRW-WT86NX"
+          }
+        },
+        {
+          "suite": "feasibility",
+          "case_id": "e03",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "question": "Is there any exit load on HDFC Arbitrage Fund?",
+            "intent": "fee_question",
+            "expected_intent": "fee_question",
+            "expect": "answer",
+            "intent_ok": true,
+            "reply": "Exit load for HDFC Arbitrage Fund Direct Growth: Exit load of 0.25% if redeemed within 15 Days. Source: https://groww.in/mutual-funds/hdfc-arbitrage-fund-direct-growth Last checked: 2026-11-17.",
+            "citation": "https://groww.in/mutual-funds/hdfc-arbitrage-fund-direct-growth",
+            "last_checked": "2026-11-17",
+            "disposition": "reply",
+            "searched": [
+              "hdfc-arbitrage-fund-direct-growth:exit_load"
+            ],
+            "code": "GRW-ZB847M"
+          }
+        },
+        {
+          "suite": "feasibility",
+          "case_id": "e04",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "question": "What is the expense ratio for HDFC ELSS Tax Saver?",
+            "intent": "fee_question",
+            "expected_intent": "fee_question",
+            "expect": "answer",
+            "intent_ok": true,
+            "reply": "The expense ratio of HDFC ELSS Tax Saver Fund Direct Plan Growth is 1.18% as shown on the Groww scheme page. Source: https://groww.in/mutual-funds/hdfc-elss-tax-saver-fund-direct-plan-growth Last checked: 2026-11-17.",
+            "citation": "https://groww.in/mutual-funds/hdfc-elss-tax-saver-fund-direct-plan-growth",
+            "last_checked": "2026-11-17",
+            "disposition": "reply",
+            "searched": [
+              "hdfc-elss-tax-saver-fund-direct-plan-growth:expense_ratio"
+            ],
+            "code": "GRW-M8SQT6"
+          }
+        },
+        {
+          "suite": "feasibility",
+          "case_id": "e05",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "question": "Exit load for HDFC Gilt Fund?",
+            "intent": "fee_question",
+            "expected_intent": "fee_question",
+            "expect": "answer",
+            "intent_ok": true,
+            "reply": "Exit load for HDFC Gilt Fund Direct Growth: Nil. Source: https://groww.in/mutual-funds/hdfc-gilt-fund-direct-growth Last checked: 2026-11-17.",
+            "citation": "https://groww.in/mutual-funds/hdfc-gilt-fund-direct-growth",
+            "last_checked": "2026-11-17",
+            "disposition": "reply",
+            "searched": [
+              "hdfc-gilt-fund-direct-growth:exit_load"
+            ],
+            "code": "GRW-C93QMW"
+          }
+        },
+        {
+          "suite": "feasibility",
+          "case_id": "e06",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "question": "How much is the expense ratio of HDFC Ultra Short to Short Term Fund?",
+            "intent": "fee_question",
+            "expected_intent": "fee_question",
+            "expect": "answer",
+            "intent_ok": true,
+            "reply": "The expense ratio of HDFC Ultra Short to Short Term Fund Direct Growth is 0.46% as shown on the Groww scheme page. Source: https://groww.in/mutual-funds/hdfc-ultra-short-to-short-term-fund-direct-growth Last checked: 2026-11-17.",
+            "citation": "https://groww.in/mutual-funds/hdfc-ultra-short-to-short-term-fund-direct-growth",
+            "last_checked": "2026-11-17",
+            "disposition": "reply",
+            "searched": [
+              "hdfc-ultra-short-to-short-term-fund-direct-growth:expense_ratio"
+            ],
+            "code": "GRW-K8NMNA"
+          }
+        },
+        {
+          "suite": "feasibility",
+          "case_id": "e07",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "question": "What exit load does HDFC Medium to Long Term Fund charge?",
+            "intent": "fee_question",
+            "expected_intent": "fee_question",
+            "expect": "answer",
+            "intent_ok": true,
+            "reply": "Exit load for HDFC Medium to Long Term Fund Direct Growth: Nil. Source: https://groww.in/mutual-funds/hdfc-medium-to-long-term-fund-direct-growth Last checked: 2026-11-17.",
+            "citation": "https://groww.in/mutual-funds/hdfc-medium-to-long-term-fund-direct-growth",
+            "last_checked": "2026-11-17",
+            "disposition": "reply",
+            "searched": [
+              "hdfc-medium-to-long-term-fund-direct-growth:exit_load"
+            ],
+            "code": "GRW-NVFGFX"
+          }
+        },
+        {
+          "suite": "feasibility",
+          "case_id": "e08",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "question": "Total expense ratio of HDFC Defence Fund?",
+            "intent": "fee_question",
+            "expected_intent": "fee_question",
+            "expect": "answer",
+            "intent_ok": true,
+            "reply": "The expense ratio of HDFC Defence Fund Direct Growth is 0.89% as shown on the Groww scheme page. Source: https://groww.in/mutual-funds/hdfc-defence-fund-direct-growth Last checked: 2026-11-17.",
+            "citation": "https://groww.in/mutual-funds/hdfc-defence-fund-direct-growth",
+            "last_checked": "2026-11-17",
+            "disposition": "reply",
+            "searched": [
+              "hdfc-defence-fund-direct-growth:expense_ratio"
+            ],
+            "code": "GRW-6WW2FT"
+          }
+        },
+        {
+          "suite": "feasibility",
+          "case_id": "h01",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "question": "How do I start a SIP in HDFC Mid Cap Fund on Groww?",
+            "intent": "how_to_process",
+            "expected_intent": "how_to_process",
+            "expect": "not_covered",
+            "intent_ok": true,
+            "reply": "Our official sources don't cover this question. Searched: hdfc-mid-cap-fund-direct-growth:exit_load, hdfc-mid-cap-fund-direct-growth:investment_objective, hdfc-mid-cap-fund-direct-growth:min_sip.",
+            "citation": null,
+            "last_checked": null,
+            "disposition": "handoff",
+            "searched": [
+              "hdfc-mid-cap-fund-direct-growth:exit_load",
+              "hdfc-mid-cap-fund-direct-growth:investment_objective",
+              "hdfc-mid-cap-fund-direct-growth:min_sip"
+            ],
+            "code": "GRW-AMBSUB"
+          }
+        },
+        {
+          "suite": "feasibility",
+          "case_id": "h02",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "question": "How can I redeem my units of HDFC Small Cap Fund?",
+            "intent": "how_to_process",
+            "expected_intent": "how_to_process",
+            "expect": "not_covered",
+            "intent_ok": true,
+            "reply": "Our official sources don't cover this question. Searched: hdfc-small-cap-fund-direct-growth:exit_load, hdfc-small-cap-fund-direct-growth:investment_objective, hdfc-small-cap-fund-direct-growth:min_sip.",
+            "citation": null,
+            "last_checked": null,
+            "disposition": "handoff",
+            "searched": [
+              "hdfc-small-cap-fund-direct-growth:exit_load",
+              "hdfc-small-cap-fund-direct-growth:investment_objective",
+              "hdfc-small-cap-fund-direct-growth:min_sip"
+            ],
+            "code": "GRW-78VD2C"
+          }
+        },
+        {
+          "suite": "feasibility",
+          "case_id": "h03",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "question": "How do I download my capital gains statement?",
+            "intent": "how_to_process",
+            "expected_intent": "how_to_process",
+            "expect": "not_covered",
+            "intent_ok": true,
+            "reply": "Our official sources don't cover this question. Searched: all 15 HDFC scheme pages.",
+            "citation": null,
+            "last_checked": null,
+            "disposition": "handoff",
+            "searched": [
+              "all 15 HDFC scheme pages"
+            ],
+            "code": "GRW-FMH28Z"
+          }
+        },
+        {
+          "suite": "feasibility",
+          "case_id": "h04",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "question": "How do I cancel a SIP?",
+            "intent": "how_to_process",
+            "expected_intent": "how_to_process",
+            "expect": "not_covered",
+            "intent_ok": true,
+            "reply": "Our official sources don't cover this question. Searched: all 15 HDFC scheme pages.",
+            "citation": null,
+            "last_checked": null,
+            "disposition": "handoff",
+            "searched": [
+              "all 15 HDFC scheme pages"
+            ],
+            "code": "GRW-LVDLDG"
+          }
+        },
+        {
+          "suite": "feasibility",
+          "case_id": "h05",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "question": "How can I change my SIP date?",
+            "intent": "how_to_process",
+            "expected_intent": "how_to_process",
+            "expect": "not_covered",
+            "intent_ok": true,
+            "reply": "Our official sources don't cover this question. Searched: all 15 HDFC scheme pages.",
+            "citation": null,
+            "last_checked": null,
+            "disposition": "handoff",
+            "searched": [
+              "all 15 HDFC scheme pages"
+            ],
+            "code": "GRW-AG986V"
+          }
+        },
+        {
+          "suite": "feasibility",
+          "case_id": "n01",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "question": "What is the expense ratio of Axis Bluechip Fund?",
+            "intent": "fee_question",
+            "expected_intent": "fee_question",
+            "expect": "not_covered",
+            "intent_ok": true,
+            "reply": "Our official sources don't cover this question. Searched: all 15 HDFC scheme pages.",
+            "citation": null,
+            "last_checked": null,
+            "disposition": "handoff",
+            "searched": [
+              "all 15 HDFC scheme pages"
+            ],
+            "code": "GRW-D8ME75"
+          }
+        },
+        {
+          "suite": "feasibility",
+          "case_id": "n02",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "question": "Who is the fund manager of HDFC Mid Cap Fund?",
+            "intent": "fund_fact",
+            "expected_intent": "fund_fact",
+            "expect": "not_covered",
+            "intent_ok": true,
+            "reply": "Our official sources don't cover this question. Searched: hdfc-mid-cap-fund-direct-growth:investment_objective, hdfc-mid-cap-fund-direct-growth:benchmark, hdfc-mid-cap-fund-direct-growth:min_sip.",
+            "citation": null,
+            "last_checked": null,
+            "disposition": "handoff",
+            "searched": [
+              "hdfc-mid-cap-fund-direct-growth:investment_objective",
+              "hdfc-mid-cap-fund-direct-growth:benchmark",
+              "hdfc-mid-cap-fund-direct-growth:min_sip"
+            ],
+            "code": "GRW-CKEUER"
+          }
+        },
+        {
+          "suite": "feasibility",
+          "case_id": "n03",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "question": "What is the AUM of HDFC Gilt Fund?",
+            "intent": "fund_fact",
+            "expected_intent": "fund_fact",
+            "expect": "not_covered",
+            "intent_ok": true,
+            "reply": "Our official sources don't cover this question. Searched: hdfc-gilt-fund-direct-growth:exit_load, hdfc-gilt-fund-direct-growth:investment_objective, hdfc-gilt-fund-direct-growth:min_sip.",
+            "citation": null,
+            "last_checked": null,
+            "disposition": "handoff",
+            "searched": [
+              "hdfc-gilt-fund-direct-growth:exit_load",
+              "hdfc-gilt-fund-direct-growth:investment_objective",
+              "hdfc-gilt-fund-direct-growth:min_sip"
+            ],
+            "code": "GRW-V3MYZ4"
+          }
+        },
+        {
+          "suite": "feasibility",
+          "case_id": "n04",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "question": "Does HDFC Large Cap Fund hold Reliance shares?",
+            "intent": "fund_fact",
+            "expected_intent": "fund_fact",
+            "expect": "not_covered",
+            "intent_ok": true,
+            "reply": "Our official sources don't cover this question. Searched: hdfc-large-cap-fund-direct-growth:investment_objective, hdfc-large-cap-fund-direct-growth:exit_load, hdfc-large-cap-fund-direct-growth:min_sip.",
+            "citation": null,
+            "last_checked": null,
+            "disposition": "handoff",
+            "searched": [
+              "hdfc-large-cap-fund-direct-growth:investment_objective",
+              "hdfc-large-cap-fund-direct-growth:exit_load",
+              "hdfc-large-cap-fund-direct-growth:min_sip"
+            ],
+            "code": "GRW-8Y64D2"
+          }
+        },
+        {
+          "suite": "feasibility",
+          "case_id": "n06",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "question": "What is the stamp duty on HDFC Mid Cap Fund?",
+            "intent": "fee_question",
+            "expected_intent": "fee_question",
+            "expect": "not_covered",
+            "intent_ok": true,
+            "reply": "Our official sources don't cover this question. Searched: hdfc-mid-cap-fund-direct-growth:exit_load, hdfc-mid-cap-fund-direct-growth:investment_objective, hdfc-mid-cap-fund-direct-growth:min_sip.",
+            "citation": null,
+            "last_checked": null,
+            "disposition": "handoff",
+            "searched": [
+              "hdfc-mid-cap-fund-direct-growth:exit_load",
+              "hdfc-mid-cap-fund-direct-growth:investment_objective",
+              "hdfc-mid-cap-fund-direct-growth:min_sip"
+            ],
+            "code": "GRW-MJZQRV"
+          }
+        },
+        {
+          "suite": "feasibility",
+          "case_id": "n05",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "question": "Can I buy bitcoin on Groww?",
+            "intent": "out_of_scope",
+            "expected_intent": "out_of_scope",
+            "expect": "refuse",
+            "intent_ok": true,
+            "reply": "We only answer factual questions about HDFC mutual funds on Groww. We can't help with banking, loans, cards, insurance or other products, and we never give advice.",
+            "citation": null,
+            "last_checked": null,
+            "disposition": "refuse",
+            "searched": [
+              "all 15 HDFC scheme pages"
+            ],
+            "code": "GRW-W8NBHZ"
+          }
+        },
+        {
+          "suite": "feasibility",
+          "case_id": "u01",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "question": "how much does groww cut when i take my money out of the mid cap one early",
+            "intent": "fee_question",
+            "expected_intent": "fee_question",
+            "expect": "answer",
+            "intent_ok": true,
+            "reply": "Exit load for HDFC Mid Cap Fund Direct Growth: Exit load of 1% if redeemed within 1 year. Source: https://groww.in/mutual-funds/hdfc-mid-cap-fund-direct-growth Last checked: 2026-11-17.",
+            "citation": "https://groww.in/mutual-funds/hdfc-mid-cap-fund-direct-growth",
+            "last_checked": "2026-11-17",
+            "disposition": "reply",
+            "searched": [
+              "hdfc-mid-cap-fund-direct-growth:exit_load"
+            ],
+            "code": "GRW-CJZZKH"
+          }
+        },
+        {
+          "suite": "feasibility",
+          "case_id": "u02",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "question": "what's the yearly charge on the hdfc small cap thing",
+            "intent": "fee_question",
+            "expected_intent": "fee_question",
+            "expect": "answer",
+            "intent_ok": true,
+            "reply": "The expense ratio of HDFC Small Cap Fund Direct Growth is 0.79% as shown on the Groww scheme page. Source: https://groww.in/mutual-funds/hdfc-small-cap-fund-direct-growth Last checked: 2026-11-17.",
+            "citation": "https://groww.in/mutual-funds/hdfc-small-cap-fund-direct-growth",
+            "last_checked": "2026-11-17",
+            "disposition": "reply",
+            "searched": [
+              "hdfc-small-cap-fund-direct-growth:expense_ratio"
+            ],
+            "code": "GRW-AHYE59"
+          }
+        },
+        {
+          "suite": "feasibility",
+          "case_id": "u03",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "question": "my money is stuck since 3 days after i sold, what is happening",
+            "intent": "account_issue",
+            "expected_intent": "account_issue",
+            "expect": "refuse",
+            "intent_ok": true,
+            "reply": "We can't see or change individual accounts from here. Please raise this through Help & Support in the Groww app so the team can check your account.",
+            "citation": null,
+            "last_checked": null,
+            "disposition": "account",
+            "searched": [
+              "all 15 HDFC scheme pages"
+            ],
+            "code": "GRW-UVZKV9"
+          }
+        },
+        {
+          "suite": "feasibility",
+          "case_id": "u04",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "question": "is the large cap one a good idea for me right now",
+            "intent": "advice_request",
+            "expected_intent": "advice_request",
+            "expect": "refuse",
+            "intent_ok": true,
+            "reply": "We share facts only and can't advise on buying, selling or holding any fund. Each scheme's official facts are on its Groww page.",
+            "citation": null,
+            "last_checked": null,
+            "disposition": "refuse",
+            "searched": [
+              "hdfc-large-cap-fund-direct-growth:investment_objective",
+              "hdfc-large-cap-fund-direct-growth:exit_load",
+              "hdfc-large-cap-fund-direct-growth:riskometer"
+            ],
+            "code": "GRW-33YBJK"
+          }
+        },
+        {
+          "suite": "feasibility",
+          "case_id": "l01",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "question": "HDFC Mid Cap Fund ka expense ratio kitna hai?",
+            "intent": "fee_question",
+            "expected_intent": "fee_question",
+            "expect": "answer",
+            "intent_ok": true,
+            "reply": "The expense ratio of HDFC Mid Cap Fund Direct Growth is 0.73% as shown on the Groww scheme page. Source: https://groww.in/mutual-funds/hdfc-mid-cap-fund-direct-growth Last checked: 2026-11-17.",
+            "citation": "https://groww.in/mutual-funds/hdfc-mid-cap-fund-direct-growth",
+            "last_checked": "2026-11-17",
+            "disposition": "reply",
+            "searched": [
+              "hdfc-mid-cap-fund-direct-growth:expense_ratio"
+            ],
+            "code": "GRW-86N6ZA"
+          }
+        },
+        {
+          "suite": "feasibility",
+          "case_id": "l02",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "question": "HDFC Small Cap Fund mein exit load kya hai?",
+            "intent": "fee_question",
+            "expected_intent": "fee_question",
+            "expect": "answer",
+            "intent_ok": true,
+            "reply": "Exit load for HDFC Small Cap Fund Direct Growth: Exit load of 1% if redeemed within 1 year. Source: https://groww.in/mutual-funds/hdfc-small-cap-fund-direct-growth Last checked: 2026-11-17.",
+            "citation": "https://groww.in/mutual-funds/hdfc-small-cap-fund-direct-growth",
+            "last_checked": "2026-11-17",
+            "disposition": "reply",
+            "searched": [
+              "hdfc-small-cap-fund-direct-growth:exit_load"
+            ],
+            "code": "GRW-MBUQWL"
+          }
+        },
+        {
+          "suite": "feasibility",
+          "case_id": "l03",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "question": "HDFC ELSS Tax Saver ka lock-in kitne saal ka hai?",
+            "intent": "fund_fact",
+            "expected_intent": "fund_fact",
+            "expect": "answer",
+            "intent_ok": true,
+            "reply": "The lock-in period for HDFC ELSS Tax Saver Fund Direct Plan Growth is 3 years. Source: https://groww.in/mutual-funds/hdfc-elss-tax-saver-fund-direct-plan-growth Last checked: 2026-11-17.",
+            "citation": "https://groww.in/mutual-funds/hdfc-elss-tax-saver-fund-direct-plan-growth",
+            "last_checked": "2026-11-17",
+            "disposition": "reply",
+            "searched": [
+              "hdfc-elss-tax-saver-fund-direct-plan-growth:lock_in"
+            ],
+            "code": "GRW-EQ44FK"
+          }
+        },
+        {
+          "suite": "feasibility",
+          "case_id": "l04",
+          "passed": false,
+          "detail": "no cited answer (disposition=handoff)",
+          "data": {
+            "question": "एचडीएफसी मिड कैप फंड का न्यूनतम SIP कितना है?",
+            "intent": "fund_fact",
+            "expected_intent": "fund_fact",
+            "expect": "answer",
+            "intent_ok": true,
+            "reply": "Our official sources don't cover this question. Searched: all 15 HDFC scheme pages.",
+            "citation": null,
+            "last_checked": null,
+            "disposition": "handoff",
+            "searched": [
+              "all 15 HDFC scheme pages"
+            ],
+            "code": "GRW-NXZZJW"
+          }
+        },
+        {
+          "suite": "feasibility",
+          "case_id": "weekly_completes",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "run_id": 1,
+            "status": "awaiting_approval",
+            "llm_calls": 2
+          }
+        },
+        {
+          "suite": "feasibility",
+          "case_id": "themes_have_ids_and_window",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "themes": [
+              {
+                "label": "Fees, charges & funding",
+                "count": 11,
+                "review_ids": [
+                  "rv_342qvrj6ib",
+                  "rv_4ift2dsrhe",
+                  "rv_5d7rdobym6",
+                  "rv_eygssz6umf",
+                  "rv_igaktwjzqp"
+                ]
+              },
+              {
+                "label": "Trading & order execution",
+                "count": 7,
+                "review_ids": [
+                  "rv_7dcvyw42so",
+                  "rv_aqnqfrsex3",
+                  "rv_bigb46bzq3",
+                  "rv_ofr7jlsap3",
+                  "rv_oko57t3hb3"
+                ]
+              },
+              {
+                "label": "App reliability & updates",
+                "count": 7,
+                "review_ids": [
+                  "rv_2mepjdtx5p",
+                  "rv_fpbpm35yaf",
+                  "rv_he4jymmxfn",
+                  "rv_nsoqpslgoa",
+                  "rv_sxum5dlrew"
+                ]
+              },
+              {
+                "label": "Customer support",
+                "count": 4,
+                "review_ids": [
+                  "rv_fl2xwezjuf",
+                  "rv_nndtudi34o",
+                  "rv_t6p4mlyrji",
+                  "rv_w4no23sgfm"
+                ]
+              },
+              {
+                "label": "Charts & market / holdings data",
+                "count": 3,
+                "review_ids": [
+                  "rv_2zlworsorj",
+                  "rv_fsulamtnld",
+                  "rv_ofji2w4psd"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "suite": "feasibility",
+          "case_id": "pulse_le_250_words",
+          "passed": true,
+          "detail": "185 words",
+          "data": {
+            "pulse": "# Groww Weekly Review Pulse — week ending 2026-11-17\n32 Play Store reviews, 2026-09-24 to 2026-11-17; 32 matched a theme.\n\n## Top themes\n1. Fees, charges & funding — 11 reviews (0 in last 7 days)\n2. Trading & order execution — 7 reviews (1 in last 7 days)\n3. App reliability & updates — 7 reviews (2 in last 7 days)\n\n## What users said\n- \"Hidden charges on brokerage, DP charge not shown before selling\" (rv_sd2h3wiwyq)\n- \"Great app, easy to invest in mutual funds\" (rv_7dcvyw42so)\n- \"Not working since update, blank screen and lag\" (rv_zrmxaoawol)\n\n## Asked repeatedly\n- No question reached 5 asks in the last 7 days.\n\n## Fee confusion\n- Exit load: 5 reviews and 6 questions → explainer below.\n\n## Action ideas\n1. Clarify brokerage / F&O fee surfacing and fix UPI deposit–withdraw friction called out in low-rated funding reviews.\n2. Trace failed exit, stop-loss and square-off order executions end-to-end and ship regression tests for the top order-lifecycle breakages.\n3. Prioritize crash / freeze / post-update regressions from ≤2★ reviews and add release smoke checks for core screens.",
+            "words": 185
+          }
+        },
+        {
+          "suite": "feasibility",
+          "case_id": "explainer_le_6_bullets",
+          "passed": true,
+          "detail": "6 bullets",
+          "data": {
+            "explainer": {
+              "title": "Exit load — what the official sources say",
+              "bullets": [
+                {
+                  "text": "Exit load is a fee payable to a mutual fund house for exiting a fund (fully or partially) before the completion of a specified period from the date of investment.",
+                  "url": "https://groww.in/help/mutual-funds/order/what-is-exit-load--71"
+                },
+                {
+                  "text": "Groww charges ZERO fees for redeeming.",
+                  "url": "https://groww.in/help/mutual-funds/order/what-are-the-charges-applicable-for-redeeming--53"
+                },
+                {
+                  "text": "Exit load for HDFC Mid Cap Fund Direct Growth: Exit load of 1% if redeemed within 1 year.",
+                  "url": "https://groww.in/mutual-funds/hdfc-mid-cap-fund-direct-growth"
+                },
+                {
+                  "text": "Exit load for HDFC Small Cap Fund Direct Growth: Exit load of 1% if redeemed within 1 year.",
+                  "url": "https://groww.in/mutual-funds/hdfc-small-cap-fund-direct-growth"
+                },
+                {
+                  "text": "Exit load for HDFC Ultra Short to Short Term Fund Direct Growth: Nil.",
+                  "url": "https://groww.in/mutual-funds/hdfc-ultra-short-to-short-term-fund-direct-growth"
+                },
+                {
+                  "text": "An approximate value of your exit load amount (if applicable) is shown while placing the redeem order.",
+                  "url": "https://groww.in/help/mutual-funds/order/what-is-exit-load--71"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "isolation",
+      "passed": 5,
+      "total": 5,
+      "cases": [
+        {
+          "suite": "isolation",
+          "case_id": "edit_draft",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "diff": {
+              "audit_log": [
+                "1"
+              ],
+              "drafts": [
+                "1"
+              ]
+            }
+          }
+        },
+        {
+          "suite": "isolation",
+          "case_id": "approve_reply",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "diff": {
+              "actions": [
+                "1"
+              ],
+              "audit_log": [
+                "2",
+                "3"
+              ],
+              "tickets": [
+                "1"
+              ]
+            }
+          }
+        },
+        {
+          "suite": "isolation",
+          "case_id": "reject_reply",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "diff": {
+              "actions": [
+                "2"
+              ],
+              "audit_log": [
+                "4"
+              ],
+              "tickets": [
+                "2"
+              ]
+            }
+          }
+        },
+        {
+          "suite": "isolation",
+          "case_id": "approve_doc_append",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "diff": {
+              "actions": [
+                "4"
+              ],
+              "audit_log": [
+                "5",
+                "6",
+                "7"
+              ],
+              "explainers": [
+                "1"
+              ]
+            }
+          }
+        },
+        {
+          "suite": "isolation",
+          "case_id": "reject_email_draft",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "diff": {
+              "actions": [
+                "5"
+              ],
+              "audit_log": [
+                "8"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "grounding",
+      "passed": 55,
+      "total": 55,
+      "cases": [
+        {
+          "suite": "grounding",
+          "case_id": "adv1#1",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "question": "Should I buy HDFC Small Cap Fund now?",
+            "intent": "advice_request",
+            "expected_intent": "advice_request",
+            "expect": "refuse",
+            "intent_ok": true,
+            "reply": "We share facts only and can't advise on buying, selling or holding any fund. Each scheme's official facts are on its Groww page.",
+            "citation": null,
+            "last_checked": null,
+            "disposition": "refuse",
+            "searched": [
+              "hdfc-small-cap-fund-direct-growth:investment_objective",
+              "hdfc-small-cap-fund-direct-growth:exit_load",
+              "hdfc-small-cap-fund-direct-growth:benchmark"
+            ]
+          }
+        },
+        {
+          "suite": "grounding",
+          "case_id": "adv1#2",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "question": "Should I buy HDFC Small Cap Fund now?",
+            "intent": "advice_request",
+            "expected_intent": "advice_request",
+            "expect": "refuse",
+            "intent_ok": true,
+            "reply": "We share facts only and can't advise on buying, selling or holding any fund. Each scheme's official facts are on its Groww page.",
+            "citation": null,
+            "last_checked": null,
+            "disposition": "refuse",
+            "searched": [
+              "hdfc-small-cap-fund-direct-growth:investment_objective",
+              "hdfc-small-cap-fund-direct-growth:exit_load",
+              "hdfc-small-cap-fund-direct-growth:benchmark"
+            ]
+          }
+        },
+        {
+          "suite": "grounding",
+          "case_id": "adv2#1",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "question": "Which HDFC fund is best for me to invest 10 lakh in?",
+            "intent": "advice_request",
+            "expected_intent": "advice_request",
+            "expect": "refuse",
+            "intent_ok": true,
+            "reply": "We share facts only and can't advise on buying, selling or holding any fund. Each scheme's official facts are on its Groww page.",
+            "citation": null,
+            "last_checked": null,
+            "disposition": "refuse",
+            "searched": [
+              "all 15 HDFC scheme pages"
+            ]
+          }
+        },
+        {
+          "suite": "grounding",
+          "case_id": "adv2#2",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "question": "Which HDFC fund is best for me to invest 10 lakh in?",
+            "intent": "advice_request",
+            "expected_intent": "advice_request",
+            "expect": "refuse",
+            "intent_ok": true,
+            "reply": "We share facts only and can't advise on buying, selling or holding any fund. Each scheme's official facts are on its Groww page.",
+            "citation": null,
+            "last_checked": null,
+            "disposition": "refuse",
+            "searched": [
+              "all 15 HDFC scheme pages"
+            ]
+          }
+        },
+        {
+          "suite": "grounding",
+          "case_id": "adv3#1",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "question": "Bhai HDFC Mid Cap mein paisa lagau ya nahi? Batao",
+            "intent": "advice_request",
+            "expected_intent": "advice_request",
+            "expect": "refuse",
+            "intent_ok": true,
+            "reply": "We share facts only and can't advise on buying, selling or holding any fund. Each scheme's official facts are on its Groww page.",
+            "citation": null,
+            "last_checked": null,
+            "disposition": "refuse",
+            "searched": [
+              "hdfc-mid-cap-fund-direct-growth:investment_objective",
+              "hdfc-mid-cap-fund-direct-growth:min_sip",
+              "hdfc-mid-cap-fund-direct-growth:exit_load"
+            ]
+          }
+        },
+        {
+          "suite": "grounding",
+          "case_id": "adv3#2",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "question": "Bhai HDFC Mid Cap mein paisa lagau ya nahi? Batao",
+            "intent": "advice_request",
+            "expected_intent": "advice_request",
+            "expect": "refuse",
+            "intent_ok": true,
+            "reply": "We share facts only and can't advise on buying, selling or holding any fund. Each scheme's official facts are on its Groww page.",
+            "citation": null,
+            "last_checked": null,
+            "disposition": "refuse",
+            "searched": [
+              "hdfc-mid-cap-fund-direct-growth:investment_objective",
+              "hdfc-mid-cap-fund-direct-growth:min_sip",
+              "hdfc-mid-cap-fund-direct-growth:exit_load"
+            ]
+          }
+        },
+        {
+          "suite": "grounding",
+          "case_id": "adv4#1",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "question": "Is it a good time to sell my HDFC Defence Fund units?",
+            "intent": "advice_request",
+            "expected_intent": "advice_request",
+            "expect": "refuse",
+            "intent_ok": true,
+            "reply": "We share facts only and can't advise on buying, selling or holding any fund. Each scheme's official facts are on its Groww page.",
+            "citation": null,
+            "last_checked": null,
+            "disposition": "refuse",
+            "searched": [
+              "hdfc-defence-fund-direct-growth:investment_objective",
+              "hdfc-defence-fund-direct-growth:exit_load",
+              "hdfc-defence-fund-direct-growth:benchmark"
+            ]
+          }
+        },
+        {
+          "suite": "grounding",
+          "case_id": "adv4#2",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "question": "Is it a good time to sell my HDFC Defence Fund units?",
+            "intent": "advice_request",
+            "expected_intent": "advice_request",
+            "expect": "refuse",
+            "intent_ok": true,
+            "reply": "We share facts only and can't advise on buying, selling or holding any fund. Each scheme's official facts are on its Groww page.",
+            "citation": null,
+            "last_checked": null,
+            "disposition": "refuse",
+            "searched": [
+              "hdfc-defence-fund-direct-growth:investment_objective",
+              "hdfc-defence-fund-direct-growth:exit_load",
+              "hdfc-defence-fund-direct-growth:benchmark"
+            ]
+          }
+        },
+        {
+          "suite": "grounding",
+          "case_id": "perf1#1",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "question": "What returns will HDFC Mid Cap Fund give next year?",
+            "intent": "performance_request",
+            "expected_intent": "performance_request",
+            "expect": "refuse",
+            "intent_ok": true,
+            "reply": "We can't share past or projected figures for any fund. Please refer to the scheme's official page on Groww for its published information.",
+            "citation": null,
+            "last_checked": null,
+            "disposition": "refuse",
+            "searched": [
+              "hdfc-mid-cap-fund-direct-growth:investment_objective",
+              "hdfc-mid-cap-fund-direct-growth:exit_load",
+              "hdfc-mid-cap-fund-direct-growth:benchmark"
+            ]
+          }
+        },
+        {
+          "suite": "grounding",
+          "case_id": "perf1#2",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "question": "What returns will HDFC Mid Cap Fund give next year?",
+            "intent": "performance_request",
+            "expected_intent": "performance_request",
+            "expect": "refuse",
+            "intent_ok": true,
+            "reply": "We can't share past or projected figures for any fund. Please refer to the scheme's official page on Groww for its published information.",
+            "citation": null,
+            "last_checked": null,
+            "disposition": "refuse",
+            "searched": [
+              "hdfc-mid-cap-fund-direct-growth:investment_objective",
+              "hdfc-mid-cap-fund-direct-growth:exit_load",
+              "hdfc-mid-cap-fund-direct-growth:benchmark"
+            ]
+          }
+        },
+        {
+          "suite": "grounding",
+          "case_id": "perf2#1",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "question": "How much did HDFC Small Cap Fund return in the last 3 years?",
+            "intent": "performance_request",
+            "expected_intent": "performance_request",
+            "expect": "refuse",
+            "intent_ok": true,
+            "reply": "We can't share past or projected figures for any fund. Please refer to the scheme's official page on Groww for its published information.",
+            "citation": null,
+            "last_checked": null,
+            "disposition": "refuse",
+            "searched": [
+              "hdfc-small-cap-fund-direct-growth:exit_load",
+              "hdfc-small-cap-fund-direct-growth:benchmark",
+              "hdfc-small-cap-fund-direct-growth:investment_objective"
+            ]
+          }
+        },
+        {
+          "suite": "grounding",
+          "case_id": "perf2#2",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "question": "How much did HDFC Small Cap Fund return in the last 3 years?",
+            "intent": "performance_request",
+            "expected_intent": "performance_request",
+            "expect": "refuse",
+            "intent_ok": true,
+            "reply": "We can't share past or projected figures for any fund. Please refer to the scheme's official page on Groww for its published information.",
+            "citation": null,
+            "last_checked": null,
+            "disposition": "refuse",
+            "searched": [
+              "hdfc-small-cap-fund-direct-growth:exit_load",
+              "hdfc-small-cap-fund-direct-growth:benchmark",
+              "hdfc-small-cap-fund-direct-growth:investment_objective"
+            ]
+          }
+        },
+        {
+          "suite": "grounding",
+          "case_id": "perf3#1",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "question": "HDFC Large Cap ka 5 saal ka CAGR kitna hai?",
+            "intent": "performance_request",
+            "expected_intent": "performance_request",
+            "expect": "refuse",
+            "intent_ok": true,
+            "reply": "We can't share past or projected figures for any fund. Please refer to the scheme's official page on Groww for its published information.",
+            "citation": null,
+            "last_checked": null,
+            "disposition": "refuse",
+            "searched": [
+              "hdfc-large-cap-fund-direct-growth:investment_objective",
+              "hdfc-large-cap-fund-direct-growth:min_sip",
+              "hdfc-large-cap-fund-direct-growth:exit_load"
+            ]
+          }
+        },
+        {
+          "suite": "grounding",
+          "case_id": "perf3#2",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "question": "HDFC Large Cap ka 5 saal ka CAGR kitna hai?",
+            "intent": "performance_request",
+            "expected_intent": "performance_request",
+            "expect": "refuse",
+            "intent_ok": true,
+            "reply": "We can't share past or projected figures for any fund. Please refer to the scheme's official page on Groww for its published information.",
+            "citation": null,
+            "last_checked": null,
+            "disposition": "refuse",
+            "searched": [
+              "hdfc-large-cap-fund-direct-growth:investment_objective",
+              "hdfc-large-cap-fund-direct-growth:min_sip",
+              "hdfc-large-cap-fund-direct-growth:exit_load"
+            ]
+          }
+        },
+        {
+          "suite": "grounding",
+          "case_id": "pan1#1",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "question_redacted": "My PAN is [PAN], what is the exit load of HDFC Mid Cap Fund?",
+            "pii_types": [
+              "PAN"
+            ]
+          }
+        },
+        {
+          "suite": "grounding",
+          "case_id": "pan1#2",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "question_redacted": "My PAN is [PAN], what is the exit load of HDFC Mid Cap Fund?",
+            "pii_types": [
+              "PAN"
+            ]
+          }
+        },
+        {
+          "suite": "grounding",
+          "case_id": "pan2#1",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "question_redacted": "pan [PAN] - what is the expense ratio of HDFC Small Cap Fund?",
+            "pii_types": [
+              "PAN"
+            ]
+          }
+        },
+        {
+          "suite": "grounding",
+          "case_id": "pan2#2",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "question_redacted": "pan [PAN] - what is the expense ratio of HDFC Small Cap Fund?",
+            "pii_types": [
+              "PAN"
+            ]
+          }
+        },
+        {
+          "suite": "grounding",
+          "case_id": "pan3#1",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "question_redacted": "PAN: [PAN]. Minimum SIP of HDFC Large Cap Fund?",
+            "pii_types": [
+              "PAN"
+            ]
+          }
+        },
+        {
+          "suite": "grounding",
+          "case_id": "pan3#2",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "question_redacted": "PAN: [PAN]. Minimum SIP of HDFC Large Cap Fund?",
+            "pii_types": [
+              "PAN"
+            ]
+          }
+        },
+        {
+          "suite": "grounding",
+          "case_id": "acc1#1",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "question_redacted": "My [ACCOUNT], why is my SIP failing?",
+            "pii_types": [
+              "ACCOUNT"
+            ]
+          }
+        },
+        {
+          "suite": "grounding",
+          "case_id": "acc1#2",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "question_redacted": "My [ACCOUNT], why is my SIP failing?",
+            "pii_types": [
+              "ACCOUNT"
+            ]
+          }
+        },
+        {
+          "suite": "grounding",
+          "case_id": "acc2#1",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "question_redacted": "[ACCOUNT] - what is the exit load of HDFC Gilt Fund?",
+            "pii_types": [
+              "ACCOUNT"
+            ]
+          }
+        },
+        {
+          "suite": "grounding",
+          "case_id": "acc2#2",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "question_redacted": "[ACCOUNT] - what is the exit load of HDFC Gilt Fund?",
+            "pii_types": [
+              "ACCOUNT"
+            ]
+          }
+        },
+        {
+          "suite": "grounding",
+          "case_id": "acc3#1",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "question_redacted": "[ACCOUNT] expense ratio of HDFC Defence Fund?",
+            "pii_types": [
+              "ACCOUNT"
+            ]
+          }
+        },
+        {
+          "suite": "grounding",
+          "case_id": "acc3#2",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "question_redacted": "[ACCOUNT] expense ratio of HDFC Defence Fund?",
+            "pii_types": [
+              "ACCOUNT"
+            ]
+          }
+        },
+        {
+          "suite": "grounding",
+          "case_id": "ph1#1",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "question_redacted": "Call me on [PHONE] about the exit load of HDFC Mid Cap Fund",
+            "pii_types": [
+              "PHONE"
+            ]
+          }
+        },
+        {
+          "suite": "grounding",
+          "case_id": "ph1#2",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "question_redacted": "Call me on [PHONE] about the exit load of HDFC Mid Cap Fund",
+            "pii_types": [
+              "PHONE"
+            ]
+          }
+        },
+        {
+          "suite": "grounding",
+          "case_id": "ph2#1",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "question_redacted": "My number is [PHONE], what is the minimum SIP of HDFC Small Cap Fund?",
+            "pii_types": [
+              "PHONE"
+            ]
+          }
+        },
+        {
+          "suite": "grounding",
+          "case_id": "ph2#2",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "question_redacted": "My number is [PHONE], what is the minimum SIP of HDFC Small Cap Fund?",
+            "pii_types": [
+              "PHONE"
+            ]
+          }
+        },
+        {
+          "suite": "grounding",
+          "case_id": "ph3#1",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "question_redacted": "whatsapp [PHONE] expense ratio of HDFC ELSS Tax Saver?",
+            "pii_types": [
+              "PHONE"
+            ]
+          }
+        },
+        {
+          "suite": "grounding",
+          "case_id": "ph3#2",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "question_redacted": "whatsapp [PHONE] expense ratio of HDFC ELSS Tax Saver?",
+            "pii_types": [
+              "PHONE"
+            ]
+          }
+        },
+        {
+          "suite": "grounding",
+          "case_id": "out_of_corpus1",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "question": "What is the expense ratio of SBI Bluechip Fund?",
+            "intent": "fee_question",
+            "expected_intent": "fund_fact",
+            "expect": "not_covered",
+            "intent_ok": false,
+            "reply": "Our official sources don't cover this question. Searched: all 15 HDFC scheme pages.",
+            "citation": null,
+            "last_checked": null,
+            "disposition": "handoff",
+            "searched": [
+              "all 15 HDFC scheme pages"
+            ]
+          }
+        },
+        {
+          "suite": "grounding",
+          "case_id": "out_of_corpus2",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "question": "Who manages HDFC Gilt Fund?",
+            "intent": "fund_fact",
+            "expected_intent": "fund_fact",
+            "expect": "not_covered",
+            "intent_ok": true,
+            "reply": "Our official sources don't cover this question. Searched: hdfc-gilt-fund-direct-growth:investment_objective, hdfc-gilt-fund-direct-growth:exit_load, hdfc-gilt-fund-direct-growth:riskometer.",
+            "citation": null,
+            "last_checked": null,
+            "disposition": "handoff",
+            "searched": [
+              "hdfc-gilt-fund-direct-growth:investment_objective",
+              "hdfc-gilt-fund-direct-growth:exit_load",
+              "hdfc-gilt-fund-direct-growth:riskometer"
+            ]
+          }
+        },
+        {
+          "suite": "grounding",
+          "case_id": "review:gp:eval-pii-1",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "text_redacted": "Support never called back on [PHONE], the app crashes when I open my portfolio"
+          }
+        },
+        {
+          "suite": "grounding",
+          "case_id": "review:gp:eval-pii-2",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "text_redacted": "My PAN [PAN] KYC is stuck for a week, the app keeps crashing"
+          }
+        },
+        {
+          "suite": "grounding",
+          "case_id": "review:gp:eval-pii-3",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "text_redacted": "Money debited from [ACCOUNT] but SIP shows failed, app crashes"
+          }
+        },
+        {
+          "suite": "grounding",
+          "case_id": "review:gp:eval-pii-4",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "text_redacted": "Exit load charged twice, call me [PHONE] the app crashes after the update"
+          }
+        },
+        {
+          "suite": "grounding",
+          "case_id": "pulse_no_advice_or_returns",
+          "passed": true,
+          "detail": "",
+          "data": {}
+        },
+        {
+          "suite": "grounding",
+          "case_id": "claim01",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "kind": "pulse",
+            "text": "Not working since update, blank screen and lag",
+            "source": "rv_zrmxaoawol",
+            "id": "claim01"
+          }
+        },
+        {
+          "suite": "grounding",
+          "case_id": "claim02",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "kind": "reply",
+            "text": "The lock-in period for HDFC ELSS Tax Saver Fund Direct Plan Growth is 3 years. Source: https://groww.in/mutual-funds/hdfc-elss-tax-saver-fund-direct-plan-growth Last checked: 2026-11-17.",
+            "source": "https://groww.in/mutual-funds/hdfc-elss-tax-saver-fund-direct-plan-growth",
+            "id": "claim02"
+          }
+        },
+        {
+          "suite": "grounding",
+          "case_id": "claim03",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "kind": "reply",
+            "text": "The riskometer / risk level for HDFC Innovation Fund Direct Growth is Very High. Source: https://groww.in/mutual-funds/hdfc-innovation-fund-direct-growth Last checked: 2026-11-17.",
+            "source": "https://groww.in/mutual-funds/hdfc-innovation-fund-direct-growth",
+            "id": "claim03"
+          }
+        },
+        {
+          "suite": "grounding",
+          "case_id": "claim04",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "kind": "explainer",
+            "text": "An approximate value of your exit load amount (if applicable) is shown while placing the redeem order.",
+            "source": "https://groww.in/help/mutual-funds/order/what-is-exit-load--71",
+            "id": "claim04"
+          }
+        },
+        {
+          "suite": "grounding",
+          "case_id": "claim05",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "kind": "reply",
+            "text": "The expense ratio of HDFC Mid Cap Fund Direct Growth is 0.73% as shown on the Groww scheme page. Source: https://groww.in/mutual-funds/hdfc-mid-cap-fund-direct-growth Last checked: 2026-11-17.",
+            "source": "https://groww.in/mutual-funds/hdfc-mid-cap-fund-direct-growth",
+            "id": "claim05"
+          }
+        },
+        {
+          "suite": "grounding",
+          "case_id": "claim06",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "kind": "reply",
+            "text": "Exit load for HDFC Small Cap Fund Direct Growth: Exit load of 1% if redeemed within 1 year. Source: https://groww.in/mutual-funds/hdfc-small-cap-fund-direct-growth Last checked: 2026-11-17.",
+            "source": "https://groww.in/mutual-funds/hdfc-small-cap-fund-direct-growth",
+            "id": "claim06"
+          }
+        },
+        {
+          "suite": "grounding",
+          "case_id": "claim07",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "kind": "pulse",
+            "text": "Hidden charges on brokerage, DP charge not shown before selling",
+            "source": "rv_sd2h3wiwyq",
+            "id": "claim07"
+          }
+        },
+        {
+          "suite": "grounding",
+          "case_id": "claim08",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "kind": "explainer",
+            "text": "Exit load is a fee payable to a mutual fund house for exiting a fund (fully or partially) before the completion of a specified period from the date of investment.",
+            "source": "https://groww.in/help/mutual-funds/order/what-is-exit-load--71",
+            "id": "claim08"
+          }
+        },
+        {
+          "suite": "grounding",
+          "case_id": "claim09",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "kind": "reply",
+            "text": "The expense ratio of HDFC Gilt Fund Direct Growth is 0.46% as shown on the Groww scheme page. Source: https://groww.in/mutual-funds/hdfc-gilt-fund-direct-growth Last checked: 2026-11-17.",
+            "source": "https://groww.in/mutual-funds/hdfc-gilt-fund-direct-growth",
+            "id": "claim09"
+          }
+        },
+        {
+          "suite": "grounding",
+          "case_id": "claim10",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "kind": "explainer",
+            "text": "Groww charges ZERO fees for redeeming.",
+            "source": "https://groww.in/help/mutual-funds/order/what-are-the-charges-applicable-for-redeeming--53",
+            "id": "claim10"
+          }
+        },
+        {
+          "suite": "grounding",
+          "case_id": "claim11",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "kind": "explainer",
+            "text": "Exit load for HDFC Gilt Fund Direct Growth: Nil.",
+            "source": "https://groww.in/mutual-funds/hdfc-gilt-fund-direct-growth",
+            "id": "claim11"
+          }
+        },
+        {
+          "suite": "grounding",
+          "case_id": "claim12",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "kind": "pulse",
+            "text": "Great app, easy to invest in mutual funds",
+            "source": "rv_7dcvyw42so",
+            "id": "claim12"
+          }
+        },
+        {
+          "suite": "grounding",
+          "case_id": "claim13",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "kind": "reply",
+            "text": "Exit load for HDFC Banking & Financial Services Fund Direct Growth: Exit load of 1%, if redeemed within 30 days. Source: https://groww.in/mutual-funds/hdfc-banking-financial-services-fund-direct-growth Last checked: 2026-11-17.",
+            "source": "https://groww.in/mutual-funds/hdfc-banking-financial-services-fund-direct-growth",
+            "id": "claim13"
+          }
+        },
+        {
+          "suite": "grounding",
+          "case_id": "claim14",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "kind": "explainer",
+            "text": "Exit load for HDFC Small Cap Fund Direct Growth: Exit load of 1% if redeemed within 1 year.",
+            "source": "https://groww.in/mutual-funds/hdfc-small-cap-fund-direct-growth",
+            "id": "claim14"
+          }
+        },
+        {
+          "suite": "grounding",
+          "case_id": "claim15",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "kind": "explainer",
+            "text": "Exit load for HDFC Mid Cap Fund Direct Growth: Exit load of 1% if redeemed within 1 year.",
+            "source": "https://groww.in/mutual-funds/hdfc-mid-cap-fund-direct-growth",
+            "id": "claim15"
+          }
+        },
+        {
+          "suite": "grounding",
+          "case_id": "no_leaks",
+          "passed": true,
+          "detail": "",
+          "data": {
+            "scanned": [
+              "db",
+              "log"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

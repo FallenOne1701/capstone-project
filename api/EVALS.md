@@ -103,7 +103,12 @@ File: `evals/results/run-7-2026-11-19.json`. 29 Groq calls (1 connection retry).
 known limitation). Note on counting: the grounding suite sends each attack twice (`repeat: 2`), so 55 cases are about
 39 distinct checks.
 
-## Known limitations (after run 7)
+### Run 8 — 2026-11-25 (real AI, final code) — feasibility 44/45 · isolation 5/5 · grounding 55/55 · intent 41/41
+File: `evals/results/run-8-2026-11-25.json`. Re-run after the tab layout (Plan 5), the explainer figure fix and the
+speed work (Plan 6: classify once, Hindi after the draft, startup warm-up): identical scores to run 7. The only failure
+is still l04 (Devanagari).
+
+## Known limitations (after run 8)
 
 - **Questions written in Devanagari script** (l04) don't match a scheme, so the desk says not covered (it does name what
   it searched). Hinglish in Latin script works. The fix would be translating the question before retrieval.
@@ -123,6 +128,7 @@ known limitation). Note on counting: the grounding suite sends each attack twice
 | 5 | 44/45 | 5/5 | 53/55 | 41/41 |
 | 6 | (network outage, not counted) | | | |
 | 7 | 44/45 | 5/5 | 55/55 | 41/41 |
+| 8 | 44/45 | 5/5 | 55/55 | 41/41 |
 
 ## Latency (Plan 6, live site)
 

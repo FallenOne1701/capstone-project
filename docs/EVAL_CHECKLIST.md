@@ -71,12 +71,12 @@ Write-up of the live demo: README → [The link in action](../README.md#the-link
 
 | Field | Value |
 |---|---|
-| Evals | **Run 7, 2026-11-19, real AI** — feasibility **44/45**, edit isolation **5/5**, grounding & compliance **55/55**, intent **41/41** · file `api/evals/results/run-7-2026-11-19.json` · 29 Groq calls |
-| Eval history | Run 1: 30/44 · 5/5 · 37/45 → run 7 above; every failure and fix in [`api/EVALS.md`](../api/EVALS.md) |
+| Evals | **Run 8, 2026-11-25, real AI, final code** — feasibility **44/45**, edit isolation **5/5**, grounding & compliance **55/55**, intent **41/41** · file `api/evals/results/run-8-2026-11-25.json` (same as run 7, 2026-11-19) |
+| Eval history | Run 1: 30/44 · 5/5 · 37/45 → runs 7 and 8 above; every failure and fix in [`api/EVALS.md`](../api/EVALS.md) |
 | API tests | **510 passed, 5 skipped** (2026-11-22, after PR #11) |
 | Page unit tests | **67/67** (2026-11-22) |
 | Browser tests | **40** (2026-11-22): 39 on the full run + `voice question reaches confirm` passed on re-run (known flake on this PC; also on pre-Plan-5 code) |
-| Weekly delivery (live) | Run 3 (2026-11-19 15:47 UTC) and run 5 (2026-11-20 14:14 UTC): Doc append + Gmail draft executed after approval |
+| Weekly delivery (live) | Run 3 (2026-11-19 15:47 UTC) and run 5 (2026-11-20 14:14 UTC): Doc append + Gmail draft executed after approval. Run 6 ran automatically on Monday 2026-11-23 (3,176 reviews; pulse carried "Brokerage & charges: 6 questions") and waits for approval |
 | Link demo (live) | 2026-11-20: tickets GRW-F8CC2W, GRW-TJNBTW, GRW-T7Q98D, GRW-7PUZJH, GRW-YJ62U4 reused explainer #4; pulse run 5 shows them |
 | Latency (live) | 2026-11-22: draft ready — clear 3.1 s, unclear 1.1 s, Hinglish 2.4 s ([table](../api/EVALS.md#latency-plan-6-live-site)) |
 
