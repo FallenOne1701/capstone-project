@@ -44,7 +44,7 @@ Play Store reviews ─► redact ─► themes (AI, with keyword fallback) ─�
 
 ## Sources
 
-**33 official public URLs** — the full manifest with each page's use and last-checked date: [`docs/SOURCES.md`](docs/SOURCES.md).
+**32 official public URLs** — the full manifest with each page's use and last-checked date: [`docs/SOURCES.md`](docs/SOURCES.md).
 Only public, official pages (fetching and citing are limited in code to `groww.in`, `amfiindia.com`, `sebi.gov.in`).
 Each page is re-fetched weekly (Sundays 21:00 IST) and every answer shows its "Last checked" date; the live list with
 dates is the **Sources** section of the *This week* tab.
