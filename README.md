@@ -44,6 +44,7 @@ Play Store reviews ─► redact ─► themes (AI, with keyword fallback) ─�
 
 ## Sources
 
+**33 official public URLs** — the full manifest with each page's use and last-checked date: [`docs/SOURCES.md`](docs/SOURCES.md).
 Only public, official pages (fetching and citing are limited in code to `groww.in`, `amfiindia.com`, `sebi.gov.in`).
 Each page is re-fetched weekly (Sundays 21:00 IST) and every answer shows its "Last checked" date; the live list with
 dates is the **Sources** section of the *This week* tab.
@@ -53,6 +54,9 @@ dates is the **Sources** section of the *This week* tab.
   Innovation · Banking & Financial Services · MNC · Gilt · Ultra Short to Short Term · Medium to Long Term · Arbitrage ·
   Gold ETF Fund of Fund — all at `https://groww.in/mutual-funds/<scheme>-direct-growth` (list in
   [`api/app/corpus/sources.yaml`](api/app/corpus/sources.yaml)).
+- **13 how-to pages on Groww Help** (starting, cancelling or changing a SIP, cancelling an order, redeeming: how,
+  when, limits, which day's NAV, how long the money takes): a how-to question is answered in the page's own words,
+  with its link and last-checked date.
 - **4 fee reference pages:** [What is exit load? — Groww Help](https://groww.in/help/mutual-funds/order/what-is-exit-load--71) ·
   [What are the charges applicable for redeeming? — Groww Help](https://groww.in/help/mutual-funds/order/what-are-the-charges-applicable-for-redeeming--53) ·
   [What fees does Groww charge? — Groww Help](https://groww.in/help/payments-&-withdrawals/payments-charges/what-fees-does-groww-charge--58) ·
@@ -74,7 +78,7 @@ redeeming mutual funds), which a person approved and which now answers brokerage
 
 ## Evals — latest run
 
-Run 8 (2026-11-25, on the final code), real AI, file [`api/evals/results/run-8-2026-11-25.json`](api/evals/results/run-8-2026-11-25.json) — the same scores as run 7 (2026-11-19), so the later layout and speed changes broke nothing:
+Run 9 (2026-11-25, on the final code with the how-to pages), real AI, file [`api/evals/results/run-9-2026-11-25.json`](api/evals/results/run-9-2026-11-25.json) — the same scores as runs 7 and 8, now with four how-to questions answered from official Groww Help pages instead of "not covered":
 
 | Eval | Score | What it checks |
 |---|---|---|
@@ -135,8 +139,9 @@ The run before it (no repeated questions yet) said "0 questions". Product now se
 
 - **Questions written in Devanagari script** get "not covered" (it names what it searched); Hinglish in Latin script
   works. This is the one failing eval case (`l04`).
-- **How-to questions** ("how do I start a SIP?") get an honest "not covered": the corpus is scheme pages and fee
-  reference pages only.
+- **How-to questions** are answered only when one of the 13 Groww Help how-to pages covers them (starting, cancelling
+  or changing a SIP, cancelling an order, redeeming); anything else (e.g. "how do I download my capital gains
+  statement?") gets an honest "not covered" naming what was searched.
 - **Personal-data masking is pattern-based** (PAN, Aadhaar, phone, email, UPI, card, account, IFSC, OTP); an unusual
   format may slip through.
 - **The page has no password** (a deliberate choice): anyone on it can approve. Google writes are limited to a Doc

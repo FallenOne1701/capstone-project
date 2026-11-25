@@ -41,6 +41,11 @@ def references() -> list[dict]:
     return list(load_schemes().get("references") or [])
 
 
+def howtos() -> list[dict]:
+    """Official Groww Help how-to pages (sources.yaml `howtos:`); fetched with the references, kind "howto"."""
+    return list(load_schemes().get("howtos") or [])
+
+
 def _download(url: str) -> str:
     r = httpx.get(url, headers={"User-Agent": _UA}, timeout=30, follow_redirects=True)
     r.raise_for_status()
@@ -56,15 +61,18 @@ def refresh_references(db: Session, *, fetch: bool = True, fixture_dir: Path | N
     from app.models import Source
     res = RefreshResult()
     now = datetime.now(timezone.utc)
-    for item in references():
+    for kind, item in [("reference", x) for x in references()] + [("howto", x) for x in howtos()]:
         if not is_allowed_source_url(item["url"]):
             raise ValueError(f"reference host not allowed: {item['url']}")
+        offline = fixture_dir is not None and not fetch
+        if offline and kind == "howto" and not (Path(fixture_dir) / f"{item['topic']}.html").exists():
+            continue   # offline runs (tests, e2e) have fee-page fixtures only
         row = db.query(Source).filter_by(url=item["url"]).one_or_none()
         if row is None:
-            row = Source(url=item["url"], title=item["title"], kind="reference", scheme_id=None, status="pending")
+            row = Source(url=item["url"], title=item["title"], kind=kind, scheme_id=None, status="pending")
             db.add(row)
         try:
-            if fixture_dir is not None and not fetch:
+            if offline:
                 html = (Path(fixture_dir) / f"{item['topic']}.html").read_text(encoding="utf-8", errors="ignore")
             else:
                 html = _download(item["url"])

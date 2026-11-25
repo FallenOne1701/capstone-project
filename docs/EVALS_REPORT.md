@@ -1,6 +1,6 @@
 # Evals report — Groww Support Desk
 
-The golden dataset, the adversarial tests and the scores of **run 8 (2026-11-25)**, generated from [`api/evals/datasets/questions.yaml`](../api/evals/datasets/questions.yaml), [`api/evals/datasets/adversarial.yaml`](../api/evals/datasets/adversarial.yaml) and the run file [`api/evals/results/run-8-2026-11-25.json`](../api/evals/results/run-8-2026-11-25.json). Real AI (Groq, Gemini fallback), a throwaway local database, Google stubbed. All personal data in the tests is synthetic.
+The golden dataset, the adversarial tests and the scores of **run 9 (2026-11-25)**, generated from [`api/evals/datasets/questions.yaml`](../api/evals/datasets/questions.yaml), [`api/evals/datasets/adversarial.yaml`](../api/evals/datasets/adversarial.yaml) and the run file [`api/evals/results/run-9-2026-11-25.json`](../api/evals/results/run-9-2026-11-25.json). Real AI (Groq, Gemini fallback), a throwaway local database, Google stubbed. All personal data in the tests is synthetic.
 
 ## Scores
 
@@ -17,7 +17,8 @@ Score history (every failure, its cause and fix: [`api/EVALS.md`](../api/EVALS.m
 |---|---|---|---|---|
 | 1 (2026-11-19) | 30/44 | 5/5 | 37/45 | 39/40 |
 | 7 (2026-11-19) | 44/45 | 5/5 | 55/55 | 41/41 |
-| 8 (2026-11-25, final code) | 44/45 | 5/5 | 55/55 | 41/41 |
+| 8 (2026-11-25) | 44/45 | 5/5 | 55/55 | 41/41 |
+| 9 (2026-11-25, final code) | 44/45 | 5/5 | 55/55 | 41/41 |
 
 ## Golden dataset — 41 questions
 
@@ -55,15 +56,15 @@ Score history (every failure, its cause and fix: [`api/EVALS.md`](../api/EVALS.m
 | e07 | What exit load does HDFC Medium to Long Term Fund charge? | fee_question | answer | ✅ | Exit load for HDFC Medium to Long Term Fund Direct Growth: Nil. Source: https://groww.in/mutual-funds/hdfc-me… |
 | e08 | Total expense ratio of HDFC Defence Fund? | fee_question | answer | ✅ | The expense ratio of HDFC Defence Fund Direct Growth is 0.89% as shown on the Groww scheme page. Source: http… |
 
-### How-to
+### How-to (answered from official Groww Help pages when one covers the question)
 
 | Id | Question | Expected intent | Expect | Result | Desk reply (this run) |
 |---|---|---|---|---|---|
-| h01 | How do I start a SIP in HDFC Mid Cap Fund on Groww? | how_to_process | not covered | ✅ | Our official sources don't cover this question. Searched: hdfc-mid-cap-fund-direct-growth:exit_load, hdfc-mid… |
-| h02 | How can I redeem my units of HDFC Small Cap Fund? | how_to_process | not covered | ✅ | Our official sources don't cover this question. Searched: hdfc-small-cap-fund-direct-growth:exit_load, hdfc-s… |
+| h01 | How do I start a SIP in HDFC Mid Cap Fund on Groww? | how_to_process | answer | ✅ | To start a SIP on Groww: - From the Home screen, go to the 'Mutual Funds' section. - Click on 'Explore' at th… |
+| h02 | How can I redeem my units of HDFC Small Cap Fund? | how_to_process | answer | ✅ | - Tap the 'Mutual Funds' tab at the bottom. - Go to your Dashboard. - Select the mutual fund. - Tap 'Redeem.'… |
 | h03 | How do I download my capital gains statement? | how_to_process | not covered | ✅ | Our official sources don't cover this question. Searched: all 15 HDFC scheme pages. |
-| h04 | How do I cancel a SIP? | how_to_process | not covered | ✅ | Our official sources don't cover this question. Searched: all 15 HDFC scheme pages. |
-| h05 | How can I change my SIP date? | how_to_process | not covered | ✅ | Our official sources don't cover this question. Searched: all 15 HDFC scheme pages. |
+| h04 | How do I cancel a SIP? | how_to_process | answer | ✅ | To cancel your ongoing SIP, follow these steps: - On your home screen, navigate to the 'Mutual Funds' section… |
+| h05 | How can I change my SIP date? | how_to_process | answer | ✅ | Changing your SIP date or amount is easy. Just follow these steps: Navigate to the 'Mutual Funds' section on … |
 
 ### Not covered by the corpus / off-topic
 

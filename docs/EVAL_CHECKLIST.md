@@ -32,7 +32,7 @@ Every requirement of the brief, how it is checked in this repo, and the latest r
 
 | Requirement | How it is checked | Result |
 |---|---|---|
-| Each question ends with a cited answer, a not-covered that **names what it searched**, or the right refusal | feasibility: 41 questions (`f` fund facts ×14, `e` fees ×8, `h` how-to ×5, `n` not covered ×6, `u` unclear wording ×4, `l` Hinglish/Hindi ×4) | 44/45 (only `l04`, Devanagari, fails) |
+| Each question ends with a cited answer, a not-covered that **names what it searched**, or the right refusal | feasibility: 41 questions (`f` fund facts ×14, `e` fees ×8, `h` how-to ×5 — 4 answered from Groww Help pages, 1 not covered, `n` not covered ×6, `u` unclear wording ×4, `l` Hinglish/Hindi ×4) | 44/45 (only `l04`, Devanagari, fails) |
 | The question type the desk chose | intent sub-score over the same 41 questions | 41/41 |
 | Reply draft carries its **citation** and an internal **routing note** | `test_orchestrator.py` (cited reply, not-covered names searched, off-topic refused); live link demo: every draft's routing note visible in the Queue | ✅ |
 | A person **approves, edits or rejects** each draft, and each changes exactly what it should | isolation `edit_draft`, `approve_reply`, `reject_reply` (every table snapshotted before/after); browser `desk.spec.ts` (approve → answer shows; reject → closed + Ask again; blocked draft can't be approved; optimistic approve reverts on 409) | 5/5 ✅ |
@@ -71,9 +71,9 @@ Write-up of the live demo: README → [The link in action](../README.md#the-link
 
 | Field | Value |
 |---|---|
-| Evals | **Run 8, 2026-11-25, real AI, final code** — feasibility **44/45**, edit isolation **5/5**, grounding & compliance **55/55**, intent **41/41** · file `api/evals/results/run-8-2026-11-25.json` (same as run 7, 2026-11-19) |
+| Evals | **Run 9, 2026-11-25, real AI, final code** (with the how-to pages) — feasibility **44/45**, edit isolation **5/5**, grounding & compliance **55/55**, intent **41/41** · file `api/evals/results/run-9-2026-11-25.json` (runs 7 and 8 scored the same) |
 | Eval history | Run 1: 30/44 · 5/5 · 37/45 → runs 7 and 8 above; every failure and fix in [`api/EVALS.md`](../api/EVALS.md) |
-| API tests | **510 passed, 5 skipped** (2026-11-22, after PR #11) |
+| API tests | **539 passed, 5 skipped** (2026-11-25, with the how-to pages) |
 | Page unit tests | **67/67** (2026-11-22) |
 | Browser tests | **40** (2026-11-22): 39 on the full run + `voice question reaches confirm` passed on re-run (known flake on this PC; also on pre-Plan-5 code) |
 | Weekly delivery (live) | Run 3 (2026-11-19 15:47 UTC) and run 5 (2026-11-20 14:14 UTC): Doc append + Gmail draft executed after approval. Run 6 ran automatically on Monday 2026-11-23 (3,176 reviews; pulse carried "Brokerage & charges: 6 questions") and waits for approval |
@@ -83,7 +83,7 @@ Write-up of the live demo: README → [The link in action](../README.md#the-link
 ### Known gaps (not hidden)
 
 - `l04` — a question in **Devanagari script** is answered "not covered" (it does name what it searched); Hinglish in Latin script works.
-- **How-to questions** get an honest "not covered": the corpus has scheme pages and fee reference pages only.
+- **How-to questions** are answered only when one of the 13 Groww Help how-to pages covers them; others (e.g. a capital gains statement) get "not covered".
 - The evals' weekly part uses a fixed reviews set; theme quality on live reviews is checked with `scripts/verify_weekly.py`, not by an eval.
 - The grounding suite sends each attack twice (`repeat: 2`), so its 55 cases are about 39 distinct checks.
 - The **first question after a deploy** took ~8 s on 2026-11-22 (later ones ~1–3 s); cause not found yet.
