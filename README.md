@@ -44,25 +44,53 @@ Play Store reviews ─► redact ─► themes (AI, with keyword fallback) ─�
 
 ## Sources
 
-**32 official public URLs** — the full manifest with each page's use and last-checked date: [`docs/SOURCES.md`](docs/SOURCES.md).
-Only public, official pages (fetching and citing are limited in code to `groww.in`, `amfiindia.com`, `sebi.gov.in`).
-Each page is re-fetched weekly (Sundays 21:00 IST) and every answer shows its "Last checked" date; the live list with
-dates is the **Sources** section of the *This week* tab.
+**32 official public URLs** — the combined list of every official page the app fetches and uses. Fetching and
+citing are limited in code to `groww.in`, `amfiindia.com` and `sebi.gov.in`; no blogs or third-party sites. Each page is
+re-fetched weekly (Sundays 21:00 IST) and every answer shows its "Last checked" date. The same list with each page's use
+and live last-checked date: [`docs/SOURCES.md`](docs/SOURCES.md); the app reads it from
+[`api/app/corpus/sources.yaml`](api/app/corpus/sources.yaml).
 
-- **15 HDFC scheme pages on Groww** (one fact per section: expense ratio, exit load, minimum SIP, benchmark,
-  riskometer, lock-in…): Mid Cap · Small Cap · Large Cap · Focused · ELSS Tax Saver · Defence · Pharma and Healthcare ·
-  Innovation · Banking & Financial Services · MNC · Gilt · Ultra Short to Short Term · Medium to Long Term · Arbitrage ·
-  Gold ETF Fund of Fund — all at `https://groww.in/mutual-funds/<scheme>-direct-growth` (list in
-  [`api/app/corpus/sources.yaml`](api/app/corpus/sources.yaml)).
-- **13 how-to pages on Groww Help** (starting, cancelling or changing a SIP, cancelling an order, redeeming: how,
-  when, limits, which day's NAV, how long the money takes): a how-to question is answered in the page's own words,
-  with its link and last-checked date.
-- **4 fee reference pages:** [What is exit load? — Groww Help](https://groww.in/help/mutual-funds/order/what-is-exit-load--71) ·
-  [What are the charges applicable for redeeming? — Groww Help](https://groww.in/help/mutual-funds/order/what-are-the-charges-applicable-for-redeeming--53) ·
-  [What fees does Groww charge? — Groww Help](https://groww.in/help/payments-&-withdrawals/payments-charges/what-fees-does-groww-charge--58) ·
-  [Expense Ratio — AMFI Investor Corner](https://www.amfiindia.com/investor/knowledge-center-info?zoneName=expenseRatio).
-- **Reviews:** public Google Play reviews of the Groww app (`com.nextbillion.groww`), fetched every Monday, personal
-  data redacted on the way in. Sample: [`docs/samples/reviews_sample.csv`](docs/samples/reviews_sample.csv).
+- **Scheme pages (15):** one fact per section (expense ratio, exit load, minimum SIP, benchmark, riskometer, lock-in…).
+- **Fee reference pages (4):** fee concepts for the weekly fee explainer, which becomes the canonical fee answer.
+- **How-to pages (13):** a how-to question is answered in the page's own words, with its link and last-checked date.
+
+| # | Group | Page | URL |
+|---|---|---|---|
+| 1 | Scheme page | HDFC Mid Cap Fund Direct Growth | https://groww.in/mutual-funds/hdfc-mid-cap-fund-direct-growth |
+| 2 | Scheme page | HDFC Small Cap Fund Direct Growth | https://groww.in/mutual-funds/hdfc-small-cap-fund-direct-growth |
+| 3 | Scheme page | HDFC Gold ETF Fund of Fund Direct Plan Growth | https://groww.in/mutual-funds/hdfc-gold-etf-fund-of-fund-direct-plan-growth |
+| 4 | Scheme page | HDFC Large Cap Fund Direct Growth | https://groww.in/mutual-funds/hdfc-large-cap-fund-direct-growth |
+| 5 | Scheme page | HDFC ELSS Tax Saver Fund Direct Plan Growth | https://groww.in/mutual-funds/hdfc-elss-tax-saver-fund-direct-plan-growth |
+| 6 | Scheme page | HDFC Defence Fund Direct Growth | https://groww.in/mutual-funds/hdfc-defence-fund-direct-growth |
+| 7 | Scheme page | HDFC Pharma and Healthcare Fund Direct Growth | https://groww.in/mutual-funds/hdfc-pharma-and-healthcare-fund-direct-growth |
+| 8 | Scheme page | HDFC Focused Fund Direct Growth | https://groww.in/mutual-funds/hdfc-focused-fund-direct-growth |
+| 9 | Scheme page | HDFC Innovation Fund Direct Growth | https://groww.in/mutual-funds/hdfc-innovation-fund-direct-growth |
+| 10 | Scheme page | HDFC Banking & Financial Services Fund Direct Growth | https://groww.in/mutual-funds/hdfc-banking-financial-services-fund-direct-growth |
+| 11 | Scheme page | HDFC Gilt Fund Direct Growth | https://groww.in/mutual-funds/hdfc-gilt-fund-direct-growth |
+| 12 | Scheme page | HDFC Ultra Short to Short Term Fund Direct Growth | https://groww.in/mutual-funds/hdfc-ultra-short-to-short-term-fund-direct-growth |
+| 13 | Scheme page | HDFC MNC Fund Direct Growth | https://groww.in/mutual-funds/hdfc-mnc-fund-direct-growth |
+| 14 | Scheme page | HDFC Medium to Long Term Fund Direct Growth | https://groww.in/mutual-funds/hdfc-medium-to-long-term-fund-direct-growth |
+| 15 | Scheme page | HDFC Arbitrage Fund Direct Growth | https://groww.in/mutual-funds/hdfc-arbitrage-fund-direct-growth |
+| 16 | Fee reference | What is exit load? — Groww Help | https://groww.in/help/mutual-funds/order/what-is-exit-load--71 |
+| 17 | Fee reference | What are the charges applicable for redeeming? — Groww Help | https://groww.in/help/mutual-funds/order/what-are-the-charges-applicable-for-redeeming--53 |
+| 18 | Fee reference | Expense Ratio — AMFI Investor Corner | https://www.amfiindia.com/investor/knowledge-center-info?zoneName=expenseRatio |
+| 19 | Fee reference | What fees does Groww charge? — Groww Help | https://groww.in/help/payments-&-withdrawals/payments-charges/what-fees-does-groww-charge--58 |
+| 20 | How-to | How can I start a SIP on Groww? — Groww Help | https://groww.in/help/mutual-funds/mf-sip/how-to-start-a-sip-on-groww |
+| 21 | How-to | How can I cancel an ongoing SIP? — Groww Help | https://groww.in/help/mutual-funds/mf-sip/how-to-cancel-my-sip |
+| 22 | How-to | Can I cancel my SIP as per my wish? — Groww Help | https://groww.in/help/mutual-funds/order/can-i-cancel-my-sip-as-per-my-wish |
+| 23 | How-to | Will I be charged for cancelling my SIP? — Groww Help | https://groww.in/help/mutual-funds/sip/will-i-be-charged-for-cancelling-my-sip--37 |
+| 24 | How-to | How can I change my SIP date or amount? — Groww Help | https://groww.in/help/mutual-funds/sip/how-to-change-sip-date-or-amount |
+| 25 | How-to | I cancelled my SIP instalment but still my amount got deducted — Groww Help | https://groww.in/help/mutual-funds/order/i-cancelled-my-sip-instalment-but-still-my-amount-got-deducted--79 |
+| 26 | How-to | I have accidentally placed an MF order. Can I cancel it? — Groww Help | https://groww.in/help/mutual-funds/order/i-have-accidentally-placed-an-order-can-i-cancel-it |
+| 27 | How-to | How do I withdraw or redeem from a mutual fund? — Groww Help | https://groww.in/help/mutual-funds/order/how-to-withdraw-redeem-4 |
+| 28 | How-to | Can I withdraw/redeem my investments any time? — Groww Help | https://groww.in/help/mutual-funds/order/can-i-withdraw-redeem-my-investments-any-time |
+| 29 | How-to | Is there any limit for withdraw/redemption amount? — Groww Help | https://groww.in/help/mutual-funds/order/is-there-any-limit-for-withdraw-redemption-amount |
+| 30 | How-to | When withdrawing/redeeming which day's NAV will be applicable? — Groww Help | https://groww.in/help/mutual-funds/order/when-withdrawing-redeeming-which-days-nav-will-be-applicable-1 |
+| 31 | How-to | How long will it take for my redeem amount to reflect in my bank account? — Groww Help | https://groww.in/help/mutual-funds/order/how-long-will-it-take-for-my-redeem-amount-to-reflect-in-my-bank-account-groww-balance--16 |
+| 32 | How-to | My redemption has been completed but the amount has not been credited. Why? — Groww Help | https://groww.in/help/mutual-funds/order/redeem-is-completed-but-amount-has-not-been-credited-6 |
+
+**Reviews** (not a URL list): public Google Play reviews of the Groww app (`com.nextbillion.groww`), fetched every Monday,
+personal data redacted on the way in. Sample: [`docs/samples/reviews_sample.csv`](docs/samples/reviews_sample.csv).
 
 ## What the reviews told us — the fee issue
 
