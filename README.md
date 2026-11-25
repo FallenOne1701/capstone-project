@@ -30,6 +30,7 @@ Play Store reviews ─► redact ─► themes (AI, with keyword fallback) ─�
   draft. Each call runs only after a person approves that action; failures show in plain words with a Retry.
 - **Grounding:** one section of a scheme page → one chunk, `bge-small-en-v1.5` embeddings in Chroma. A reply states
   one fact with its source URL and "Last checked" date, or says "not covered" and names what it searched.
+- **Safety design** (every rule, where it is enforced in code, and the test that proves it): [`docs/SAFETY.md`](docs/SAFETY.md).
 - **Compliance:** advice and return/performance requests get fixed refusals; personal data is redacted before
   anything is stored, logged or sent to an AI model; a log filter redacts every log line again.
 - **The approval gate** (`AUTO_APPROVE=0`): every reply and Google write is a pending action; approve / edit / reject
@@ -49,7 +50,7 @@ Run 7 (2026-11-19), real AI, file [`api/evals/results/run-7-2026-11-19.json`](ap
 Iteration: run 1 scored 30/44 · 5/5 · 37/45; a code review then made the checks stricter; the fixes in between are in the history. The one remaining failure is a
 question in Devanagari script (a known limitation).
 
-Full history — every failure, its cause, the fix and the re-run: [`api/EVALS.md`](api/EVALS.md). Live latency before/after Plan 6 (e.g. Hinglish draft 10.3 s → 2.4 s): [`api/EVALS.md` → Latency](api/EVALS.md#latency-plan-6-live-site).
+Every requirement of the brief, how it is checked and the latest result: [`docs/EVAL_CHECKLIST.md`](docs/EVAL_CHECKLIST.md). Full history — every failure, its cause, the fix and the re-run: [`api/EVALS.md`](api/EVALS.md). Live latency before/after Plan 6 (e.g. Hinglish draft 10.3 s → 2.4 s): [`api/EVALS.md` → Latency](api/EVALS.md#latency-plan-6-live-site).
 Run them: `cd api && .venv/Scripts/python -m app.evals run all`.
 
 ## Samples
