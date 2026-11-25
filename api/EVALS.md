@@ -108,12 +108,18 @@ File: `evals/results/run-8-2026-11-25.json`. Re-run after the tab layout (Plan 5
 speed work (Plan 6: classify once, Hindi after the draft, startup warm-up): identical scores to run 7. The only failure
 is still l04 (Devanagari).
 
-## Known limitations (after run 8)
+### Run 9 — 2026-11-25 (real AI) — feasibility 44/45 · isolation 5/5 · grounding 55/55 · intent 41/41
+File: `evals/results/run-9-2026-11-25.json`. After adding 13 official Groww Help how-to pages: the dataset's how-to
+questions h01 (start a SIP), h02 (redeem), h04 (cancel a SIP) and h05 (change SIP date) now **expect a cited answer**
+(they expected "not covered" before) and each is answered from its help page with the link and last-checked date;
+h03 (capital gains statement) still expects and gets "not covered" — no page covers it. The only failure is still l04.
+
+## Known limitations (after run 9)
 
 - **Questions written in Devanagari script** (l04) don't match a scheme, so the desk says not covered (it does name what
   it searched). Hinglish in Latin script works. The fix would be translating the question before retrieval.
-- **How-to questions** get an honest "not covered" because the corpus has only the scheme pages and four fee reference
-  pages; adding Groww help pages to the corpus would let the desk answer them.
+- **How-to questions** are answered only when one of the 13 Groww Help how-to pages covers them; others (h03, capital
+  gains statement) get an honest "not covered".
 - Each eval run uses a fixed reviews set for the weekly part, so theme quality on live reviews is checked by the
   verification report (`scripts/verify_weekly.py`), not by these evals.
 
@@ -129,6 +135,7 @@ is still l04 (Devanagari).
 | 6 | (network outage, not counted) | | | |
 | 7 | 44/45 | 5/5 | 55/55 | 41/41 |
 | 8 | 44/45 | 5/5 | 55/55 | 41/41 |
+| 9 | 44/45 | 5/5 | 55/55 | 41/41 |
 
 ## Latency (Plan 6, live site)
 

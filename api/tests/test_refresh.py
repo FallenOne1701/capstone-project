@@ -43,8 +43,11 @@ def test_fetch_failure_marks_stale_and_keeps_date(db_session, tmp_path, monkeypa
     monkeypatch.setattr(reference, "_download", no_network)
     res = rf.refresh_corpus(db_session, fetch=True, raw_dir=FIXTURES)
     assert res.stale == 15
-    for r in db_session.query(Source):  # schemes and references both keep their old date
+    for r in db_session.query(Source).filter(Source.url.in_(before)):  # fetched before: keep the old date
         assert r.status == "stale" and r.fetched_at == before[r.url]
+    # how-to pages were never fetched (the offline run has no fixtures for them): an error, never a fake date
+    assert all(r.status == "error" and r.fetched_at is None
+               for r in db_session.query(Source).filter_by(kind="howto"))
 
 
 def test_status_reports_vectors_after_refresh(db_session, tmp_path, monkeypatch):

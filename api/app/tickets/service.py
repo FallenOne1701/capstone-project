@@ -13,11 +13,13 @@ from app.approvals.service import audit
 from app.config import get_settings, load_schemes
 from app.corpus.refresh import last_checked_for
 from app.desk.contracts import FactsResult, OrchestratorOutput, RoutingNote
+from app.desk.templates import covered_reply
 from app.desk.orchestrator import run_desk
 from app.desk.reviewer import review_draft
 from app.desk.translate import translate_reply, validate_translation
 from app.link.canonical import find_canonical, reuse_reply
 from app.guard.pii import redact
+from app.corpus.howto import howto_fact, howto_topic
 from app.desk.timing import log as timing_log, step
 from app.intent.cache import classify_cached
 from app.intent.classifier import IntentResult
@@ -108,6 +110,30 @@ async def _add_translation(db: Session, d: Draft) -> None:
     audit(db, "desk", "translate", "draft", d.id, "ok" if not probs else f"discarded:{probs[0]}")
 
 
+_NO_HOWTO = {"advice_request", "performance_request"}
+
+
+def _howto_answer(db: Session, t: Ticket, intent: IntentResult):
+    """A how-to question answered from its official Groww Help page (the page's own words), or None.
+    Tried for how-to questions, and for any other question that names no fund when a page matches specifically;
+    never for advice or returns questions, which keep their fixed refusal."""
+    if intent.intent in _NO_HOWTO or (intent.intent != "how_to_process" and intent.scheme_ids):
+        return None
+    topic = howto_topic(t.question_redacted)
+    hit = howto_fact(topic) if topic else None
+    if hit is None:
+        return None
+    fact, url, title = hit
+    checked = last_checked_for(db, url) or date.today().isoformat()
+    draft = OrchestratorOutput(
+        reply=covered_reply(fact, url, checked), citation=url, last_checked=checked, disposition="reply",
+        disagreement=False, routing_note=RoutingNote(team="Customer support", priority="P3",
+                                                     why=f"How-to answered from the official help page: {title}."))
+    facts = FactsResult(status="covered", scheme_id="howto", fact=fact, citation=url, last_checked=checked,
+                        searched=[f"howto:{topic}"])
+    return draft, facts
+
+
 async def process_ticket(db: Session, ticket_id: int, *, retriever, themes_provider: Callable = lambda db: []) -> Draft | None:
     t = db.get(Ticket, ticket_id)
     started = time.perf_counter()
@@ -132,6 +158,11 @@ async def process_ticket(db: Session, ticket_id: int, *, retriever, themes_provi
             with step("desk", t.id):   # reused explainer: the reviewer only
                 review = review_draft(draft_out, facts=facts, round=1)
             searched, reused_id = facts.searched, ex.id
+        elif (ht := _howto_answer(db, t, intent)) is not None:
+            draft_out, facts = ht
+            with step("desk", t.id):   # how-to page: the reviewer only
+                review = review_draft(draft_out, facts=facts, round=1)
+            searched, reused_id = facts.searched, None
         else:
             with step("themes", t.id):
                 themes = themes_provider(db)

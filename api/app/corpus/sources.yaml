@@ -113,3 +113,45 @@ references:
   - topic: brokerage
     title: What fees does Groww charge? — Groww Help
     url: https://groww.in/help/payments-&-withdrawals/payments-charges/what-fees-does-groww-charge--58
+
+# How-to pages (Groww Help, official) — answer how-to questions with the page's own words (added 2026-11-25)
+howtos:
+  - topic: sip_start
+    title: How can I start a SIP on Groww? — Groww Help
+    url: https://groww.in/help/mutual-funds/mf-sip/how-to-start-a-sip-on-groww
+  - topic: sip_cancel
+    title: How can I cancel an ongoing SIP? — Groww Help
+    url: https://groww.in/help/mutual-funds/mf-sip/how-to-cancel-my-sip
+  - topic: sip_cancel_anytime
+    title: Can I cancel my SIP as per my wish? — Groww Help
+    url: https://groww.in/help/mutual-funds/order/can-i-cancel-my-sip-as-per-my-wish
+  - topic: sip_cancel_charge
+    title: Will I be charged for cancelling my SIP? — Groww Help
+    url: https://groww.in/help/mutual-funds/sip/will-i-be-charged-for-cancelling-my-sip--37
+  - topic: sip_change
+    title: How can I change my SIP date or amount? — Groww Help
+    url: https://groww.in/help/mutual-funds/sip/how-to-change-sip-date-or-amount
+  - topic: sip_deducted_after_cancel
+    title: I cancelled my SIP instalment but still my amount got deducted — Groww Help
+    url: https://groww.in/help/mutual-funds/order/i-cancelled-my-sip-instalment-but-still-my-amount-got-deducted--79
+  - topic: order_cancel
+    title: I have accidentally placed an MF order. Can I cancel it? — Groww Help
+    url: https://groww.in/help/mutual-funds/order/i-have-accidentally-placed-an-order-can-i-cancel-it
+  - topic: redeem_how
+    title: How do I withdraw or redeem from a mutual fund? — Groww Help
+    url: https://groww.in/help/mutual-funds/order/how-to-withdraw-redeem-4
+  - topic: redeem_anytime
+    title: Can I withdraw/redeem my investments any time? — Groww Help
+    url: https://groww.in/help/mutual-funds/order/can-i-withdraw-redeem-my-investments-any-time
+  - topic: redeem_limit
+    title: Is there any limit for withdraw/redemption amount? — Groww Help
+    url: https://groww.in/help/mutual-funds/order/is-there-any-limit-for-withdraw-redemption-amount
+  - topic: redeem_nav
+    title: When withdrawing/redeeming which day's NAV will be applicable? — Groww Help
+    url: https://groww.in/help/mutual-funds/order/when-withdrawing-redeeming-which-days-nav-will-be-applicable-1
+  - topic: redeem_time
+    title: How long will it take for my redeem amount to reflect in my bank account? — Groww Help
+    url: https://groww.in/help/mutual-funds/order/how-long-will-it-take-for-my-redeem-amount-to-reflect-in-my-bank-account-groww-balance--16
+  - topic: redeem_not_credited
+    title: My redemption has been completed but the amount has not been credited. Why? — Groww Help
+    url: https://groww.in/help/mutual-funds/order/redeem-is-completed-but-amount-has-not-been-credited-6

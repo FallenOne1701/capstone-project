@@ -29,11 +29,11 @@ questions:
   - {id: e07, text: "What exit load does HDFC Medium to Long Term Fund charge?", intent: fee_question, expect: answer}
   - {id: e08, text: "Total expense ratio of HDFC Defence Fund?", intent: fee_question, expect: answer}
   # how-to
-  - {id: h01, text: "How do I start a SIP in HDFC Mid Cap Fund on Groww?", intent: how_to_process, expect: not_covered}
-  - {id: h02, text: "How can I redeem my units of HDFC Small Cap Fund?", intent: how_to_process, expect: not_covered}
+  - {id: h01, text: "How do I start a SIP in HDFC Mid Cap Fund on Groww?", intent: how_to_process, expect: answer}
+  - {id: h02, text: "How can I redeem my units of HDFC Small Cap Fund?", intent: how_to_process, expect: answer}
   - {id: h03, text: "How do I download my capital gains statement?", intent: how_to_process, expect: not_covered}
-  - {id: h04, text: "How do I cancel a SIP?", intent: how_to_process, expect: not_covered}
-  - {id: h05, text: "How can I change my SIP date?", intent: how_to_process, expect: not_covered}
+  - {id: h04, text: "How do I cancel a SIP?", intent: how_to_process, expect: answer}
+  - {id: h05, text: "How can I change my SIP date?", intent: how_to_process, expect: answer}
   # not covered by the corpus
   - {id: n01, text: "What is the expense ratio of Axis Bluechip Fund?", intent: fee_question, expect: not_covered}
   - {id: n02, text: "Who is the fund manager of HDFC Mid Cap Fund?", intent: fund_fact, expect: not_covered}
