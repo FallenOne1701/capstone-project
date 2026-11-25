@@ -23,9 +23,15 @@ Play Store reviews ─► redact ─► themes (AI, with keyword fallback) ─�
           ─► pending actions: Doc append, Gmail draft ─► a person approves ─► MCP Server 1 (stdio) ─► Google
 ```
 
-- **The links between the loops:** the desk uses the week's review themes to route tickets, and an approved fee
-  explainer becomes the canonical answer that later fee tickets reuse.
-- **MCP:** the API runs our MCP server (`api/mcp_server/`, vendored from Milestone 3) as a stdio subprocess and calls
+- **How the two loops connect** (shown working on the live site — see [The link in action](#the-link-in-action)):
+  1. **Response → weekly:** every ticket gets a question key (intent · fee topic · fund). A key asked **5 or more times
+     in 7 days** appears under "Asked repeatedly" in the next pulse, and the fee line counts those questions next to
+     the reviews (e.g. "Brokerage & charges: 81 reviews and 6 questions").
+  2. **Weekly → response:** when a person approves the weekly Doc append, that week's fee explainer becomes
+     **canonical**; later fee questions are answered from it instead of being drafted fresh (routing note
+     "Reused canonical explainer #N").
+  3. The desk also uses the week's review themes to label and route each ticket.
+- **MCP:** the API runs our MCP server (`api/mcp_server/`, vendored from Milestone 2) as a stdio subprocess and calls
   only `google_docs_append_content` and `gmail_create_draft`; `gmail_send_email` is denylisted, so mail is only ever a
   draft. Each call runs only after a person approves that action; failures show in plain words with a Retry.
 - **Grounding:** one section of a scheme page → one chunk, `bge-small-en-v1.5` embeddings in Chroma. A reply states
@@ -36,9 +42,39 @@ Play Store reviews ─► redact ─► themes (AI, with keyword fallback) ─�
 - **The approval gate** (`AUTO_APPROVE=0`): every reply and Google write is a pending action; approve / edit / reject
   are audited, and approve publishes only the exact text the person saw.
 
+## Sources
+
+Only public, official pages (fetching and citing are limited in code to `groww.in`, `amfiindia.com`, `sebi.gov.in`).
+Each page is re-fetched weekly (Sundays 21:00 IST) and every answer shows its "Last checked" date; the live list with
+dates is the **Sources** section of the *This week* tab.
+
+- **15 HDFC scheme pages on Groww** (one fact per section: expense ratio, exit load, minimum SIP, benchmark,
+  riskometer, lock-in…): Mid Cap · Small Cap · Large Cap · Focused · ELSS Tax Saver · Defence · Pharma and Healthcare ·
+  Innovation · Banking & Financial Services · MNC · Gilt · Ultra Short to Short Term · Medium to Long Term · Arbitrage ·
+  Gold ETF Fund of Fund — all at `https://groww.in/mutual-funds/<scheme>-direct-growth` (list in
+  [`api/app/corpus/sources.yaml`](api/app/corpus/sources.yaml)).
+- **4 fee reference pages:** [What is exit load? — Groww Help](https://groww.in/help/mutual-funds/order/what-is-exit-load--71) ·
+  [What are the charges applicable for redeeming? — Groww Help](https://groww.in/help/mutual-funds/order/what-are-the-charges-applicable-for-redeeming--53) ·
+  [What fees does Groww charge? — Groww Help](https://groww.in/help/payments-&-withdrawals/payments-charges/what-fees-does-groww-charge--58) ·
+  [Expense Ratio — AMFI Investor Corner](https://www.amfiindia.com/investor/knowledge-center-info?zoneName=expenseRatio).
+- **Reviews:** public Google Play reviews of the Groww app (`com.nextbillion.groww`), fetched every Monday, personal
+  data redacted on the way in. Sample: [`docs/samples/reviews_sample.csv`](docs/samples/reviews_sample.csv).
+
+## What the reviews told us — the fee issue
+
+Weekly run 6 (automatic, Monday 2026-11-23): **3,176 Play Store reviews** (29 Oct – 23 Nov), 470 matched a theme.
+Top themes: **Trading & order execution** (202), **Fees, charges & funding** (101), **App reliability & updates** (94),
+then Customer support (56) and Charts & holdings data (17).
+
+The recurring fee confusion is **brokerage & charges** — users asking what Groww charges per trade and about charges
+they didn't expect ("hidden charges on brokerage, DP charge not shown before selling"). It is the top fee topic in
+**81 reviews**, and **6 support questions** about it that week. The weekly loop turned it into a facts-only explainer
+from Groww's help pages (equity trades: ₹20 or 0.1% of trade value, whichever is lower; minimum ₹5; zero fees for
+redeeming mutual funds), which a person approved and which now answers brokerage questions on the desk.
+
 ## Evals — latest run
 
-Run 7 (2026-11-19), real AI, file [`api/evals/results/run-7-2026-11-19.json`](api/evals/results/run-7-2026-11-19.json):
+Run 8 (2026-11-25, on the final code), real AI, file [`api/evals/results/run-8-2026-11-25.json`](api/evals/results/run-8-2026-11-25.json) — the same scores as run 7 (2026-11-19), so the later layout and speed changes broke nothing:
 
 | Eval | Score | What it checks |
 |---|---|---|
@@ -51,7 +87,7 @@ Iteration: run 1 scored 30/44 · 5/5 · 37/45; a code review then made the check
 question in Devanagari script (a known limitation).
 
 Every requirement of the brief, how it is checked and the latest result: [`docs/EVAL_CHECKLIST.md`](docs/EVAL_CHECKLIST.md). Full history — every failure, its cause, the fix and the re-run: [`api/EVALS.md`](api/EVALS.md). Live latency before/after Plan 6 (e.g. Hinglish draft 10.3 s → 2.4 s): [`api/EVALS.md` → Latency](api/EVALS.md#latency-plan-6-live-site).
-Run them: `cd api && .venv/Scripts/python -m app.evals run all`.
+**How to run the evals:** `cd api && .venv/Scripts/python -m app.evals run all` (or `feasibility` · `isolation` · `grounding`). They use the real AI (Groq, Gemini as fallback) against a throwaway local database with Google stubbed, so they never touch the live Queue or Google; ~2.5 min, ~30 AI calls; each run prints a score card and saves every case to `api/evals/results/run-<n>-<date>.json`.
 
 ## Samples
 
@@ -95,6 +131,23 @@ The run before it (no repeated questions yet) said "0 questions". Product now se
 
 > Groww charges a brokerage fee for executing your trades. Here's a breakdown: Equity Trading: The fee is either ₹20 or 0.1% of your trade value, whichever is lower. Source: https://groww.in/help/payments-&-withdrawals/payments-charges/what-fees-does-groww-charge--58 Last checked: 2026-11-19.
 
+## Known limits
+
+- **Questions written in Devanagari script** get "not covered" (it names what it searched); Hinglish in Latin script
+  works. This is the one failing eval case (`l04`).
+- **How-to questions** ("how do I start a SIP?") get an honest "not covered": the corpus is scheme pages and fee
+  reference pages only.
+- **Personal-data masking is pattern-based** (PAN, Aadhaar, phone, email, UPI, card, account, IFSC, OTP); an unusual
+  format may slip through.
+- **The page has no password** (a deliberate choice): anyone on it can approve. Google writes are limited to a Doc
+  append and a Gmail *draft*, and approvals are rate-limited.
+- **The first question after a redeploy is slow** (~8 s; later ones ~1–3 s); the cause isn't found yet.
+- **The Google sign-in is in testing mode**, so it must be renewed every 7 days (last renewed 2026-11-25).
+- The evals' weekly part uses a fixed set of reviews; theme quality on live reviews is checked with
+  `api/scripts/verify_weekly.py`.
+
+More: [`docs/SAFETY.md`](docs/SAFETY.md) (safety limits) · [`api/EVALS.md`](api/EVALS.md) (eval limits).
+
 ## Run it locally
 
 ```bash
@@ -124,5 +177,5 @@ cd web && npm test && npm run e2e                  # vitest + Playwright
 
 - `api/` — FastAPI app: `app/intent`, `app/desk` (agents), `app/corpus` (retrieval), `app/guard` (PII, compliance,
   rate limits), `app/weekly`, `app/approvals`, `app/delivery` (MCP client), `app/evals`; tests in `api/tests/`.
-- `web/` — the single page (Ask · Queue · This week).
+- `web/` — the single page (tabs: Ask · This week · Queue).
 - `docs/superpowers/` — the design specs and implementation plans, plan by plan.
