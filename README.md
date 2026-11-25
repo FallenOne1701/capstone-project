@@ -86,7 +86,7 @@ Run 8 (2026-11-25, on the final code), real AI, file [`api/evals/results/run-8-2
 Iteration: run 1 scored 30/44 · 5/5 · 37/45; a code review then made the checks stricter; the fixes in between are in the history. The one remaining failure is a
 question in Devanagari script (a known limitation).
 
-Every requirement of the brief, how it is checked and the latest result: [`docs/EVAL_CHECKLIST.md`](docs/EVAL_CHECKLIST.md). Full history — every failure, its cause, the fix and the re-run: [`api/EVALS.md`](api/EVALS.md). Live latency before/after Plan 6 (e.g. Hinglish draft 10.3 s → 2.4 s): [`api/EVALS.md` → Latency](api/EVALS.md#latency-plan-6-live-site).
+**Evals report** (golden dataset, adversarial tests, scores): [`docs/EVALS_REPORT.md`](docs/EVALS_REPORT.md). Every requirement of the brief, how it is checked and the latest result: [`docs/EVAL_CHECKLIST.md`](docs/EVAL_CHECKLIST.md). Full history — every failure, its cause, the fix and the re-run: [`api/EVALS.md`](api/EVALS.md). Live latency before/after Plan 6 (e.g. Hinglish draft 10.3 s → 2.4 s): [`api/EVALS.md` → Latency](api/EVALS.md#latency-plan-6-live-site).
 **How to run the evals:** `cd api && .venv/Scripts/python -m app.evals run all` (or `feasibility` · `isolation` · `grounding`). They use the real AI (Groq, Gemini as fallback) against a throwaway local database with Google stubbed, so they never touch the live Queue or Google; ~2.5 min, ~30 AI calls; each run prints a score card and saves every case to `api/evals/results/run-<n>-<date>.json`.
 
 ## Samples
